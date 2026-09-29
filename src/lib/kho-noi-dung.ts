@@ -59,3 +59,56 @@ export function useBoBai() {
 
   return { boBai, loi, dangTai: boBai === null && loi === null };
 }
+
+// ---------------------------------------------------------------- chiêm tinh và thần số
+
+export type NoiDungCung = {
+  ma: string;
+  ten: string;
+  ten_en: string;
+  tu_ngay: string;
+  den_ngay: string;
+  nguyen_to: string;
+  tinh_chat: string;
+  tinh_cach: string;
+  diem_manh: string;
+  diem_yeu: string;
+};
+
+export type DongHop = { cung_a: string; cung_b: string; diem: number; loi_binh: string };
+export type DongSoChuDao = {
+  so: number;
+  ten: string;
+  tinh_cach: string;
+  diem_manh: string;
+  diem_yeu: string;
+  loi_khuyen: string;
+};
+export type DongSoVanMenh = { so: number; ten: string; y_nghia: string; loi_khuyen: string };
+
+function useBang<T>(bang: string) {
+  const [dong, setDong] = useState<T[] | null>(null);
+  const [loi, setLoi] = useState<string | null>(null);
+
+  useEffect(() => {
+    let huy = false;
+    supabase
+      .from(bang)
+      .select('*')
+      .then(({ data, error }) => {
+        if (huy) return;
+        if (error) setLoi(error.message);
+        else setDong(data as T[]);
+      });
+    return () => {
+      huy = true;
+    };
+  }, [bang]);
+
+  return { dong, loi, dangTai: dong === null && loi === null };
+}
+
+export const useCung = () => useBang<NoiDungCung>('cung_hoang_dao');
+export const useDoHop = () => useBang<DongHop>('do_hop_cung');
+export const useSoChuDao = () => useBang<DongSoChuDao>('so_chu_dao');
+export const useSoVanMenh = () => useBang<DongSoVanMenh>('so_van_menh');

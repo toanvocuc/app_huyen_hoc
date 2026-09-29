@@ -1,15 +1,22 @@
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { Khoi, ManHinh } from '@/components/man-hinh';
+import { LaBai } from '@/components/la-bai';
+import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
+import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import { ghiSuKien } from '@/lib/su-kien';
 import { supabase } from '@/lib/supabase';
-import { laHomNay, ngayVietNam, type LaDaRut } from '@/lib/tarot';
+import { laHomNay, type LaDaRut } from '@/lib/tarot';
+import { cungTheoNgay, timCung } from '@/lib/zodiac';
+
+const THU = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
 
 export default function HomNay() {
   const { boBai, loi, dangTai } = useBoBai();
+  const { hoSo } = useHoSo();
   const [la, setLa] = useState<LaDaRut | null>(null);
 
   useEffect(() => {
@@ -21,30 +28,62 @@ export default function HomNay() {
     });
   }, [boBai]);
 
+  const d = new Date();
+  const ngayChu = `${THU[d.getDay()]}, ngày ${d.getDate()} tháng ${d.getMonth() + 1}`;
+
+  const ns = tachNgay(hoSo?.ngay_sinh ?? null);
+  const maCung = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
+  const cung = maCung ? timCung(maCung) : null;
+
   return (
-    <ManHinh tieuDe="Lá bài hôm nay" phu={ngayVietNam()}>
-      {dangTai ? <ActivityIndicator color="#C9A227" /> : null}
-      {loi ? <Text className="text-sm text-chu-phu">Chưa tải được nội dung: {loi}</Text> : null}
+    <ManHinh tieuDe="Lá bài hôm nay" phu={ngayChu}>
+      {dangTai ? <DangTai /> : null}
+      {loi ? <Trong loi={`Chưa tải được nội dung. ${loi}`} /> : null}
       {boBai?.length === 0 ? (
-        <Text className="text-sm text-chu-phu">
-          Kho lá bài đang trống. Nạp data/tarot_78_la.csv vào bảng la_bai.
-        </Text>
+        <Trong loi="Kho lá bài đang trống. Nạp data/tarot_78_la.csv vào bảng la_bai rồi mở lại." />
       ) : null}
 
       {la ? (
         <View>
-          {/* TODO: hiện ảnh lá bài từ assets/cards/ */}
-          <Khoi>
-            <Text className="text-xs uppercase tracking-widest text-vang">{la.la.bo}</Text>
-            <Text className="mt-1 text-xl font-bold text-chu-chinh">{la.la.tenVi}</Text>
-            <Text className="mt-1 text-sm text-chu-phu">{la.la.tuKhoa}</Text>
-            <Text className="mt-4 text-base leading-6 text-chu-chinh">{la.la.yNghiaXuoi}</Text>
-            <Text className="mt-4 text-sm leading-5 text-chu-phu">{la.la.loiKhuyen}</Text>
-          </Khoi>
+          <View className="items-center">
+            <LaBai daRut={la} rong={200} />
+          </View>
+
+          <View className="mt-6">
+            <Text className="text-center text-2xl font-bold text-chu-chinh">{la.la.tenVi}</Text>
+            <Text className="mt-1.5 text-center text-xs font-semibold uppercase tracking-widest text-vang">
+              {la.la.tuKhoa}
+            </Text>
+          </View>
+
+          <View className="mt-6">
+            <Khoi>
+              <Text className="text-base leading-7 text-chu-chinh">{la.la.yNghiaXuoi}</Text>
+            </Khoi>
+          </View>
+
+          <View className="mt-4">
+            <Khoi>
+              <Nhan>Lời khuyên</Nhan>
+              <Text className="text-base leading-7 text-chu-chinh">{la.la.loiKhuyen}</Text>
+            </Khoi>
+          </View>
+
+          {cung ? (
+            <Pressable
+              onPress={() => router.push('/cung')}
+              className="mt-4 flex-row items-center justify-between rounded-2xl bg-nen-nhat p-5 active:opacity-70">
+              <View className="flex-1 pr-3">
+                <Nhan>Cung của bạn</Nhan>
+                <Text className="text-base text-chu-chinh">{cung.ten} · xem tử vi hôm nay</Text>
+              </View>
+              <Text className="text-lg text-vang">›</Text>
+            </Pressable>
+          ) : null}
 
           <HoiChuyenGia
             manHinh="hom-nay"
-            loiMoi={`Lá ${la.la.tenVi} hôm nay ứng vào chuyện gì của bạn? Nhắn cho chuyên gia để hỏi rõ.`}
+            loiMoi={`Lá ${la.la.tenVi} hôm nay ứng vào chuyện gì của bạn? Nhắn cho chuyên gia để hỏi cho rõ.`}
           />
         </View>
       ) : null}

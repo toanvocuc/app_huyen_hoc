@@ -44,7 +44,8 @@
         {
           "color": "#C9A227"
         }
-      ]
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
