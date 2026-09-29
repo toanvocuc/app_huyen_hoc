@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
@@ -22,6 +23,14 @@ export default function BuocGioSinh() {
         datBanNhap({ gio, phut });
         router.push('/nhap-ho-so/noi-sinh');
       }}>
+      <View className="mb-7 items-center">
+        <Image
+          source={require('@/assets/nen/dong-ho-cat.jpg')}
+          style={{ width: 150, height: 211, borderRadius: 18 }}
+          contentFit="cover"
+        />
+      </View>
+
       <View
         style={{ borderColor: MAU.vien }}
         className="flex-row items-center justify-center gap-2 rounded-2xl border bg-nen-nhat py-7">

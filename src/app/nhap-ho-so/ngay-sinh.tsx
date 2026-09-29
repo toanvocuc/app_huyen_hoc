@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
 import { KhungBuoc } from '@/components/khung-buoc';
-import { VanNen } from '@/components/mat-sau';
+import { Image } from 'expo-image';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { datBanNhap, layBanNhap } from '@/lib/ban-nhap';
 import { kiemNgaySinh } from '@/lib/ho-so';
@@ -33,8 +33,12 @@ export default function BuocNgaySinh() {
         datBanNhap({ ngay, thang, nam });
         router.push('/nhap-ho-so/gio-sinh');
       }}>
-      <View className="mb-8 items-center opacity-80">
-        <VanNen cỡ={168} />
+      <View className="mb-8 items-center">
+        <Image
+          source={require('@/assets/nen/vong-hoang-dao.jpg')}
+          style={{ width: 210, height: 210, borderRadius: 105 }}
+          contentFit="cover"
+        />
       </View>
 
       <View className="flex-row items-start gap-3">

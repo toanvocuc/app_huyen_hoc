@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
@@ -18,7 +19,16 @@ export default function KhamPha() {
       {!ns ? (
         <Trong loi="Chưa có ngày sinh. Vào mục Cá nhân điền ngày sinh rồi quay lại." />
       ) : (
-        <View className="gap-4">
+        <View>
+          <View className="mb-7 items-center">
+            <Image
+              source={require('@/assets/nen/vong-hoang-dao.jpg')}
+              style={{ width: 190, height: 190, borderRadius: 95 }}
+              contentFit="cover"
+            />
+          </View>
+
+          <View className="gap-4">
           <The
             nhan="Cung hoàng đạo"
             ten={cung?.ten ?? ''}
@@ -37,6 +47,7 @@ export default function KhamPha() {
             mo="Số chủ đạo từ ngày sinh và số vận mệnh từ họ tên"
             onPress={() => router.push('/than-so')}
           />
+          </View>
         </View>
       )}
     </ManHinh>

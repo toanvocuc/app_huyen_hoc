@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { NenSao } from '@/components/nen-sao';
 import { VongSo } from '@/components/vong-so';
 import { Nut, VanNgan } from '@/components/nen';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
@@ -41,6 +42,7 @@ export default function HoanTat() {
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      <NenSao cao={380} mo={0.85} />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <View className="flex-1 justify-center px-7">
           <View className="items-center">
