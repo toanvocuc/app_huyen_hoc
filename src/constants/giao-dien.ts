@@ -2,11 +2,11 @@
 
 export const MAU = {
   // Nền đi từ tím sẫm lên tím than, không phải một màu phẳng.
-  nen: '#14101E',
-  nenGiua: '#1C1729',
-  nenTren: '#241C36',
-  nenNhat: '#221B33',
-  nenNhatHon: '#2B2340',
+  nen: '#0A0813',
+  nenGiua: '#100D1B',
+  nenTren: '#171324',
+  nenNhat: '#171327',
+  nenNhatHon: '#1F1933',
 
   vang: '#C9A227',
   vangSang: '#E8C55A',
@@ -25,7 +25,7 @@ export const MAU = {
 export const NEN_CHUYEN: readonly [string, string, string] = [MAU.nenTren, MAU.nenGiua, MAU.nen];
 
 /** Nền chuyển sắc cho khối nội dung, nhạt hơn nền một chút. */
-export const KHOI_CHUYEN: readonly [string, string] = ['#272038', '#1E1830'];
+export const KHOI_CHUYEN: readonly [string, string] = ['#1C1730', '#14101F'];
 
 export const CHU = {
   /** Phông có chân, dùng cho tiêu đề và tên lá bài. Chỉ dùng ở cỡ lớn. */

@@ -113,38 +113,3 @@ function GiuCho({ ten, rong }: { ten: string; rong: number }) {
     </LinearGradient>
   );
 }
-
-/** Mặt sau, dùng cho màn rút bài lúc chưa lật. */
-export function MatSau({ rong = 110 }: { rong?: number }) {
-  const cao = rong / TY_LE_LA_BAI;
-  return (
-    <View
-      style={{
-        width: rong,
-        height: cao,
-        borderColor: MAU.vangMo,
-        shadowColor: '#000',
-        shadowOpacity: 0.45,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 5 },
-        elevation: 6,
-      }}
-      className="overflow-hidden rounded-xl border">
-      <LinearGradient
-        colors={['#332A4C', '#1E1830']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        {/* Hoạ tiết ba viên kim cương lồng nhau, vẽ bằng code cho tới khi có ảnh mặt sau thật. */}
-        <View style={{ borderColor: MAU.vangMo }} className="absolute inset-2 rounded-md border" />
-        {[0.5, 0.34, 0.18].map((t) => (
-          <View
-            key={t}
-            style={{ width: rong * t, height: rong * t, borderColor: MAU.vangMo }}
-            className="absolute rotate-45 border"
-          />
-        ))}
-      </LinearGradient>
-    </View>
-  );
-}

@@ -6,9 +6,9 @@ module.exports = {
     extend: {
       colors: {
         // Giữ khớp với src/constants/giao-dien.ts
-        nen: '#14101E',
-        'nen-nhat': '#221B33',
-        'nen-nhat-hon': '#2B2340',
+        nen: '#0A0813',
+        'nen-nhat': '#171327',
+        'nen-nhat-hon': '#1F1933',
         vang: '#C9A227',
         'vang-sang': '#E8C55A',
         'chu-chinh': '#F2EFF7',
