@@ -6,14 +6,15 @@ module.exports = {
     extend: {
       colors: {
         // Giữ khớp với src/constants/giao-dien.ts
-        nen: '#1A1625',
-        'nen-nhat': '#241F33',
-        'nen-nhat-hon': '#2E2740',
+        nen: '#14101E',
+        'nen-nhat': '#221B33',
+        'nen-nhat-hon': '#2B2340',
         vang: '#C9A227',
-        'chu-chinh': '#F5F3F7',
-        'chu-phu': '#A39CB5',
-        'chu-mo': '#6F6785',
-        vien: '#332C47',
+        'vang-sang': '#E8C55A',
+        'chu-chinh': '#F2EFF7',
+        'chu-phu': '#A9A0BE',
+        'chu-mo': '#6E6688',
+        vien: '#332B4A',
         tot: '#5DBD92',
         canh: '#E0806A',
       },

@@ -4,7 +4,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
-import { Khoi, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
+import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
+import { CHU } from '@/constants/giao-dien';
 import { layPhien } from '@/lib/phien-rut';
 import { ghiSuKien } from '@/lib/su-kien';
 import { maNguoiDung, supabase } from '@/lib/supabase';
@@ -64,17 +65,21 @@ export default function KetQua() {
         </ScrollView>
       ) : (
         <View className="items-center">
-          <LaBai daRut={dang} rong={200} />
+          <LaBai daRut={dang} rong={210} haoQuang />
         </View>
       )}
 
       <View className="mt-7">
         {nhieuLa ? <Nhan>{dang.viTri}</Nhan> : null}
-        <Text className="text-2xl font-bold text-chu-chinh">
+        <Text
+          style={{ fontFamily: CHU.hoaDam, fontSize: 34, lineHeight: 40 }}
+          className="text-chu-chinh">
           {dang.la.tenVi}
           {dang.nguoc ? ' (ngược)' : ''}
         </Text>
-        <Text className="mt-1.5 text-xs font-semibold uppercase tracking-widest text-vang">
+        <Text
+          style={{ fontFamily: CHU.thanDam, letterSpacing: 1.8 }}
+          className="mt-2 text-[11px] uppercase text-vang">
           {dang.la.tuKhoa}
         </Text>
       </View>
@@ -82,19 +87,19 @@ export default function KetQua() {
       <View className="mt-5 gap-4">
         <Khoi>
           <Nhan>Ý nghĩa</Nhan>
-          <Text className="text-base leading-7 text-chu-chinh">{yNghia(dang)}</Text>
+          <ChuThan>{yNghia(dang)}</ChuThan>
         </Khoi>
         <Khoi>
           <Nhan>Tình cảm</Nhan>
-          <Text className="text-base leading-7 text-chu-chinh">{dang.la.tinhCam}</Text>
+          <ChuThan>{dang.la.tinhCam}</ChuThan>
         </Khoi>
         <Khoi>
           <Nhan>Công việc</Nhan>
-          <Text className="text-base leading-7 text-chu-chinh">{dang.la.congViec}</Text>
+          <ChuThan>{dang.la.congViec}</ChuThan>
         </Khoi>
         <Khoi>
           <Nhan>Lời khuyên</Nhan>
-          <Text className="text-base leading-7 text-chu-chinh">{dang.la.loiKhuyen}</Text>
+          <ChuThan>{dang.la.loiKhuyen}</ChuThan>
         </Khoi>
       </View>
 

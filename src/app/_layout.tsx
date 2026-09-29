@@ -1,5 +1,15 @@
 import '@/global.css';
 
+import {
+  BeVietnamPro_400Regular,
+  BeVietnamPro_500Medium,
+  BeVietnamPro_600SemiBold,
+} from '@expo-google-fonts/be-vietnam-pro';
+import {
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from '@expo-google-fonts/cormorant-garamond';
+import { useFonts } from 'expo-font';
 import { Stack, router, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -17,6 +27,13 @@ export default function RootLayout() {
   const [coHoSo, setCoHoSo] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
   const doan = useSegments();
+  const [phongXong] = useFonts({
+    BeVietnamPro_400Regular,
+    BeVietnamPro_500Medium,
+    BeVietnamPro_600SemiBold,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
+  });
 
   useEffect(() => {
     // Hồ sơ ẩn danh tạo ngay lần mở đầu tiên, khách không phải bấm gì.
@@ -31,12 +48,12 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!xong || loi) return;
+    if (!xong || !phongXong || loi) return;
     const dangNhapLieu = doan[0] === 'nhap-ho-so';
     if (!coHoSo && !dangNhapLieu) router.replace('/nhap-ho-so');
-  }, [xong, loi, coHoSo, doan]);
+  }, [xong, phongXong, loi, coHoSo, doan]);
 
-  if (!xong) {
+  if (!xong || !phongXong) {
     return (
       <View className="flex-1 items-center justify-center bg-nen">
         <ActivityIndicator color={MAU.vang} />

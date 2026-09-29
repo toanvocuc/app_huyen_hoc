@@ -4,7 +4,8 @@ import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
-import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong, VanNgan } from '@/components/nen';
+import { CHU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import { ghiSuKien } from '@/lib/su-kien';
@@ -46,26 +47,32 @@ export default function HomNay() {
       {la ? (
         <View>
           <View className="items-center">
-            <LaBai daRut={la} rong={200} />
+            <LaBai daRut={la} rong={210} haoQuang />
           </View>
 
           <View className="mt-6">
-            <Text className="text-center text-2xl font-bold text-chu-chinh">{la.la.tenVi}</Text>
-            <Text className="mt-1.5 text-center text-xs font-semibold uppercase tracking-widest text-vang">
+            <Text
+              style={{ fontFamily: CHU.hoaDam, fontSize: 36, lineHeight: 42 }}
+              className="text-center text-chu-chinh">
+              {la.la.tenVi}
+            </Text>
+            <Text
+              style={{ fontFamily: CHU.thanDam, letterSpacing: 1.8 }}
+              className="mt-2 text-center text-[11px] uppercase text-vang">
               {la.la.tuKhoa}
             </Text>
           </View>
 
-          <View className="mt-6">
-            <Khoi>
-              <Text className="text-base leading-7 text-chu-chinh">{la.la.yNghiaXuoi}</Text>
-            </Khoi>
-          </View>
+          <VanNgan />
+
+          <Khoi>
+            <ChuThan>{la.la.yNghiaXuoi}</ChuThan>
+          </Khoi>
 
           <View className="mt-4">
-            <Khoi>
+            <Khoi vien>
               <Nhan>Lời khuyên</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{la.la.loiKhuyen}</Text>
+              <ChuThan>{la.la.loiKhuyen}</ChuThan>
             </Khoi>
           </View>
 
@@ -75,7 +82,9 @@ export default function HomNay() {
               className="mt-4 flex-row items-center justify-between rounded-2xl bg-nen-nhat p-5 active:opacity-70">
               <View className="flex-1 pr-3">
                 <Nhan>Cung của bạn</Nhan>
-                <Text className="text-base text-chu-chinh">{cung.ten} · xem tử vi hôm nay</Text>
+                <Text style={{ fontFamily: CHU.than }} className="text-base text-chu-chinh">
+                  {cung.ten} · xem tử vi hôm nay
+                </Text>
               </View>
               <Text className="text-lg text-vang">›</Text>
             </Pressable>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useSoChuDao, useSoVanMenh } from '@/lib/kho-noi-dung';
 import { soChuDao, soVanMenh } from '@/lib/numerology';
@@ -65,19 +65,19 @@ export default function ThanSo() {
           <>
             <Khoi>
               <Nhan>{noiDungCD.ten}</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDungCD.tinh_cach}</Text>
+              <ChuThan>{noiDungCD.tinh_cach}</ChuThan>
             </Khoi>
             <Khoi>
               <Nhan>Điểm mạnh</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDungCD.diem_manh}</Text>
+              <ChuThan>{noiDungCD.diem_manh}</ChuThan>
             </Khoi>
             <Khoi>
               <Nhan>Điểm yếu</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDungCD.diem_yeu}</Text>
+              <ChuThan>{noiDungCD.diem_yeu}</ChuThan>
             </Khoi>
             <Khoi>
               <Nhan>Lời khuyên</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDungCD.loi_khuyen}</Text>
+              <ChuThan>{noiDungCD.loi_khuyen}</ChuThan>
             </Khoi>
           </>
         ) : null}
@@ -86,11 +86,11 @@ export default function ThanSo() {
           <>
             <Khoi>
               <Nhan>{noiDungVM.ten}</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDungVM.y_nghia}</Text>
+              <ChuThan>{noiDungVM.y_nghia}</ChuThan>
             </Khoi>
             <Khoi>
               <Nhan>Lời khuyên</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDungVM.loi_khuyen}</Text>
+              <ChuThan>{noiDungVM.loi_khuyen}</ChuThan>
             </Khoi>
           </>
         ) : null}

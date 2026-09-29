@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useCung } from '@/lib/kho-noi-dung';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
@@ -58,15 +58,15 @@ export default function TrangCung() {
           <View className="gap-4">
             <Khoi>
               <Nhan>Tính cách</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDung.tinh_cach}</Text>
+              <ChuThan>{noiDung.tinh_cach}</ChuThan>
             </Khoi>
             <Khoi>
               <Nhan>Điểm mạnh</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDung.diem_manh}</Text>
+              <ChuThan>{noiDung.diem_manh}</ChuThan>
             </Khoi>
             <Khoi>
               <Nhan>Điểm yếu</Nhan>
-              <Text className="text-base leading-7 text-chu-chinh">{noiDung.diem_yeu}</Text>
+              <ChuThan>{noiDung.diem_yeu}</ChuThan>
             </Khoi>
           </View>
         ) : null}

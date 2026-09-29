@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { DangTai, Khoi, ManHinh, Nhan } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, ManHinh, Nhan } from '@/components/nen';
 import { MAU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useDoHop } from '@/lib/kho-noi-dung';
