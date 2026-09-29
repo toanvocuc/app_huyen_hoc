@@ -1,14 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { CHU, MAU } from '@/constants/giao-dien';
+
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#C9A227',
-        tabBarInactiveTintColor: '#A39CB5',
-        tabBarStyle: { backgroundColor: '#241F33', borderTopColor: '#332C47' },
+        tabBarActiveTintColor: MAU.vang,
+        tabBarInactiveTintColor: MAU.chuMo,
+        tabBarStyle: {
+          backgroundColor: MAU.nenNhat,
+          borderTopColor: MAU.vien,
+          height: 62,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: { fontFamily: CHU.thanVua, fontSize: 11 },
       }}>
       <Tabs.Screen
         name="index"

@@ -45,7 +45,7 @@ export default function DieuKhoan() {
       </Pressable>
 
       <View className="mt-6">
-        <Nut nhan="Tiếp tục" tat={!dongY} onPress={() => router.push('/nhap-ho-so/thong-tin')} />
+        <Nut nhan="Tiếp tục" tat={!dongY} onPress={() => router.push('/nhap-ho-so/ten')} />
       </View>
     </ManHinh>
   );

@@ -1,31 +1,31 @@
 /** Bộ màu, phông chữ và khoảng cách dùng chung. Đổi ở đây là đổi cả app. */
 
 export const MAU = {
-  // Nền đi từ tím sẫm lên tím than, không phải một màu phẳng.
-  nen: '#0A0813',
-  nenGiua: '#100D1B',
-  nenTren: '#171324',
-  nenNhat: '#171327',
-  nenNhatHon: '#1F1933',
+  // Nền xanh đêm, đi từ đậm dưới lên nhạt trên.
+  nen: '#0B1220',
+  nenGiua: '#0E1728',
+  nenTren: '#131E33',
+  nenNhat: '#141E33',
+  nenNhatHon: '#1B2740',
 
-  vang: '#C9A227',
-  vangSang: '#E8C55A',
-  vangMo: 'rgba(201,162,39,0.28)',
-  vangRatMo: 'rgba(201,162,39,0.10)',
+  vang: '#D4A84B',
+  vangSang: '#E8C673',
+  vangMo: 'rgba(212,168,75,0.30)',
+  vangRatMo: 'rgba(212,168,75,0.10)',
 
-  chuChinh: '#F2EFF7',
-  chuPhu: '#A9A0BE',
-  chuMo: '#6E6688',
-  vien: '#332B4A',
-  tot: '#5DBD92',
-  canh: '#E0806A',
+  chuChinh: '#EDF1F8',
+  chuPhu: '#9AA8C0',
+  chuMo: '#63708A',
+  vien: '#233149',
+  tot: '#4FBF95',
+  canh: '#E08268',
 } as const;
 
 /** Nền chuyển sắc cho toàn màn hình. */
 export const NEN_CHUYEN: readonly [string, string, string] = [MAU.nenTren, MAU.nenGiua, MAU.nen];
 
 /** Nền chuyển sắc cho khối nội dung, nhạt hơn nền một chút. */
-export const KHOI_CHUYEN: readonly [string, string] = ['#1C1730', '#14101F'];
+export const KHOI_CHUYEN: readonly [string, string] = ['#18233A', '#111A2C'];
 
 export const CHU = {
   /** Phông có chân, dùng cho tiêu đề và tên lá bài. Chỉ dùng ở cỡ lớn. */

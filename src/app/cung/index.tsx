@@ -1,90 +1,99 @@
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+/** Lưới 12 cung hoàng đạo. Cung của người dùng được đánh dấu riêng. */
 
-import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { BieuTuongCung } from '@/components/bieu-tuong-cung';
+import { ThanhTieuDe } from '@/components/thanh-tieu-de';
+import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useCung } from '@/lib/kho-noi-dung';
-import { cungTheoNgay, timCung } from '@/lib/zodiac';
+import { CUNG, cungTheoNgay } from '@/lib/zodiac';
 
-type Tab = 'hom-nay' | 'tuan-nay' | 'tinh-cach';
-
-export default function TrangCung() {
+export default function LuoiCung() {
   const { hoSo } = useHoSo();
-  const { dong, dangTai } = useCung();
-  const [tab, setTab] = useState<Tab>('hom-nay');
-
+  const { dong } = useCung();
   const ns = tachNgay(hoSo?.ngay_sinh ?? null);
-  const ma = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
-  const cung = ma ? timCung(ma) : null;
-  const noiDung = dong?.find((c) => c.ma === ma);
-
-  if (!cung) {
-    return (
-      <ManHinh quayLai tieuDe="Cung hoàng đạo">
-        <Trong loi="Chưa có ngày sinh nên chưa xác định được cung." />
-      </ManHinh>
-    );
-  }
+  const cuaToi = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
 
   return (
-    <ManHinh
-      quayLai
-      tieuDe={cung.ten}
-      phu={`${cung.nguyenTo} · ${noiDung?.tu_ngay ?? ''} đến ${noiDung?.den_ngay ?? ''}`}>
-      <View className="flex-row rounded-xl bg-nen-nhat p-1">
-        {([
-          ['hom-nay', 'Hôm nay'],
-          ['tuan-nay', 'Tuần này'],
-          ['tinh-cach', 'Tính cách'],
-        ] as [Tab, string][]).map(([ma2, ten]) => (
-          <Pressable
-            key={ma2}
-            onPress={() => setTab(ma2)}
-            className={`min-h-[44px] flex-1 items-center justify-center rounded-lg ${
-              tab === ma2 ? 'bg-vang' : ''
-            }`}>
-            <Text className={`text-sm font-semibold ${tab === ma2 ? 'text-nen' : 'text-chu-phu'}`}>
-              {ten}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+    <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ThanhTieuDe ten="12 cung hoàng đạo" />
 
-      <View className="mt-6">
-        {dangTai ? <DangTai /> : null}
+        <ScrollView contentContainerClassName="px-5 pb-14 pt-6">
+          <Text
+            style={{ fontFamily: CHU.hoaDam, fontSize: 30, lineHeight: 36 }}
+            className="text-chu-chinh">
+            Khám phá bản thân
+          </Text>
+          <Text
+            style={{ fontFamily: CHU.than, fontSize: 14, lineHeight: 22 }}
+            className="mt-1.5 text-chu-phu">
+            Chọn cung của bạn hoặc của người thân để xem tính cách và độ hợp.
+          </Text>
 
-        {tab === 'tinh-cach' && noiDung ? (
-          <View className="gap-4">
-            <Khoi>
-              <Nhan>Tính cách</Nhan>
-              <ChuThan>{noiDung.tinh_cach}</ChuThan>
-            </Khoi>
-            <Khoi>
-              <Nhan>Điểm mạnh</Nhan>
-              <ChuThan>{noiDung.diem_manh}</ChuThan>
-            </Khoi>
-            <Khoi>
-              <Nhan>Điểm yếu</Nhan>
-              <ChuThan>{noiDung.diem_yeu}</ChuThan>
-            </Khoi>
+          <View className="mt-6 flex-row flex-wrap justify-between gap-y-3">
+            {CUNG.map((c) => {
+              const nd = dong?.find((x) => x.ma === c.ma);
+              const cuaMinh = cuaToi === c.ma;
+              return (
+                <Pressable
+                  key={c.ma}
+                  onPress={() => router.push({ pathname: '/cung/chi-tiet', params: { ma: c.ma } })}
+                  style={{
+                    width: '48.5%',
+                    borderColor: cuaMinh ? MAU.vang : MAU.vien,
+                    borderWidth: cuaMinh ? 1.5 : 1,
+                  }}
+                  className="items-center rounded-2xl bg-nen-nhat px-3 py-5 active:opacity-75">
+                  {cuaMinh ? (
+                    <Text
+                      style={{ fontFamily: CHU.thanDam, letterSpacing: 1.2 }}
+                      className="absolute right-3 top-2.5 text-[9px] uppercase text-vang">
+                      Của bạn
+                    </Text>
+                  ) : null}
+
+                  <View
+                    style={{ borderColor: cuaMinh ? MAU.vang : MAU.vien }}
+                    className="h-14 w-14 items-center justify-center rounded-full border">
+                    <BieuTuongCung ma={c.ma} co={28} mau={cuaMinh ? MAU.vangSang : MAU.vang} />
+                  </View>
+
+                  <Text
+                    style={{ fontFamily: CHU.hoaDam, fontSize: 20, lineHeight: 26 }}
+                    className="mt-2.5 text-chu-chinh">
+                    {c.ten}
+                  </Text>
+                  <Text style={{ fontFamily: CHU.than }} className="text-[11px] text-chu-mo">
+                    {nd ? `${nd.tu_ngay} – ${nd.den_ngay}` : c.nguyenTo}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
-        ) : null}
 
-        {tab !== 'tinh-cach' ? (
-          <Trong
-            loi={
-              'Nội dung tử vi sinh sẵn theo lô ở máy chủ, chưa có bản cho ngày này. ' +
-              'Phần sinh nội dung nằm ở mục E02 và E03 của kế hoạch.'
-            }
-          />
-        ) : null}
-      </View>
-
-      <HoiChuyenGia
-        manHinh="cung-hoang-dao"
-        loiMoi={`Là ${cung.ten} thì điều gì đang chờ bạn tháng này? Nhắn cho chuyên gia để hỏi cho rõ.`}
-      />
-    </ManHinh>
+          <Pressable
+            onPress={() => router.push('/cung/do-hop')}
+            style={{ borderColor: MAU.vien }}
+            className="mt-5 flex-row items-center justify-between rounded-2xl border bg-nen-nhat px-5 py-4 active:opacity-75">
+            <View className="flex-1 pr-3">
+              <Text
+                style={{ fontFamily: CHU.thanDam, letterSpacing: 1.3 }}
+                className="text-[10px] uppercase text-vang">
+                Độ hợp
+              </Text>
+              <Text style={{ fontFamily: CHU.thanVua }} className="mt-1 text-base text-chu-chinh">
+                So hai cung với nhau
+              </Text>
+            </View>
+            <Text className="text-lg text-vang">›</Text>
+          </Pressable>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
