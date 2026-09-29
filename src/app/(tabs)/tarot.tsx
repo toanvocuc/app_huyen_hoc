@@ -6,6 +6,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MatSau } from '@/components/mat-sau';
+import { NenKhungVan } from '@/components/nen-anh';
 import { DangTai, Nut, Trong } from '@/components/nen';
 import { CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
@@ -23,6 +24,7 @@ export default function ChonKieuTrai() {
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      <NenKhungVan />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerClassName="px-5 pb-10 pt-4" keyboardShouldPersistTaps="handled">
           <Text

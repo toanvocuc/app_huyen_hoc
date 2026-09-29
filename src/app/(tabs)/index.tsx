@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
+import { NenKhungVan } from '@/components/nen-anh';
 import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong, VanNgan } from '@/components/nen';
 import { CHU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
@@ -37,7 +38,7 @@ export default function HomNay() {
   const cung = maCung ? timCung(maCung) : null;
 
   return (
-    <ManHinh tieuDe="Lá bài hôm nay" phu={ngayChu}>
+    <ManHinh tieuDe="Lá bài hôm nay" phu={ngayChu} nenPhu={<NenKhungVan />}>
       {dangTai ? <DangTai /> : null}
       {loi ? <Trong loi={`Chưa tải được nội dung. ${loi}`} /> : null}
       {boBai?.length === 0 ? (

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { NenTroiSao } from '@/components/nen-anh';
 import { Nut } from '@/components/nen';
 import { BuocTienTrinh, ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
@@ -33,6 +34,7 @@ export function KhungBuoc({
 }) {
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      <NenTroiSao />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <ThanhTieuDe ten={tenMan} />
         <BuocTienTrinh buoc={buoc} tong={tong} nhanPhai={buoc === 1 ? 'Khởi tạo' : undefined} />

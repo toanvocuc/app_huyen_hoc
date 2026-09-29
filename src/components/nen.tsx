@@ -12,15 +12,19 @@ export function ManHinh({
   tieuDe,
   phu,
   quayLai,
+  nenPhu,
   children,
 }: {
   tieuDe?: string;
   phu?: string;
   quayLai?: boolean;
+  /** Lớp ảnh nền đặt dưới nội dung, ví dụ trời sao hay khung hoa văn. */
+  nenPhu?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      {nenPhu}
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerClassName="px-5 pb-16 pt-3" keyboardShouldPersistTaps="handled">
           {quayLai ? (

@@ -12,7 +12,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { MatSau, VanNen } from '@/components/mat-sau';
+import { MatSau } from '@/components/mat-sau';
+import { NenKhungVan } from '@/components/nen-anh';
 import { DangTai, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
@@ -81,12 +82,13 @@ export default function RutBai() {
 
   return (
     <View className="flex-1 bg-nen">
+      <NenKhungVan />
       <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
         <Pressable
           onPress={() => router.back()}
           hitSlop={14}
           style={{ borderColor: MAU.vien }}
-          className="ml-5 mt-2 h-10 w-10 items-center justify-center rounded-full border active:opacity-60">
+          className="ml-8 mt-6 h-10 w-10 items-center justify-center rounded-full border active:opacity-60">
           <Ionicons name="chevron-back" size={20} color={MAU.chuPhu} />
         </Pressable>
 
@@ -100,11 +102,7 @@ export default function RutBai() {
         </View>
 
         {/* Hoa văn la bàn lớn làm nền, nằm sau bộ bài */}
-        <View className="flex-1 items-center justify-center">
-          <View pointerEvents="none" className="absolute">
-            <VanNen cỡ={RONG_MAN * 0.95} />
-          </View>
-
+        <View className="flex-1 items-center justify-center pb-16">
           <View style={{ height: RONG_LA / 0.57 + 70, width: '100%' }} className="items-center justify-center">
             {Array.from({ length: SO_LA }).map((_, i) => {
               const giua = (SO_LA - 1) / 2;
@@ -152,8 +150,13 @@ export default function RutBai() {
           </View>
         </View>
 
-        {canRut > 1 && !dangLat ? (
-          <View className="items-center pb-4">
+        <View className="items-center pb-14">
+          <Text
+            style={{ fontFamily: CHU.than }}
+            className="mb-3 px-12 text-center text-[11px] leading-4 text-chu-mo">
+            Lá bài được chọn ngẫu nhiên bằng bộ sinh số của hệ điều hành
+          </Text>
+          {canRut > 1 && !dangLat ? (
             <View
               style={{ borderColor: MAU.vien }}
               className="rounded-full border bg-nen-nhat px-6 py-2.5">
@@ -161,14 +164,8 @@ export default function RutBai() {
                 Đã chọn {daChon.length} / {canRut}
               </Text>
             </View>
-          </View>
-        ) : null}
-
-        <Text
-          style={{ fontFamily: CHU.than }}
-          className="px-10 pb-4 text-center text-[11px] leading-4 text-chu-mo">
-          Lá bài được chọn ngẫu nhiên bằng bộ sinh số của hệ điều hành
-        </Text>
+          ) : null}
+        </View>
       </SafeAreaView>
     </View>
   );

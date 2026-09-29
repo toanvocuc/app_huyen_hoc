@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { NenTroiSao } from '@/components/nen-anh';
 import { Khoi, ManHinh, Nut } from '@/components/nen';
 
 export default function DieuKhoan() {
@@ -9,6 +10,7 @@ export default function DieuKhoan() {
 
   return (
     <ManHinh
+      nenPhu={<NenTroiSao />}
       quayLai
       tieuDe="Điều khoản và quyền riêng tư"
       phu="Đọc qua một lượt trước khi bắt đầu.">
