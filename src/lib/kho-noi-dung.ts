@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
+import {
+  MAU_CUNG,
+  MAU_DO_HOP,
+  MAU_LA_BAI,
+  MAU_SO_CHU_DAO,
+  MAU_SO_VAN_MENH,
+} from '@/data/noi-dung-mau';
 import { supabase } from '@/lib/supabase';
+import { XEM_THU } from '@/lib/xem-thu';
 import type { LaBai } from '@/lib/tarot';
 
 type DongLaBai = {
@@ -40,6 +48,10 @@ export function useBoBai() {
   const [loi, setLoi] = useState<string | null>(null);
 
   useEffect(() => {
+    if (XEM_THU) {
+      setBoBai(MAU_LA_BAI);
+      return;
+    }
     let huy = false;
     supabase
       .from('la_bai')
@@ -86,11 +98,22 @@ export type DongSoChuDao = {
 };
 export type DongSoVanMenh = { so: number; ten: string; y_nghia: string; loi_khuyen: string };
 
+const MAU_BANG: Record<string, unknown[]> = {
+  cung_hoang_dao: MAU_CUNG,
+  do_hop_cung: MAU_DO_HOP,
+  so_chu_dao: MAU_SO_CHU_DAO,
+  so_van_menh: MAU_SO_VAN_MENH,
+};
+
 function useBang<T>(bang: string) {
   const [dong, setDong] = useState<T[] | null>(null);
   const [loi, setLoi] = useState<string | null>(null);
 
   useEffect(() => {
+    if (XEM_THU) {
+      setDong(MAU_BANG[bang] as T[]);
+      return;
+    }
     let huy = false;
     supabase
       .from(bang)

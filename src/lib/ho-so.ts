@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
+import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
 
 export type GioiTinh = 'nam' | 'nu' | 'khac';
 
@@ -46,6 +47,7 @@ export function kiemNgaySinh(ngay: number, thang: number, nam: number): string |
 }
 
 export async function docHoSo(): Promise<HoSo | null> {
+  if (XEM_THU) return HO_SO_MAU;
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
   const { data, error } = await supabase
@@ -58,6 +60,7 @@ export async function docHoSo(): Promise<HoSo | null> {
 }
 
 export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
+  if (XEM_THU) return { ...HO_SO_MAU, ...phan };
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error('Chưa có phiên đăng nhập');
   const { data, error } = await supabase
@@ -71,6 +74,7 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
 
 /** Xoá sạch dữ liệu. Dòng hồ sơ đi thì lần rút và sự kiện đi theo. */
 export async function xoaSachDuLieu() {
+  if (XEM_THU) return;
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return;
   const { error } = await supabase.from('ho_so').delete().eq('nguoi_dung', u.user.id);

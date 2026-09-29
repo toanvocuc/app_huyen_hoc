@@ -7,7 +7,7 @@ import { LaBai } from '@/components/la-bai';
 import { Khoi, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
 import { layPhien } from '@/lib/phien-rut';
 import { ghiSuKien } from '@/lib/su-kien';
-import { supabase } from '@/lib/supabase';
+import { maNguoiDung, supabase } from '@/lib/supabase';
 import { yNghia } from '@/lib/tarot';
 
 export default function KetQua() {
@@ -24,10 +24,10 @@ export default function KetQua() {
   async function luuLanRut() {
     if (!phien) return;
     try {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) return;
+      const ma = await maNguoiDung();
+      if (!ma) return;
       await supabase.from('lan_rut').insert({
-        nguoi_dung: data.user.id,
+        nguoi_dung: ma,
         kieu_trai: phien.cacLa.length === 1 ? 'mot-la' : 'ba-la',
         cac_la: phien.cacLa.map((l) => ({ ma: l.la.ma, nguoc: l.nguoc, vi_tri: l.viTri })),
         cau_hoi: phien.cauHoi || null,

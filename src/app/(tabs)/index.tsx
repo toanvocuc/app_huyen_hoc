@@ -8,7 +8,7 @@ import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import { ghiSuKien } from '@/lib/su-kien';
-import { supabase } from '@/lib/supabase';
+import { maNguoiDung } from '@/lib/supabase';
 import { laHomNay, type LaDaRut } from '@/lib/tarot';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
@@ -21,9 +21,9 @@ export default function HomNay() {
 
   useEffect(() => {
     if (!boBai?.length) return;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) return;
-      setLa(laHomNay(boBai, data.user.id));
+    maNguoiDung().then((ma) => {
+      if (!ma) return;
+      setLa(laHomNay(boBai, ma));
       ghiSuKien({ loai: 'xem_ket_qua', manHinh: 'hom-nay' });
     });
   }, [boBai]);

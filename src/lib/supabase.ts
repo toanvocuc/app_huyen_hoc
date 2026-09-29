@@ -14,17 +14,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 
+import { XEM_THU } from '@/lib/xem-thu';
+
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!url || !anonKey) {
+if (!XEM_THU && (!url || !anonKey)) {
   throw new Error(
     'Thiếu EXPO_PUBLIC_SUPABASE_URL hoặc EXPO_PUBLIC_SUPABASE_ANON_KEY. ' +
       'Chép .env.example thành .env rồi điền vào.'
   );
 }
 
-export const supabase = createClient(url, anonKey, {
+export const supabase = createClient(url ?? 'https://xem-thu.invalid', anonKey ?? 'xem-thu', {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -39,10 +41,18 @@ export const supabase = createClient(url, anonKey, {
  * Phiên đăng nhập lưu lại trong máy, nên lần sau mở vẫn là người đó.
  */
 export async function dangNhapAnDanh() {
+  if (XEM_THU) return null;
   const { data } = await supabase.auth.getSession();
   if (data.session) return data.session.user;
 
   const { data: moi, error } = await supabase.auth.signInAnonymously();
   if (error) throw error;
   return moi.user;
+}
+
+/** Mã người dùng hiện tại. Ở chế độ xem thử thì trả mã cố định để nội dung không đổi. */
+export async function maNguoiDung(): Promise<string | null> {
+  if (XEM_THU) return 'xem-thu';
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
 }

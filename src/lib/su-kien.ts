@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { XEM_THU } from '@/lib/xem-thu';
 
 export type LoaiSuKien = 'xem_ket_qua' | 'thay_muc_hoi' | 'bam_zalo';
 
@@ -25,6 +26,7 @@ export async function ghiSuKien(arg: {
   manHinh?: string;
   maTheoDoi?: string;
 }): Promise<void> {
+  if (XEM_THU) return;
   try {
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;

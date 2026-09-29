@@ -57,12 +57,13 @@ export default function ThongTin() {
         onChangeText={setHoTen}
         placeholder="Nguyễn Văn An"
         placeholderTextColor={MAU.chuMo}
-        className="min-h-[52px] rounded-xl border border-vien bg-nen-nhat px-4 text-base text-chu-chinh"
+        style={{ height: 52 }}
+        className="rounded-xl border border-vien bg-nen-nhat px-4 text-base text-chu-chinh"
       />
 
       <View className="mt-6">
         <Nhan>Ngày sinh</Nhan>
-        <View className="flex-row gap-3">
+        <View className="flex-row items-start gap-3">
           <OSo gia={ngay} dat={setNgay} goi="Ngày" dai={2} />
           <OSo gia={thang} dat={setThang} goi="Tháng" dai={2} />
           <OSo gia={nam} dat={setNam} goi="Năm" dai={4} rong />
@@ -71,12 +72,12 @@ export default function ThongTin() {
 
       <View className="mt-6">
         <Nhan>Giờ sinh</Nhan>
-        <View className="flex-row gap-3">
+        <View className="flex-row items-start gap-3">
           <OSo gia={gio} dat={setGio} goi="Giờ" dai={2} />
           <OSo gia={phut} dat={setPhut} goi="Phút" dai={2} />
-          <View className="flex-1 justify-center">
+          <View style={{ flex: 1.4 }} className="h-[52px] justify-center">
             <Text className="text-xs leading-4 text-chu-mo">
-              Không nhớ thì bỏ trống. Chỉ cần khi lập lá số.
+              Không nhớ thì bỏ trống
             </Text>
           </View>
         </View>
@@ -133,9 +134,9 @@ function OSo({
       placeholderTextColor={MAU.chuMo}
       keyboardType="number-pad"
       maxLength={dai}
-      className={`min-h-[52px] rounded-xl border border-vien bg-nen-nhat px-4 text-center text-base text-chu-chinh ${
-        rong ? 'flex-[1.4]' : 'flex-1'
-      }`}
+      // minWidth 0 để ô co lại được, không thì ba ô cộng lại tràn khỏi màn hình.
+      style={{ flex: rong ? 1.4 : 1, minWidth: 0, height: 52 }}
+      className="rounded-xl border border-vien bg-nen-nhat px-2 text-center text-base text-chu-chinh"
     />
   );
 }
