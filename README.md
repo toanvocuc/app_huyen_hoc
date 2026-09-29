@@ -42,8 +42,16 @@ Không cần máy Mac để ra bản iOS — EAS Build đóng gói trên máy ch
 ```bash
 npm install
 cp .env.example .env        # rồi điền khoá vào .env
+npm run kiem-tra            # kiểm phần tính toán, chạy trong 1 giây
 npx expo start
 ```
+
+| Lệnh | Làm gì |
+|---|---|
+| `npm run kiem-tra` | Kiểm số chủ đạo, số vận mệnh, bỏ dấu tiếng Việt, xác định cung |
+| `npm run typecheck` | Soát kiểu TypeScript |
+| `npx expo start` | Chạy thử |
+| `npx expo export --platform android` | Thử đóng gói, xem có lỗi biên dịch không |
 
 Muốn chạy trên máy ảo Android thì cài Android Studio để lấy bộ công cụ và máy ảo.
 Chạy trên iPhone thật thì dùng Expo Go, hoặc dựng bản qua EAS.
@@ -64,18 +72,24 @@ Chạy trên iPhone thật thì dùng Expo Go, hoặc dựng bản qua EAS.
 ## Cấu trúc thư mục
 
 ```
-app/              màn hình, đi theo Expo Router
-components/       thành phần giao diện dùng lại
-lib/              gọi Supabase, hàm tính toán
-  tarot.ts          rút bài, chọn lá của ngày
-  numerology.ts     số chủ đạo, số vận mệnh, bỏ dấu tiếng Việt
-  zodiac.ts         xác định cung, tính độ hợp
+src/
+  app/            màn hình, đi theo Expo Router
+    (tabs)/         bốn thẻ: Hôm nay · Rút bài · Khám phá · Cá nhân
+  components/     thành phần giao diện dùng lại
+  lib/            gọi Supabase và các hàm tính toán
+    tarot.ts        rút bài, chọn lá của ngày
+    numerology.ts   số chủ đạo, số vận mệnh, bỏ dấu tiếng Việt
+    zodiac.ts       xác định cung, tính độ hợp
+    supabase.ts     nối máy chủ, đăng nhập ẩn danh
+    su-kien.ts      ghi ba mốc đếm phễu, sinh mã theo dõi
+    kho-noi-dung.ts đọc nội dung từ cơ sở dữ liệu
 assets/
-  cards/          78 ảnh Tarot, bản quét in năm 1909
+  cards/          78 ảnh Tarot, bản quét in năm 1909 (xem NGUON.md)
 supabase/
   migrations/     mọi thay đổi cấu trúc bảng, theo thứ tự
   functions/      Edge Functions, chỗ duy nhất giữ khoá bí mật
 data/             nội dung dạng CSV để nạp vào cơ sở dữ liệu
+kiem-tra/         kiểm nhanh phần tính toán, không cần máy ảo
 ```
 
 ---
