@@ -52,8 +52,10 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "kiem-tra": "node --experimental-strip-types --no-warnings kiem-tra/logic.ts",
-    "xem-thu": "expo start --web"
+    "kiem-tra": "node --experimental-strip-types --no-warnings kiem-tra/logic.ts && node kiem-tra/doc-csv.mjs",
+    "xem-thu": "expo start --web",
+    "nap-du-lieu": "node supabase/nap-du-lieu.mjs",
+    "kiem-khoa": "node supabase/kiem-khoa-dong.mjs"
   },
   "private": true
 }

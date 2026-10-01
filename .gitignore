@@ -48,3 +48,6 @@ example
 
 # eas
 .easignore
+
+# khoa quan tri, KHONG BAO GIO dua vao app
+.env.quan-tri
