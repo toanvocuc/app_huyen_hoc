@@ -5,12 +5,13 @@ import { Pressable, Text, View } from 'react-native';
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
 import { NenKhungVan } from '@/components/nen-anh';
-import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong, VanNgan } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import { ghiSuKien } from '@/lib/su-kien';
 import { maNguoiDung } from '@/lib/supabase';
+import { datPhien } from '@/lib/phien-rut';
 import { laHomNay, type LaDaRut } from '@/lib/tarot';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
@@ -90,6 +91,17 @@ export default function HomNay() {
               <Text className="text-lg text-vang">›</Text>
             </Pressable>
           ) : null}
+
+          <View className="mt-5">
+            <Nut
+              nhan="Lưu ảnh để chia sẻ"
+              kieu="vien"
+              onPress={() => {
+                datPhien([la], '');
+                router.push('/chia-se');
+              }}
+            />
+          </View>
 
           <HoiChuyenGia
             manHinh="hom-nay"
