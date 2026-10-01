@@ -97,13 +97,24 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
   return data as HoSo;
 }
 
-/** Xoá sạch dữ liệu. Dòng hồ sơ đi thì lần rút và sự kiện đi theo. */
+/**
+ * Xoá sạch dữ liệu của người đang đăng nhập.
+ *
+ * Phải xoá đích danh cả ba bảng. Hai bảng kia tham chiếu auth.users chứ không phải
+ * ho_so, nên xoá mỗi dòng hồ sơ là chúng vẫn nằm lại. App không xoá được tài khoản
+ * vì việc đó cần khoá quản trị, thứ không bao giờ để trong app.
+ */
 export async function xoaSachDuLieu() {
   if (XEM_THU) return;
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return;
-  const { error } = await supabase.from('ho_so').delete().eq('nguoi_dung', u.user.id);
-  if (error) throw error;
+  const toi = u.user.id;
+
+  for (const bang of ['su_kien', 'lan_rut', 'ho_so'] as const) {
+    const { error } = await supabase.from(bang).delete().eq('nguoi_dung', toi);
+    if (error) throw error;
+  }
+
   datCoHoSo(false);
   await supabase.auth.signOut();
 }

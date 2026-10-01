@@ -56,7 +56,8 @@
     "xem-thu": "expo start --web",
     "nap-du-lieu": "node supabase/nap-du-lieu.mjs",
     "kiem-khoa": "node supabase/kiem-khoa-dong.mjs",
-    "soat-du-lieu": "node supabase/soat-du-lieu.mjs"
+    "soat-du-lieu": "node supabase/soat-du-lieu.mjs",
+    "thu-ho-so": "node supabase/thu-luu-ho-so.mjs"
   },
   "private": true
 }

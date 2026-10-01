@@ -113,7 +113,16 @@ Lệnh này dùng đúng khoá công khai mà app dùng, rồi thử tám việc
 - Đăng nhập ẩn danh rồi chỉ thấy đúng dòng của mình
 - **Không** ghi được hồ sơ mang tên người khác
 
-Phải ra `KHOÁ DÒNG DỮ LIỆU ĂN ĐÚNG`. Còn chỗ nào `SAI` thì sửa xong mới được phát hành —
+Rồi thử trọn đường lưu hồ sơ, đúng như app làm khi khách nhập xong năm bước:
+
+```bash
+npm run thu-ho-so
+```
+
+Lệnh này đăng nhập, lưu hồ sơ, sửa, rút bài, ghi sự kiện rồi xoá sạch. Kiểm từng cột
+riêng lẻ chưa đủ — phải chạy thật một lượt mới biết đường đi có thông không.
+
+Phải ra `KHOÁ DÒNG DỮ LIỆU ĂN ĐÚNG` và `ĐƯỜNG LƯU HỒ SƠ THÔNG SUỐT`. Còn chỗ nào `SAI` thì sửa xong mới được phát hành —
 đây là lỗ hổng làm lộ họ tên và ngày sinh của toàn bộ khách.
 
 ---
