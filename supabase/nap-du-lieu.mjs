@@ -43,6 +43,15 @@ function docMoiTruong(ten) {
 /** Cột nào là số thì đổi kiểu, không thì Postgres báo lỗi. */
 const SO = new Set(['so', 'diem']);
 
+/**
+ * Cột nào trong CSV thì bỏ, vì bảng không có.
+ *
+ * do_hop_cung.csv có sẵn ten_a và ten_b cho người đọc file dễ hiểu, nhưng bảng
+ * không giữ hai cột đó: tên cung đã nằm ở cung_hoang_dao rồi. Chép sang đây là
+ * lưu hai lần một thứ, sửa tên cung ở một chỗ thì chỗ kia sai theo.
+ */
+const BO_COT = { do_hop_cung: ['ten_a', 'ten_b'] };
+
 const BANG = [
   ['la_bai', 'tarot_78_la.csv'],
   ['so_chu_dao', 'so_chu_dao.csv'],
@@ -63,9 +72,13 @@ const db = createClient(mt.SUPABASE_URL, mt.SUPABASE_SERVICE_ROLE_KEY, {
 
 let hong = 0;
 for (const [bang, file] of BANG) {
+  const bo = BO_COT[bang] ?? [];
   const dong = docCsv(join(GOC, 'data', file)).map((d) => {
     const ra = {};
-    for (const [k, v] of Object.entries(d)) ra[k] = SO.has(k) ? Number(v) : v;
+    for (const [k, v] of Object.entries(d)) {
+      if (bo.includes(k)) continue;
+      ra[k] = SO.has(k) ? Number(v) : v;
+    }
     return ra;
   });
 

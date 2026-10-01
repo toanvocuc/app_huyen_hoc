@@ -55,7 +55,8 @@
     "kiem-tra": "node --experimental-strip-types --no-warnings kiem-tra/logic.ts && node kiem-tra/doc-csv.mjs",
     "xem-thu": "expo start --web",
     "nap-du-lieu": "node supabase/nap-du-lieu.mjs",
-    "kiem-khoa": "node supabase/kiem-khoa-dong.mjs"
+    "kiem-khoa": "node supabase/kiem-khoa-dong.mjs",
+    "soat-du-lieu": "node supabase/soat-du-lieu.mjs"
   },
   "private": true
 }

@@ -86,6 +86,15 @@ OK    do_hop_cung      nạp 78 dòng, bảng đang có 78
 
 Chạy lại nhiều lần được, dòng cũ bị ghi đè chứ không nhân đôi.
 
+Rồi soát nội dung đã lên đúng chưa:
+
+```bash
+npm run soat-du-lieu
+```
+
+Lệnh này đối chiếu từng chữ với file CSV, không chỉ đếm số dòng. Đếm đủ mà dấu tiếng Việt
+hỏng hoặc ô dài bị cắt cụt thì vẫn là sai.
+
 ---
 
 ## 6. Kiểm khoá dòng dữ liệu
