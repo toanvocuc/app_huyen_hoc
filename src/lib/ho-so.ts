@@ -7,6 +7,30 @@ import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
 
 export type GioiTinh = 'nam' | 'nu' | 'khac';
 
+/**
+ * Báo tin cho màn gốc biết đã có hồ sơ hay chưa.
+ *
+ * Màn gốc chỉ đọc hồ sơ một lần lúc mở app. Nhập xong năm bước mà không báo lại
+ * thì nó vẫn tưởng là chưa có và đá ngược về phần nhập.
+ */
+type NguoiNghe = (co: boolean) => void;
+const dangNghe = new Set<NguoiNghe>();
+let daCoHoSo = false;
+
+export function datCoHoSo(co: boolean) {
+  daCoHoSo = co;
+  dangNghe.forEach((f) => f(co));
+}
+
+export function ngheCoHoSo(f: NguoiNghe) {
+  dangNghe.add(f);
+  return () => {
+    dangNghe.delete(f);
+  };
+}
+
+export const dangCoHoSo = () => daCoHoSo;
+
 export type HoSo = {
   nguoi_dung: string;
   ho_ten: string | null;
@@ -69,6 +93,7 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
     .select()
     .single();
   if (error) throw error;
+  if ((data as HoSo).ngay_sinh) datCoHoSo(true);
   return data as HoSo;
 }
 
@@ -79,6 +104,7 @@ export async function xoaSachDuLieu() {
   if (!u.user) return;
   const { error } = await supabase.from('ho_so').delete().eq('nguoi_dung', u.user.id);
   if (error) throw error;
+  datCoHoSo(false);
   await supabase.auth.signOut();
 }
 

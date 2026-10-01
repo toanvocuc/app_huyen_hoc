@@ -88,5 +88,20 @@ ket(new Set(hop.map((h) => `${h.cung_a}|${h.cung_b}`)).size === 78, 'không có 
 const maSai = tren.filter((d) => !/^(major-\d{2}|(cups|wands|swords|pents)-\d{2})$/.test(d.ma));
 ket(maSai.length === 0, 'mã lá khớp tên file ảnh', maSai.map((d) => d.ma).join(', '));
 
+// --- Bảng có đủ cột mà app ghi vào không ------------------------------------
+// Thiếu một cột thôi là mọi lần lưu đều hỏng, mà lỗi chỉ lộ lúc chạy thật trên máy.
+// Đây đúng là chỗ đã sót cột noi_sinh ở file tạo bảng đầu tiên.
+const COT_CAN = {
+  ho_so: ['nguoi_dung', 'ho_ten', 'ngay_sinh', 'gio_sinh', 'noi_sinh', 'gioi_tinh', 'gio_nhac'],
+  lan_rut: ['nguoi_dung', 'kieu_trai', 'cac_la', 'cau_hoi'],
+  su_kien: ['nguoi_dung', 'loai', 'man_hinh', 'ma_theo_doi'],
+};
+
+for (const [bang, cot] of Object.entries(COT_CAN)) {
+  // Chọn đích danh từng cột: thiếu cột nào thì Postgres gọi tên cột đó ra.
+  const { error } = await db.from(bang).select(cot.join(',')).limit(0);
+  ket(!error, `${bang} đủ ${cot.length} cột app cần`, error?.message ?? '');
+}
+
 console.log(sai === 0 ? '\n==> DỮ LIỆU ĐÃ NẠP ĐÚNG' : `\n==> CÓ ${sai} CHỖ SAI`);
 process.exit(sai === 0 ? 0 : 1);

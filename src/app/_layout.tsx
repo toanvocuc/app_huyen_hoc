@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { MAU } from '@/constants/giao-dien';
-import { docHoSo } from '@/lib/ho-so';
+import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
 import { dangNhapAnDanh } from '@/lib/supabase';
 
 SplashScreen.preventAutoHideAsync();
@@ -39,13 +39,20 @@ export default function RootLayout() {
     // Hồ sơ ẩn danh tạo ngay lần mở đầu tiên, khách không phải bấm gì.
     dangNhapAnDanh()
       .then(docHoSo)
-      .then((h) => setCoHoSo(Boolean(h?.ngay_sinh)))
+      .then((h) => {
+        const co = Boolean(h?.ngay_sinh);
+        setCoHoSo(co);
+        datCoHoSo(co);
+      })
       .catch((e) => setLoi(e instanceof Error ? e.message : String(e)))
       .finally(() => {
         setXong(true);
         SplashScreen.hideAsync();
       });
   }, []);
+
+  // Nhập hồ sơ xong thì ho-so.ts báo lại, nhờ vậy không bị đá ngược về phần nhập.
+  useEffect(() => ngheCoHoSo(setCoHoSo), []);
 
   useEffect(() => {
     if (!xong || !phongXong || loi) return;
