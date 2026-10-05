@@ -46,6 +46,9 @@ for (const [bang, n] of [
   ['so_van_menh', 12],
   ['cung_hoang_dao', 12],
   ['do_hop_cung', 78],
+  ['mui_ten_bieu_do', 16],
+  ['con_so_bieu_do', 9],
+  ['tu_vi_mau', 252],
 ]) {
   const { count } = await db.from(bang).select('*', { count: 'exact', head: true });
   ket(count === n, `${bang} có ${n} dòng`, `đếm được ${count}`);
@@ -84,15 +87,89 @@ const { data: hop } = await db.from('do_hop_cung').select('*');
 ket(hop.every((h) => h.diem >= 1 && h.diem <= 5), 'điểm hợp nằm trong 1 tới 5');
 ket(new Set(hop.map((h) => `${h.cung_a}|${h.cung_b}`)).size === 78, 'không có cặp trùng');
 
+// Mỗi cặp phải có bài riêng. Bản cũ dùng chung bốn câu theo điểm, khách xem hai
+// cặp khác nhau là nhận ra ngay, nên đếm số bài khác nhau chứ không chỉ đếm dòng.
+const soBai = new Set(hop.map((h) => h.loi_binh)).size;
+ket(soBai === 78, '78 cặp có 78 bài khác nhau', `chỉ có ${soBai} bài`);
+
+const thieuCot = hop.filter((h) => !h.diem_manh || !h.diem_yeu || !h.loi_khuyen);
+ket(
+  thieuCot.length === 0,
+  'cặp nào cũng đủ điểm mạnh, điểm yếu và lời khuyên',
+  `${thieuCot.length} cặp còn thiếu`
+);
+
+// Thang điểm cũ dồn 73% số cặp vào hai đầu 2 sao và 5 sao, mức 1 sao thì trống trơn.
+const demDiem = {};
+for (const h of hop) demDiem[h.diem] = (demDiem[h.diem] ?? 0) + 1;
+ket(
+  [1, 2, 3, 4, 5].every((d) => (demDiem[d] ?? 0) >= 10),
+  'cả năm mức đều có ít nhất 10 cặp',
+  JSON.stringify(demDiem)
+);
+
 // Mã lá phải trùng tên file ảnh, không thì app hiện khung giữ chỗ.
 const maSai = tren.filter((d) => !/^(major-\d{2}|(cups|wands|swords|pents)-\d{2})$/.test(d.ma));
 ket(maSai.length === 0, 'mã lá khớp tên file ảnh', maSai.map((d) => d.ma).join(', '));
+
+// --- Biểu đồ ngày sinh -------------------------------------------------------
+// Tám đường thẳng, mỗi đường phải có đủ hai bản: một bản khi đủ ba số, một bản
+// khi trống cả ba. Thiếu một bản là màn biểu đồ hiện ô trắng đúng lúc khách đọc.
+const DUONG = ['1-5-9', '3-5-7', '3-6-9', '2-5-8', '1-4-7', '1-2-3', '4-5-6', '7-8-9'];
+const { data: muiTen } = await db.from('mui_ten_bieu_do').select('*');
+const thieuMt = [];
+for (const d of DUONG) {
+  for (const loai of ['day', 'trong']) {
+    if (!muiTen.some((m) => m.cac_so === d && m.loai === loai)) thieuMt.push(`${loai}-${d}`);
+  }
+}
+ket(thieuMt.length === 0, 'đủ 16 mũi tên biểu đồ', thieuMt.join(', '));
+
+const { data: conSo } = await db.from('con_so_bieu_do').select('*');
+const thieuCs = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((n) => !conSo.some((c) => c.so === n));
+ket(thieuCs.length === 0, 'đủ chín con số trong ô vuông', thieuCs.join(', '));
+
+// --- Tử vi ngày và tuần ------------------------------------------------------
+// Thiếu bài cho một cung là cung đó mở ra trống trơn, mà chỉ khách thuộc cung đó
+// mới thấy, nên lỗi kiểu này rất lâu mới có người báo.
+const { data: tv } = await db.from('tu_vi_mau').select('*');
+const MA_CUNG = [
+  'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
+];
+const thieuTuVi = [];
+for (const ky of ['ngay', 'tuan']) {
+  for (const c of MA_CUNG) {
+    const n = tv.filter((x) => x.ky === ky && x.muc === 'tong_quan' && x.cung === c).length;
+    if (n < 5) thieuTuVi.push(`${ky}/${c} chỉ có ${n}`);
+  }
+  for (const muc of ['tinh_cam', 'cong_viec']) {
+    const n = tv.filter((x) => x.ky === ky && x.muc === muc && x.cung === 'chung').length;
+    if (n < 5) thieuTuVi.push(`${ky}/${muc} chỉ có ${n}`);
+  }
+}
+ket(thieuTuVi.length === 0, 'cung nào cũng đủ bài tử vi ngày và tuần', thieuTuVi.join(', '));
+
+// Kho các mục phải lệch nhau về số lượng. Bằng nhau thì tổ hợp lặp lại rất nhanh
+// và khách đọc mỗi sáng sẽ nhận ra ngay.
+const coKho = ['tinh_cam', 'cong_viec', 'suc_khoe'].map(
+  (m) => tv.filter((x) => x.ky === 'ngay' && x.muc === m).length
+);
+ket(
+  new Set(coKho).size === coKho.length,
+  'ba kho của bản ngày lệch nhau về số lượng',
+  coKho.join(' / ')
+);
 
 // --- Bảng có đủ cột mà app ghi vào không ------------------------------------
 // Thiếu một cột thôi là mọi lần lưu đều hỏng, mà lỗi chỉ lộ lúc chạy thật trên máy.
 // Đây đúng là chỗ đã sót cột noi_sinh ở file tạo bảng đầu tiên.
 const COT_CAN = {
-  ho_so: ['nguoi_dung', 'ho_ten', 'ngay_sinh', 'gio_sinh', 'noi_sinh', 'gioi_tinh', 'gio_nhac'],
+  ho_so: [
+    'nguoi_dung', 'ho_ten', 'ngay_sinh', 'gio_sinh', 'noi_sinh', 'gioi_tinh',
+    'gio_nhac', 'nhac_la_bai', 'nhac_tin_tuc',
+  ],
+  thiet_bi: ['ma_day', 'nguoi_dung', 'nen_tang'],
   lan_rut: ['nguoi_dung', 'kieu_trai', 'cac_la', 'cau_hoi'],
   su_kien: ['nguoi_dung', 'loai', 'man_hinh', 'ma_theo_doi'],
 };

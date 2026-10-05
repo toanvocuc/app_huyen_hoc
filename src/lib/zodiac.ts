@@ -50,21 +50,33 @@ export function timCung(ma: MaCung): MocCung {
 }
 
 /**
- * Điểm hợp 1 tới 5, dựng theo quan hệ nguyên tố rồi cộng thêm cho cặp hợp truyền thống.
- * Hoả hợp Khí, Thổ hợp Thuỷ. Cùng nguyên tố thì hiểu nhau nhưng dễ giống nhau quá.
+ * Điểm hợp 1 tới 5, chấm theo góc chiếu giữa hai cung.
+ *
+ * Bản trước chấm theo nguyên tố rồi cộng thêm cho cặp hợp truyền thống. Cách đó
+ * dồn 73% số cặp vào hai đầu 2 sao và 5 sao, còn mức 1 sao thì không cặp nào
+ * chạm tới, nên thang điểm gần như chỉ có hai nấc.
+ *
+ * Cách này đếm hai cung cách nhau mấy bậc trên vòng hoàng đạo, là cách chuẩn
+ * trong chiêm tinh, và cho ra 12 / 12 / 18 / 24 / 12 cặp cho mức 1 tới 5.
  */
-const DIEM_NGUYEN_TO: Record<string, number> = {
-  'Hoả|Hoả': 4, 'Hoả|Khí': 5, 'Hoả|Thổ': 2, 'Hoả|Thuỷ': 2,
-  'Khí|Khí': 4, 'Khí|Thổ': 2, 'Khí|Thuỷ': 3,
-  'Thổ|Thổ': 4, 'Thổ|Thuỷ': 5,
-  'Thuỷ|Thuỷ': 4,
+const DIEM_THEO_KHOANG_CACH: Record<number, number> = {
+  0: 4, // trùng cung: hiểu nhau ngay, nhưng cùng một tật
+  1: 3, // kề nhau: ít điểm chung, không va nhau mà cũng không dính nhau
+  2: 4, // lục hợp: bổ cho nhau, cần một bên chủ động
+  3: 2, // vuông góc: va chạm thật, hai bên cùng muốn cầm trịch
+  4: 5, // tam hợp: cùng nguyên tố, ăn ý gần như không phải cố
+  5: 1, // lệch hẳn: lệch nhau gần như mọi mặt
+  6: 3, // đối đỉnh: hai cực, hút nhau mà cũng mài nhau
 };
 
+/** Hai cung cách nhau mấy bậc, tính theo đường ngắn hơn trên vòng tròn. */
+export function khoangCachCung(a: MaCung, b: MaCung): number {
+  const i = CUNG.findIndex((c) => c.ma === a);
+  const j = CUNG.findIndex((c) => c.ma === b);
+  const h = Math.abs(i - j);
+  return Math.min(h, 12 - h);
+}
+
 export function diemHop(a: MaCung, b: MaCung): number {
-  const ca = timCung(a);
-  const cb = timCung(b);
-  let d = DIEM_NGUYEN_TO[`${ca.nguyenTo}|${cb.nguyenTo}`] ?? DIEM_NGUYEN_TO[`${cb.nguyenTo}|${ca.nguyenTo}`] ?? 3;
-  if (ca.hopVoi.includes(b) || cb.hopVoi.includes(a)) d = Math.min(5, d + 1);
-  if (a === b) d = 4;
-  return d;
+  return DIEM_THEO_KHOANG_CACH[khoangCachCung(a, b)];
 }

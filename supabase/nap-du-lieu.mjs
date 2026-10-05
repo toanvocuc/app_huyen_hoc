@@ -1,5 +1,5 @@
 /**
- * Nạp sáu file CSV trong data/ vào cơ sở dữ liệu.
+ * Nạp các file CSV trong data/ vào cơ sở dữ liệu.
  *
  * Chạy:  node supabase/nap-du-lieu.mjs
  *
@@ -41,7 +41,7 @@ function docMoiTruong(ten) {
 }
 
 /** Cột nào là số thì đổi kiểu, không thì Postgres báo lỗi. */
-const SO = new Set(['so', 'diem']);
+const SO = new Set(['so', 'diem', 'thu_tu']);
 
 /**
  * Cột nào trong CSV thì bỏ, vì bảng không có.
@@ -58,6 +58,9 @@ const BANG = [
   ['so_van_menh', 'so_van_menh.csv'],
   ['cung_hoang_dao', 'cung_hoang_dao.csv'],
   ['do_hop_cung', 'do_hop_cung.csv'],
+  ['mui_ten_bieu_do', 'mui_ten_bieu_do.csv'],
+  ['con_so_bieu_do', 'con_so_bieu_do.csv'],
+  ['tu_vi_mau', 'tu_vi_mau.csv'],
 ];
 
 const mt = docMoiTruong('.env.quan-tri');
@@ -94,5 +97,35 @@ for (const [bang, file] of BANG) {
   console.log(`OK    ${bang.padEnd(16)} nạp ${dong.length} dòng, bảng đang có ${count}`);
 }
 
-console.log(hong === 0 ? '\n==> Nạp xong' : `\n==> Có ${hong} bảng lỗi`);
+// ---------------------------------------------------------------- app có đọc được không
+//
+// Nạp bằng khoá quản trị thì bỏ qua khoá dòng, nên "nạp xong" KHÔNG có nghĩa là
+// app đọc được. Bảng tu_vi_mau đã dính đúng chuyện đó: 252 dòng nằm trong bảng
+// mà đọc bằng khoá công khai ra 0, vì câu tạo luật cho đọc chưa chạy. Mục tử vi
+// hiện trống trơn với mọi khách, và chỉ lộ ra lúc mở app lên xem.
+//
+// Nên đọc lại một lượt bằng đúng khoá mà app cầm.
+const moiTruongApp = docMoiTruong('.env');
+const khoaApp = moiTruongApp.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (khoaApp) {
+  console.log('\nĐọc lại bằng khoá công khai, đúng khoá mà app dùng:');
+  const nhuApp = createClient(mt.SUPABASE_URL, khoaApp, { auth: { persistSession: false } });
+  for (const [bang] of BANG) {
+    const { count, error } = await nhuApp.from(bang).select('*', { count: 'exact', head: true });
+    if (error) {
+      console.log(`SAI   ${bang.padEnd(16)} ${error.message}`);
+      hong++;
+    } else if (!count) {
+      console.log(`SAI   ${bang.padEnd(16)} app đọc ra 0 dòng, thiếu luật cho đọc trong khoá dòng`);
+      hong++;
+    } else {
+      console.log(`OK    ${bang.padEnd(16)} app đọc được ${count} dòng`);
+    }
+  }
+} else {
+  console.log('\nKhông thấy EXPO_PUBLIC_SUPABASE_ANON_KEY trong .env nên bỏ qua bước kiểm bằng khoá app.');
+}
+
+console.log(hong === 0 ? '\n==> Nạp xong' : `\n==> Có ${hong} chỗ lỗi`);
 process.exit(hong === 0 ? 0 : 1);

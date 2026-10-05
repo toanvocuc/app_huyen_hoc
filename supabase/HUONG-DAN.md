@@ -11,6 +11,10 @@ Vào **supabase.com**, đăng ký rồi bấm **New project**.
 | Ô | Điền gì |
 |---|---|
 | Name | `app-huyen-hoc` |
+
+> App đã đổi tên thành **Omora** ngày 2026-10-01, nhưng dự án trên
+> Supabase vẫn giữ tên cũ. Đổi tên ở đó chỉ là chuyện hiển thị, không ảnh
+> hưởng gì tới khoá hay đường dẫn, nên để nguyên cũng được.
 | Database Password | Một mật khẩu dài. **Lưu lại ngay**, sau này không xem lại được |
 | Region | **Singapore** — gần Việt Nam nhất, mỗi lượt gọi nhanh hơn khoảng 150 mili giây so với Mỹ |
 | Plan | Free |

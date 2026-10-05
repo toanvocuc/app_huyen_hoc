@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 
 import {
+  MAU_CON_SO_BIEU_DO,
   MAU_CUNG,
   MAU_DO_HOP,
   MAU_LA_BAI,
+  MAU_MUI_TEN_BIEU_DO,
   MAU_SO_CHU_DAO,
   MAU_SO_VAN_MENH,
+  MAU_TU_VI,
 } from '@/data/noi-dung-mau';
 import { supabase } from '@/lib/supabase';
 import { XEM_THU } from '@/lib/xem-thu';
@@ -87,7 +90,15 @@ export type NoiDungCung = {
   diem_yeu: string;
 };
 
-export type DongHop = { cung_a: string; cung_b: string; diem: number; loi_binh: string };
+export type DongHop = {
+  cung_a: string;
+  cung_b: string;
+  diem: number;
+  loi_binh: string;
+  diem_manh: string | null;
+  diem_yeu: string | null;
+  loi_khuyen: string | null;
+};
 export type DongSoChuDao = {
   so: number;
   ten: string;
@@ -98,11 +109,37 @@ export type DongSoChuDao = {
 };
 export type DongSoVanMenh = { so: number; ten: string; y_nghia: string; loi_khuyen: string };
 
+export type DongMuiTen = {
+  ma: string;
+  cac_so: string;
+  loai: 'day' | 'trong';
+  ten: string;
+  y_nghia: string;
+  loi_khuyen: string;
+};
+export type DongTuVi = {
+  ky: 'ngay' | 'tuan';
+  muc: 'tong_quan' | 'tinh_cam' | 'cong_viec' | 'suc_khoe';
+  cung: string;
+  thu_tu: number;
+  noi_dung: string;
+};
+export type DongConSo = {
+  so: number;
+  ten: string;
+  khi_thieu: string;
+  khi_co: string;
+  khi_nhieu: string;
+};
+
 const MAU_BANG: Record<string, unknown[]> = {
   cung_hoang_dao: MAU_CUNG,
   do_hop_cung: MAU_DO_HOP,
   so_chu_dao: MAU_SO_CHU_DAO,
   so_van_menh: MAU_SO_VAN_MENH,
+  mui_ten_bieu_do: MAU_MUI_TEN_BIEU_DO,
+  con_so_bieu_do: MAU_CON_SO_BIEU_DO,
+  tu_vi_mau: MAU_TU_VI,
 };
 
 function useBang<T>(bang: string) {
@@ -135,3 +172,6 @@ export const useCung = () => useBang<NoiDungCung>('cung_hoang_dao');
 export const useDoHop = () => useBang<DongHop>('do_hop_cung');
 export const useSoChuDao = () => useBang<DongSoChuDao>('so_chu_dao');
 export const useSoVanMenh = () => useBang<DongSoVanMenh>('so_van_menh');
+export const useMuiTen = () => useBang<DongMuiTen>('mui_ten_bieu_do');
+export const useConSo = () => useBang<DongConSo>('con_so_bieu_do');
+export const useTuVi = () => useBang<DongTuVi>('tu_vi_mau');

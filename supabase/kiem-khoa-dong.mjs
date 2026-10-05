@@ -52,7 +52,16 @@ function ket(dat, ten, them = '') {
 console.log('Kiểm bằng khoá công khai, chưa đăng nhập\n');
 
 // --- Bảng nội dung: ai cũng phải đọc được, nhưng không ai ghi được -------------
-for (const bang of ['la_bai', 'so_chu_dao', 'so_van_menh', 'cung_hoang_dao', 'do_hop_cung']) {
+for (const bang of [
+  'la_bai',
+  'so_chu_dao',
+  'so_van_menh',
+  'cung_hoang_dao',
+  'do_hop_cung',
+  'mui_ten_bieu_do',
+  'con_so_bieu_do',
+  'tu_vi_mau',
+]) {
   const { data, error } = await db.from(bang).select('*').limit(1);
   ket(!error && data?.length === 1, `đọc được ${bang}`, error?.message ?? '');
 }
@@ -72,8 +81,34 @@ const { error: loiGhi } = await db.from('la_bai').insert({
 });
 ket(Boolean(loiGhi), 'KHÔNG ghi được vào la_bai', loiGhi ? '' : 'ghi được, là lỗ hổng');
 
+// Bảng nội dung nào cũng phải chặn ghi, không riêng gì la_bai. Bật khoá dòng mà
+// quên viết luật thì bảng vẫn chặn, nhưng viết nhầm luật thành "ai cũng ghi được"
+// thì chỉ chỗ này mới lộ ra.
+const { error: loiGhiMuiTen } = await db.from('mui_ten_bieu_do').insert({
+  ma: 'thu-xoa-di',
+  cac_so: '1-5-9',
+  loai: 'day',
+  ten: 'x',
+  y_nghia: 'x',
+  loi_khuyen: 'x',
+});
+ket(
+  Boolean(loiGhiMuiTen),
+  'KHÔNG ghi được vào mui_ten_bieu_do',
+  loiGhiMuiTen ? '' : 'ghi được, là lỗ hổng'
+);
+
+const { error: loiGhiConSo } = await db
+  .from('con_so_bieu_do')
+  .insert({ so: 9, ten: 'x', khi_thieu: 'x', khi_co: 'x', khi_nhieu: 'x' });
+ket(
+  Boolean(loiGhiConSo),
+  'KHÔNG ghi được vào con_so_bieu_do',
+  loiGhiConSo ? '' : 'ghi được, là lỗ hổng'
+);
+
 // --- Bảng dữ liệu riêng: chưa đăng nhập thì không thấy dòng nào --------------
-for (const bang of ['ho_so', 'lan_rut', 'su_kien']) {
+for (const bang of ['ho_so', 'lan_rut', 'su_kien', 'thiet_bi']) {
   const { data, error } = await db.from(bang).select('*').limit(5);
   // Khoá dòng ăn thì trả về mảng rỗng, không phải báo lỗi.
   const dat = !error && Array.isArray(data) && data.length === 0;
