@@ -1,9 +1,8 @@
 /** Thanh tiêu đề ở đầu màn: nút lùi bên trái, tên màn căn giữa, đường kẻ mảnh dưới. */
 
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
+import { NutQuayLai } from '@/components/nut-quay-lai';
 import { CHU, MAU } from '@/constants/giao-dien';
 
 export function ThanhTieuDe({
@@ -18,17 +17,9 @@ export function ThanhTieuDe({
   return (
     <View
       style={{ borderBottomColor: MAU.vien }}
-      className="flex-row items-center border-b px-5 pb-3.5 pt-1">
-      <View className="w-9">
-        {quayLai ? (
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={14}
-            className="h-9 w-9 items-center justify-center -ml-2 active:opacity-60">
-            <Ionicons name="chevron-back" size={22} color={MAU.chuPhu} />
-          </Pressable>
-        ) : null}
-      </View>
+      className="flex-row items-center border-b px-5 pb-3 pt-1">
+      {/* Hai ô hai bên rộng bằng nhau để tên màn nằm đúng giữa. */}
+      <View className="w-12">{quayLai ? <NutQuayLai chu={false} /> : null}</View>
 
       <Text
         style={{ fontFamily: CHU.thanDam }}
@@ -37,7 +28,7 @@ export function ThanhTieuDe({
         {ten}
       </Text>
 
-      <View className="w-9 items-end">{phai}</View>
+      <View className="w-12 items-end">{phai}</View>
     </View>
   );
 }

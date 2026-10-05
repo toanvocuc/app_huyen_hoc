@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Dimensions, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Logo } from '@/components/logo';
 import { Nut } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
 
@@ -26,17 +27,8 @@ export default function ChaoMung() {
       />
 
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
-        <View className="items-center pt-12">
-          <View
-            style={{ borderColor: MAU.vangMo }}
-            className="h-16 w-16 items-center justify-center rounded-full border">
-            <View style={{ borderColor: MAU.vang }} className="h-6 w-6 rotate-45 border" />
-          </View>
-          <Text
-            style={{ fontFamily: CHU.thanDam, letterSpacing: 3 }}
-            className="mt-4 text-[10px] uppercase text-vang">
-            Huyền Học
-          </Text>
+        <View className="items-center pt-10">
+          <Logo rong={150} />
         </View>
 
         <View className="flex-1" />

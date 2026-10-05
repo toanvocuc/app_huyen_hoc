@@ -1,21 +1,30 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
-
-import { KhungBuoc } from '@/components/khung-buoc';
 import { Image } from 'expo-image';
-import { CHU, MAU } from '@/constants/giao-dien';
+import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Text, View } from 'react-native';
+
+import { BanhXeNgaySinh } from '@/components/banh-xe';
+import { KhungBuoc } from '@/components/khung-buoc';
+import { CHU } from '@/constants/giao-dien';
 import { datBanNhap, layBanNhap } from '@/lib/ban-nhap';
 import { kiemNgaySinh } from '@/lib/ho-so';
+import { NAM_MAC_DINH } from '@/lib/ngay-thang';
 
 export default function BuocNgaySinh() {
   const b = layBanNhap();
-  const [ngay, setNgay] = useState(b.ngay);
-  const [thang, setThang] = useState(b.thang);
-  const [nam, setNam] = useState(b.nam);
+  const [ngay, setNgay] = useState(Number(b.ngay) || 1);
+  const [thang, setThang] = useState(Number(b.thang) || 1);
+  const [nam, setNam] = useState(Number(b.nam) || NAM_MAC_DINH);
   const [loi, setLoi] = useState<string | null>(null);
 
-  const du = ngay.length > 0 && thang.length > 0 && nam.length === 4;
+  // Bọc trong useCallback vì bên trong bánh xe có một useEffect phụ thuộc vào
+  // hàm này. Trả về hàm mới mỗi lần vẽ lại thì effect đó chạy không ngừng.
+  const dat = useCallback((phan: { ngay?: number; thang?: number; nam?: number }) => {
+    if (phan.ngay !== undefined) setNgay(phan.ngay);
+    if (phan.thang !== undefined) setThang(phan.thang);
+    if (phan.nam !== undefined) setNam(phan.nam);
+    setLoi(null);
+  }, []);
 
   return (
     <KhungBuoc
@@ -23,28 +32,31 @@ export default function BuocNgaySinh() {
       buoc={2}
       hoi="Bạn sinh ngày nào?"
       dan="Ngày sinh là chìa khoá để xác định cung hoàng đạo và số chủ đạo của bạn."
-      tat={!du}
+      cuon={false}
       onTiep={() => {
-        const bao = kiemNgaySinh(Number(ngay), Number(thang), Number(nam));
+        const bao = kiemNgaySinh(ngay, thang, nam);
         if (bao) {
           setLoi(bao);
           return;
         }
-        datBanNhap({ ngay, thang, nam });
+        datBanNhap({ ngay: String(ngay), thang: String(thang), nam: String(nam) });
         router.push('/nhap-ho-so/gio-sinh');
       }}>
-      <View className="mb-8 items-center">
+      {/*
+        Màn này không cuộn được, nên ảnh phải tự co theo chỗ còn lại: nhiều chỗ
+        thì nở tới 150, chật thì teo dần rồi mất hẳn. Bánh xe đặt flexShrink 0
+        để không bao giờ bị bóp, vì bóp là mất dòng.
+      */}
+      <View className="mb-7 items-center justify-center" style={{ flex: 1, maxHeight: 150 }}>
         <Image
           source={require('@/assets/nen/vong-hoang-dao.jpg')}
-          style={{ width: 210, height: 210, borderRadius: 105 }}
+          style={{ flex: 1, aspectRatio: 1, borderRadius: 999 }}
           contentFit="cover"
         />
       </View>
 
-      <View className="flex-row items-start gap-3">
-        <O gia={ngay} dat={setNgay} nhan="Ngày" dai={2} />
-        <O gia={thang} dat={setThang} nhan="Tháng" dai={2} />
-        <O gia={nam} dat={setNam} nhan="Năm" dai={4} rong />
+      <View style={{ flexShrink: 0 }}>
+        <BanhXeNgaySinh ngay={ngay} thang={thang} nam={nam} dat={dat} />
       </View>
 
       {loi ? (
@@ -53,39 +65,5 @@ export default function BuocNgaySinh() {
         </Text>
       ) : null}
     </KhungBuoc>
-  );
-}
-
-function O({
-  gia,
-  dat,
-  nhan,
-  dai,
-  rong,
-}: {
-  gia: string;
-  dat: (v: string) => void;
-  nhan: string;
-  dai: number;
-  rong?: boolean;
-}) {
-  return (
-    <View style={{ flex: rong ? 1.4 : 1, minWidth: 0 }}>
-      <Text
-        style={{ fontFamily: CHU.thanDam, letterSpacing: 1.3 }}
-        className="mb-2 text-center text-[10px] uppercase text-chu-mo">
-        {nhan}
-      </Text>
-      <TextInput
-        value={gia}
-        onChangeText={(v) => dat(v.replace(/[^0-9]/g, '').slice(0, dai))}
-        placeholder={'—'.repeat(dai > 2 ? 4 : 2)}
-        placeholderTextColor={MAU.chuMo}
-        keyboardType="number-pad"
-        maxLength={dai}
-        style={{ fontFamily: CHU.than, height: 60, borderColor: MAU.vien }}
-        className="rounded-2xl border bg-nen-nhat px-2 text-center text-xl text-chu-chinh"
-      />
-    </View>
   );
 }

@@ -3,12 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MatSau } from '@/components/mat-sau';
 import { NenKhungVan } from '@/components/nen-anh';
 import { DangTai, Nut, Trong } from '@/components/nen';
-import { CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
+import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import type { KieuTrai } from '@/lib/tarot';
 
@@ -18,15 +18,19 @@ const KIEU: { ma: KieuTrai; ten: string; mo: string; so: number }[] = [
 ];
 
 export default function ChonKieuTrai() {
-  const { boBai, dangTai } = useBoBai();
+  const { boBai, loi, dangTai } = useBoBai();
   const [kieu, setKieu] = useState<KieuTrai>('mot-la');
   const [cauHoi, setCauHoi] = useState('');
+  const le = useSafeAreaInsets();
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
       <NenKhungVan />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <ScrollView contentContainerClassName="px-5 pb-10 pt-4" keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerClassName="px-5 pt-4"
+          contentContainerStyle={{ paddingBottom: CAO_THANH_TAB + 16 + le.bottom }}
+          keyboardShouldPersistTaps="handled">
           <Text
             style={{ fontFamily: CHU.hoaDam, fontSize: 40, lineHeight: 46, color: MAU.vang }}
             className="text-center">
@@ -39,6 +43,11 @@ export default function ChonKieuTrai() {
           </Text>
 
           {dangTai ? <DangTai /> : null}
+          {loi ? (
+            <View className="mt-6">
+              <Trong loi={`Chưa tải được nội dung. ${loi}`} />
+            </View>
+          ) : null}
           {boBai?.length === 0 ? (
             <View className="mt-6">
               <Trong loi="Kho lá bài đang trống, chưa rút được." />

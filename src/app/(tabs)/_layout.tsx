@@ -1,9 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CHU, MAU } from '@/constants/giao-dien';
+import { CAO_THANH_TAB, CHU, MAU } from '@/constants/giao-dien';
 
 export default function TabsLayout() {
+  // Android vẽ tràn xuống dưới thanh điều hướng của máy. Đặt height cố định là
+  // bỏ qua lề này, nên ba nút điều hướng của hệ thống đè lên đúng chỗ bấm của
+  // bốn mục. Phải cộng le.bottom vào cả chiều cao lẫn đệm dưới.
+  const le = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -13,8 +19,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: MAU.nenNhat,
           borderTopColor: MAU.vien,
-          height: 62,
-          paddingBottom: 8,
+          height: CAO_THANH_TAB + le.bottom,
+          paddingBottom: 8 + le.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontFamily: CHU.thanVua, fontSize: 11 },

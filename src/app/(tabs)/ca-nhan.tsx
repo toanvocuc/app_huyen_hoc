@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { DangTai } from '@/components/nen';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
-import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
+import { CAO_THANH_TAB, CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
@@ -15,6 +15,7 @@ export default function CaNhan() {
   const { hoSo, dangTai } = useHoSo();
   const ns = tachNgay(hoSo?.ngay_sinh ?? null);
   const ma = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
+  const le = useSafeAreaInsets();
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
@@ -24,7 +25,9 @@ export default function CaNhan() {
         {dangTai ? (
           <DangTai />
         ) : (
-          <ScrollView contentContainerClassName="px-5 pb-14 pt-7">
+          <ScrollView
+            contentContainerClassName="px-5 pt-7"
+            contentContainerStyle={{ paddingBottom: CAO_THANH_TAB + 16 + le.bottom }}>
             <View className="items-center">
               <View
                 style={{ borderColor: MAU.vangMo }}

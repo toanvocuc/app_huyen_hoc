@@ -3,9 +3,10 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { ManHinh, Nhan, Trong } from '@/components/nen';
+import { CHU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
-import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { soChuDao } from '@/lib/numerology';
+import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
 export default function KhamPha() {
   const { hoSo } = useHoSo();
@@ -61,10 +62,10 @@ function The({ nhan, ten, mo, onPress }: { nhan: string; ten: string; mo: string
       className="flex-row items-center justify-between rounded-2xl bg-nen-nhat p-5 active:opacity-70">
       <View className="flex-1 pr-3">
         <Nhan>{nhan}</Nhan>
-        {ten ? <Text className="text-lg font-bold text-chu-chinh">{ten}</Text> : null}
-        <Text className="mt-1 text-sm leading-5 text-chu-phu">{mo}</Text>
+        {ten ? <Text style={{ fontFamily: CHU.thanDam }} className="text-lg text-chu-chinh">{ten}</Text> : null}
+        <Text style={{ fontFamily: CHU.than }} className="mt-1 text-sm leading-5 text-chu-phu">{mo}</Text>
       </View>
-      <Text className="text-lg text-vang">›</Text>
+      <Text style={{ fontFamily: CHU.than }} className="text-lg text-vang">›</Text>
     </Pressable>
   );
 }

@@ -1,16 +1,26 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
+import { BanhXeGioSinh } from '@/components/banh-xe';
 import { KhungBuoc } from '@/components/khung-buoc';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { datBanNhap, layBanNhap } from '@/lib/ban-nhap';
 
 export default function BuocGioSinh() {
   const b = layBanNhap();
-  const [gio, setGio] = useState(b.gio);
-  const [phut, setPhut] = useState(b.phut);
+  const [gio, setGio] = useState(b.gio === '' ? 12 : Number(b.gio));
+  const [phut, setPhut] = useState(Number(b.phut) || 0);
+  // Bánh xe lúc nào cũng có sẵn một giá trị, nên phải có chỗ đánh dấu riêng
+  // cho người không nhớ giờ sinh, không thì ai cũng bị gán đại một giờ.
+  const [khongNho, setKhongNho] = useState(b.gio === '');
+
+  const dat = useCallback((phan: { gio?: number; phut?: number }) => {
+    if (phan.gio !== undefined) setGio(phan.gio);
+    if (phan.phut !== undefined) setPhut(phan.phut);
+  }, []);
 
   return (
     <KhungBuoc
@@ -18,52 +28,59 @@ export default function BuocGioSinh() {
       buoc={3}
       hoi="Bạn sinh vào lúc mấy giờ?"
       dan="Giờ sinh chỉ cần khi lập lá số Tử Vi. Không nhớ thì bỏ qua, các phần khác vẫn chạy đủ."
-      nhanNut={gio ? 'Tiếp tục' : 'Tôi không nhớ giờ sinh'}
+      nhanNut={khongNho ? 'Tôi không nhớ giờ sinh' : 'Tiếp tục'}
+      cuon={false}
       onTiep={() => {
-        datBanNhap({ gio, phut });
+        datBanNhap(
+          khongNho ? { gio: '', phut: '' } : { gio: String(gio), phut: String(phut) }
+        );
         router.push('/nhap-ho-so/noi-sinh');
       }}>
-      <View className="mb-7 items-center">
+      {/* Tự co theo chỗ còn lại, xem ghi chú ở bước ngày sinh. */}
+      <View className="mb-6 items-center justify-center" style={{ flex: 1, maxHeight: 146 }}>
         <Image
           source={require('@/assets/nen/dong-ho-cat.jpg')}
-          style={{ width: 150, height: 211, borderRadius: 18 }}
+          style={{ flex: 1, aspectRatio: 104 / 146, borderRadius: 14 }}
           contentFit="cover"
         />
       </View>
 
-      <View
-        style={{ borderColor: MAU.vien }}
-        className="flex-row items-center justify-center gap-2 rounded-2xl border bg-nen-nhat py-7">
-        <TextInput
-          value={gio}
-          onChangeText={(v) => setGio(v.replace(/[^0-9]/g, '').slice(0, 2))}
-          placeholder="00"
-          placeholderTextColor={MAU.chuMo}
-          keyboardType="number-pad"
-          maxLength={2}
-          style={{ fontFamily: CHU.hoaDam, fontSize: 46, width: 86 }}
-          className="text-center text-chu-chinh"
-        />
-        <Text style={{ fontFamily: CHU.hoaDam, fontSize: 40 }} className="text-vang">
-          :
-        </Text>
-        <TextInput
-          value={phut}
-          onChangeText={(v) => setPhut(v.replace(/[^0-9]/g, '').slice(0, 2))}
-          placeholder="00"
-          placeholderTextColor={MAU.chuMo}
-          keyboardType="number-pad"
-          maxLength={2}
-          style={{ fontFamily: CHU.hoaDam, fontSize: 46, width: 86 }}
-          className="text-center text-chu-chinh"
-        />
+      <View style={{ flexShrink: 0 }}>
+        <View style={{ opacity: khongNho ? 0.3 : 1 }}>
+          <BanhXeGioSinh gio={gio} phut={phut} dat={dat} />
+        </View>
+
+        {/* Chạm vào bánh xe đang mờ là bật nó lên luôn, khỏi phải đi tìm ô đánh dấu. */}
+        {khongNho ? (
+          <Pressable
+            onPress={() => setKhongNho(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Tôi nhớ giờ sinh, chọn giờ"
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+          />
+        ) : null}
       </View>
 
-      <Text
-        style={{ fontFamily: CHU.thanDam, letterSpacing: 1.3 }}
-        className="mt-3 text-center text-[10px] uppercase text-chu-mo">
-        Giờ  ·  Phút
-      </Text>
+      <Pressable
+        onPress={() => setKhongNho((v) => !v)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: khongNho }}
+        hitSlop={8}
+        className="mt-5 flex-row items-center justify-center gap-2.5 py-1 active:opacity-60">
+        <View
+          style={{
+            borderColor: khongNho ? MAU.vang : MAU.vien,
+            backgroundColor: khongNho ? MAU.vang : 'transparent',
+          }}
+          className="h-[22px] w-[22px] items-center justify-center rounded-md border">
+          {khongNho ? <Ionicons name="checkmark" size={15} color={MAU.nen} /> : null}
+        </View>
+        <Text
+          style={{ fontFamily: CHU.than }}
+          className={khongNho ? 'text-sm text-chu-chinh' : 'text-sm text-chu-phu'}>
+          Tôi không nhớ giờ sinh
+        </Text>
+      </Pressable>
     </KhungBuoc>
   );
 }

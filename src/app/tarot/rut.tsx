@@ -1,6 +1,5 @@
 /** Màn rút bài: xoè bài thành vòng cung, chạm chọn, lật lên rồi sang màn kết quả. */
 
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
@@ -14,7 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MatSau } from '@/components/mat-sau';
 import { NenKhungVan } from '@/components/nen-anh';
-import { DangTai, VanNgan } from '@/components/nen';
+import { DangTai, Trong, VanNgan } from '@/components/nen';
+import { NutQuayLai } from '@/components/nut-quay-lai';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import { datPhien } from '@/lib/phien-rut';
@@ -36,7 +36,7 @@ export default function RutBai() {
     kieu: KieuTrai;
     cauHoi: string;
   }>();
-  const { boBai, dangTai } = useBoBai();
+  const { boBai, loi, dangTai } = useBoBai();
 
   const canRut = VI_TRI[kieu as KieuTrai]?.length ?? 1;
   const [daChon, setDaChon] = useState<number[]>([]);
@@ -72,6 +72,18 @@ export default function RutBai() {
     opacity: 1 - lat.value * 0.3,
   }));
 
+  // Phải chặn lỗi TRƯỚC vòng quay. Tải hỏng thì dangTai hết true nhưng ketQua
+  // vẫn null, nên để nguyên thứ tự cũ là màn quay mãi không bao giờ thoát.
+  if (loi || boBai?.length === 0) {
+    return (
+      <View className="flex-1 bg-nen px-5 pt-24">
+        <Trong
+          loi={loi ? `Chưa tải được nội dung. ${loi}` : 'Kho lá bài đang trống, chưa rút được.'}
+        />
+      </View>
+    );
+  }
+
   if (dangTai || !ketQua) {
     return (
       <View className="flex-1 bg-nen">
@@ -84,13 +96,9 @@ export default function RutBai() {
     <View className="flex-1 bg-nen">
       <NenKhungVan />
       <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={14}
-          style={{ borderColor: MAU.vien }}
-          className="ml-8 mt-6 h-10 w-10 items-center justify-center rounded-full border active:opacity-60">
-          <Ionicons name="chevron-back" size={20} color={MAU.chuPhu} />
-        </Pressable>
+        <View className="ml-8 mt-6">
+          <NutQuayLai />
+        </View>
 
         <View className="mt-6 px-8">
           <Text

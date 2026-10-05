@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
+import { NenKhungVan } from '@/components/nen-anh';
 import { CHU } from '@/constants/giao-dien';
 import { layPhien } from '@/lib/phien-rut';
 import { ghiSuKien } from '@/lib/su-kien';
@@ -40,7 +41,7 @@ export default function KetQua() {
 
   if (!phien) {
     return (
-      <ManHinh quayLai tieuDe="Kết quả">
+      <ManHinh quayLai nenPhu={<NenKhungVan />} tieuDe="Kết quả">
         <Trong loi="Chưa có lần rút nào. Quay lại chọn kiểu trải rồi rút một lần." />
       </ManHinh>
     );
@@ -50,7 +51,7 @@ export default function KetQua() {
   const dang = phien.cacLa[dangXem];
 
   return (
-    <ManHinh quayLai tieuDe={nhieuLa ? 'Ba lá của bạn' : 'Lá bài của bạn'} phu={phien.cauHoi || undefined}>
+    <ManHinh quayLai nenPhu={<NenKhungVan />} tieuDe={nhieuLa ? 'Ba lá của bạn' : 'Lá bài của bạn'} phu={phien.cauHoi || undefined}>
       {nhieuLa ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5">
           <View className="flex-row gap-3 px-5">
@@ -74,7 +75,7 @@ export default function KetQua() {
         <Text
           style={{ fontFamily: CHU.hoaDam, fontSize: 34, lineHeight: 40 }}
           className="text-chu-chinh">
-          {dang.la.tenVi}
+          {dang.la.tenEn}
           {dang.nguoc ? ' (ngược)' : ''}
         </Text>
         <Text
@@ -114,7 +115,7 @@ export default function KetQua() {
 
       <HoiChuyenGia
         manHinh="tarot"
-        loiMoi={`Muốn hiểu sâu hơn về ${dang.la.tenVi}? Nhắn cho chuyên gia để hỏi theo đúng chuyện của bạn.`}
+        loiMoi={`Muốn hiểu sâu hơn về ${dang.la.tenEn}? Nhắn cho chuyên gia để hỏi theo đúng chuyện của bạn.`}
       />
     </ManHinh>
   );

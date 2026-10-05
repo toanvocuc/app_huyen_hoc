@@ -56,7 +56,7 @@ export default function HomNay() {
             <Text
               style={{ fontFamily: CHU.hoaDam, fontSize: 36, lineHeight: 42 }}
               className="text-center text-chu-chinh">
-              {la.la.tenVi}
+              {la.la.tenEn}
             </Text>
             <Text
               style={{ fontFamily: CHU.thanDam, letterSpacing: 1.8 }}
@@ -105,7 +105,7 @@ export default function HomNay() {
 
           <HoiChuyenGia
             manHinh="hom-nay"
-            loiMoi={`Lá ${la.la.tenVi} hôm nay ứng vào chuyện gì của bạn? Nhắn cho chuyên gia để hỏi cho rõ.`}
+            loiMoi={`Lá ${la.la.tenEn} hôm nay ứng vào chuyện gì của bạn? Nhắn cho chuyên gia để hỏi cho rõ.`}
           />
         </View>
       ) : null}

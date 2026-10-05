@@ -2,16 +2,19 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { ChuThan, Khoi, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
+import { NenKhungCung } from '@/components/nen-anh';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
-import { useCung } from '@/lib/kho-noi-dung';
+import { useCung, useTuVi, type DongTuVi } from '@/lib/kho-noi-dung';
+import { layBaiTuVi, ngayChu, tuanChu } from '@/lib/tu-vi';
 import { cungTheoNgay, diemHop, timCung, type MaCung } from '@/lib/zodiac';
 
 /**
@@ -33,15 +36,19 @@ function chiSo(ma: MaCung) {
 }
 
 export default function ChiTietCung() {
-  const { ma } = useLocalSearchParams<{ ma: MaCung }>();
+  // `ky` cho phép mở thẳng thẻ tuần bằng đường dẫn, ví dụ /cung/chi-tiet?ma=virgo&ky=tuan.
+  const { ma, ky: kyBanDau } = useLocalSearchParams<{ ma: MaCung; ky?: string }>();
   const { hoSo } = useHoSo();
-  const { dong } = useCung();
+  const { dong, loi } = useCung();
+  const tuVi = useTuVi();
+  const [ky, setKy] = useState<'ngay' | 'tuan'>(kyBanDau === 'tuan' ? 'tuan' : 'ngay');
 
   const cung = ma ? timCung(ma) : null;
   const nd = dong?.find((x) => x.ma === ma);
   const ns = tachNgay(hoSo?.ngay_sinh ?? null);
   const cuaToi = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
   const cs = ma ? chiSo(ma) : null;
+  const le = useSafeAreaInsets();
 
   if (!cung || !cs) {
     return (
@@ -58,10 +65,13 @@ export default function ChiTietCung() {
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      <NenKhungCung />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ThanhTieuDe ten={cung.ten} />
 
-        <ScrollView contentContainerClassName="px-5 pb-14 pt-7">
+        <ScrollView
+          contentContainerClassName="px-5 pt-7"
+          contentContainerStyle={{ paddingBottom: 56 + le.bottom }}>
           <View className="items-center">
             <View
               style={{ borderColor: MAU.vangMo }}
@@ -98,8 +108,54 @@ export default function ChiTietCung() {
             <Chi nhan="May mắn" gia={cs.mayMan} />
           </View>
 
+          <View className="mt-8">
+            <View
+              style={{ borderColor: MAU.vien }}
+              className="flex-row rounded-full border bg-nen-nhat p-1">
+              {(
+                [
+                  ['ngay', 'Hôm nay'],
+                  ['tuan', 'Tuần này'],
+                ] as ['ngay' | 'tuan', string][]
+              ).map(([v, nhan]) => {
+                const dang = ky === v;
+                return (
+                  <Pressable
+                    key={v}
+                    onPress={() => setKy(v)}
+                    style={{ backgroundColor: dang ? MAU.vang : 'transparent' }}
+                    className="min-h-[44px] flex-1 items-center justify-center rounded-full active:opacity-80">
+                    <Text
+                      style={{ fontFamily: CHU.thanDam, color: dang ? MAU.nen : MAU.chuPhu }}
+                      className="text-sm">
+                      {nhan}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text
+              style={{ fontFamily: CHU.than }}
+              className="mt-3 text-center text-xs text-chu-mo">
+              {ky === 'ngay' ? ngayChu() : `Tuần ${tuanChu()}`}
+            </Text>
+
+            {tuVi.dangTai ? (
+              <View className="mt-5">
+                <DangTai />
+              </View>
+            ) : tuVi.loi ? (
+              <View className="mt-5">
+                <Trong loi={`Chưa tải được tử vi. ${tuVi.loi}`} />
+              </View>
+            ) : (
+              <TuVi kho={tuVi.dong} cung={cung.ma} ky={ky} />
+            )}
+          </View>
+
           {nd ? (
-            <View className="mt-7 gap-4">
+            <View className="mt-8 gap-4">
               <Khoi>
                 <Nhan>Tính cách</Nhan>
                 <ChuThan>{nd.tinh_cach}</ChuThan>
@@ -112,6 +168,12 @@ export default function ChiTietCung() {
                 <Nhan>Điểm yếu</Nhan>
                 <ChuThan>{nd.diem_yeu}</ChuThan>
               </Khoi>
+            </View>
+          ) : null}
+
+          {loi ? (
+            <View className="mt-7">
+              <Trong loi={`Chưa tải được nội dung. ${loi}`} />
             </View>
           ) : null}
 
@@ -136,6 +198,87 @@ export default function ChiTietCung() {
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
+  );
+}
+
+/** Khối tử vi: điểm sao, mấy con số vui, rồi tới các mục chữ. */
+function TuVi({
+  kho,
+  cung,
+  ky,
+}: {
+  kho: DongTuVi[] | null;
+  cung: MaCung;
+  ky: 'ngay' | 'tuan';
+}) {
+  const b = layBaiTuVi(kho, cung, ky);
+
+  if (!b.tongQuan) {
+    return (
+      <View className="mt-5">
+        <Trong loi="Chưa có bài tử vi cho cung này. Nạp data/tu_vi_mau.csv vào bảng tu_vi_mau." />
+      </View>
+    );
+  }
+
+  return (
+    <View className="mt-5 gap-4">
+      <Khoi vien>
+        <View className="mb-3 flex-row justify-center gap-1.5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View
+              key={i}
+              style={{ backgroundColor: i <= b.diem ? MAU.vang : MAU.vien }}
+              className="h-2.5 w-9 rounded-full"
+            />
+          ))}
+        </View>
+        <ChuThan>{b.tongQuan}</ChuThan>
+      </Khoi>
+
+      <View className="flex-row gap-3">
+        <O nhan="Số may mắn" gia={String(b.soMayMan)} />
+        <O nhan="Màu hợp" gia={b.mauMayMan} />
+        <O nhan="Giờ tốt" gia={b.gioTot} />
+      </View>
+
+      {b.tinhCam ? (
+        <Khoi>
+          <Nhan>Tình cảm</Nhan>
+          <ChuThan>{b.tinhCam}</ChuThan>
+        </Khoi>
+      ) : null}
+      {b.congViec ? (
+        <Khoi>
+          <Nhan>Công việc và tiền bạc</Nhan>
+          <ChuThan>{b.congViec}</ChuThan>
+        </Khoi>
+      ) : null}
+      {b.sucKhoe ? (
+        <Khoi>
+          <Nhan>Sức khoẻ</Nhan>
+          <ChuThan>{b.sucKhoe}</ChuThan>
+        </Khoi>
+      ) : null}
+    </View>
+  );
+}
+
+/** Một ô nhỏ cho mấy con số vui. */
+function O({ nhan, gia }: { nhan: string; gia: string }) {
+  return (
+    <View
+      style={{ borderColor: MAU.vien }}
+      className="flex-1 items-center rounded-2xl border bg-nen-nhat px-2 py-3">
+      <Text
+        style={{ fontFamily: CHU.thanDam, letterSpacing: 1 }}
+        className="text-[9px] uppercase text-chu-mo">
+        {nhan}
+      </Text>
+      <Text style={{ fontFamily: CHU.thanDam }} className="mt-1 text-sm text-vang">
+        {gia}
+      </Text>
+    </View>
   );
 }
 

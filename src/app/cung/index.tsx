@@ -3,9 +3,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
+import { Trong } from '@/components/nen';
+import { NenKhungCung } from '@/components/nen-anh';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
@@ -14,16 +16,20 @@ import { CUNG, cungTheoNgay } from '@/lib/zodiac';
 
 export default function LuoiCung() {
   const { hoSo } = useHoSo();
-  const { dong } = useCung();
+  const { dong, loi } = useCung();
   const ns = tachNgay(hoSo?.ngay_sinh ?? null);
   const cuaToi = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
+  const le = useSafeAreaInsets();
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      <NenKhungCung />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ThanhTieuDe ten="12 cung hoàng đạo" />
 
-        <ScrollView contentContainerClassName="px-5 pb-14 pt-6">
+        <ScrollView
+          contentContainerClassName="px-5 pt-6"
+          contentContainerStyle={{ paddingBottom: 56 + le.bottom }}>
           <Text
             style={{ fontFamily: CHU.hoaDam, fontSize: 30, lineHeight: 36 }}
             className="text-chu-chinh">
@@ -34,6 +40,12 @@ export default function LuoiCung() {
             className="mt-1.5 text-chu-phu">
             Chọn cung của bạn hoặc của người thân để xem tính cách và độ hợp.
           </Text>
+
+          {loi ? (
+            <View className="mt-6">
+              <Trong loi={`Chưa tải được nội dung. ${loi}`} />
+            </View>
+          ) : null}
 
           <View className="mt-6 flex-row flex-wrap justify-between gap-y-3">
             {CUNG.map((c) => {

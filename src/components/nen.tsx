@@ -3,10 +3,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useRef } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
+import { NutQuayLai } from '@/components/nut-quay-lai';
+import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 
 export function ManHinh({
   tieuDe,
@@ -22,18 +24,22 @@ export function ManHinh({
   nenPhu?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  // Chừa chỗ cho thanh tab và thanh điều hướng của máy, không thì dòng cuối
+  // trang nằm khuất phía dưới và cuộn hết cỡ vẫn không đọc được.
+  const le = useSafeAreaInsets();
+
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
       {nenPhu}
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <ScrollView contentContainerClassName="px-5 pb-16 pt-3" keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerClassName="px-5 pt-3"
+          contentContainerStyle={{ paddingBottom: CAO_THANH_TAB + 16 + le.bottom }}
+          keyboardShouldPersistTaps="handled">
           {quayLai ? (
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={12}
-              className="mb-3 -ml-1 h-9 w-9 items-center justify-center rounded-full active:opacity-60">
-              <Ionicons name="chevron-back" size={24} color={MAU.chuPhu} />
-            </Pressable>
+            <View className="mb-4">
+              <NutQuayLai />
+            </View>
           ) : null}
           {tieuDe ? (
             <Text style={{ fontFamily: CHU.hoaDam, fontSize: 38, lineHeight: 44 }} className="text-chu-chinh">
@@ -110,6 +116,20 @@ export function Nut({
   dangChay?: boolean;
 }) {
   const chu = kieu === 'dac' ? MAU.nen : MAU.vang;
+  const lucBam = useRef(0);
+
+  /**
+   * Chặn cú bấm thứ hai ngay sau cú đầu.
+   *
+   * Máy yếu chuyển màn mất một lúc, khách tưởng nút chưa ăn nên bấm thêm cái
+   * nữa. Hai cú đều chạy router.push, thế là nhảy luôn hai màn.
+   */
+  const bam = () => {
+    const gio = Date.now();
+    if (gio - lucBam.current < 800) return;
+    lucBam.current = gio;
+    onPress();
+  };
 
   const ben = (
     <View className="min-h-[54px] items-center justify-center px-5 py-3.5">
@@ -125,7 +145,7 @@ export function Nut({
 
   if (kieu === 'dac') {
     return (
-      <Pressable onPress={onPress} disabled={tat || dangChay} className={tat ? 'opacity-40' : ''}>
+      <Pressable onPress={bam} disabled={tat || dangChay} className={tat ? 'opacity-40' : ''}>
         <LinearGradient
           colors={[MAU.vangSang, MAU.vang]}
           start={{ x: 0, y: 0 }}
@@ -139,7 +159,7 @@ export function Nut({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={bam}
       disabled={tat || dangChay}
       style={{ borderColor: kieu === 'vien' ? MAU.vang : MAU.vien }}
       className={`rounded-[14px] border ${kieu === 'nhe' ? 'bg-nen-nhat' : ''} ${
