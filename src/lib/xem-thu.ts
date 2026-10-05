@@ -18,4 +18,6 @@ export const HO_SO_MAU: HoSo = {
   noi_sinh: 'Hà Nội',
   gioi_tinh: 'nu',
   gio_nhac: '07:00',
+  nhac_la_bai: true,
+  nhac_tin_tuc: false,
 };

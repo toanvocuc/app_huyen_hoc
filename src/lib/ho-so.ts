@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { supabase } from '@/lib/supabase';
+import { dangNhapAnDanh, supabase } from '@/lib/supabase';
 import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
 
 export type GioiTinh = 'nam' | 'nu' | 'khac';
@@ -39,6 +39,8 @@ export type HoSo = {
   noi_sinh: string | null;
   gioi_tinh: GioiTinh | null;
   gio_nhac: string | null;
+  nhac_la_bai: boolean | null;
+  nhac_tin_tuc: boolean | null;
 };
 
 export function tachNgay(ngaySinh: string | null) {
@@ -85,6 +87,15 @@ export async function docHoSo(): Promise<HoSo | null> {
 
 export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
   if (XEM_THU) return { ...HO_SO_MAU, ...phan };
+
+  // Xoá sạch dữ liệu xong là đăng xuất, mà màn gốc chỉ tạo phiên lúc mở app nên
+  // không ai tạo lại. Thiếu dòng này thì khách nhập đủ năm bước, tới bước cuối
+  // mới báo "Chưa có phiên đăng nhập", và mất sạch thứ vừa gõ.
+  //
+  // dangNhapAnDanh đọc phiên trong máy trước, chỉ tạo mới khi thật sự không có.
+  // Nhờ vậy mất mạng không biến thành tạo nhầm một tài khoản trắng.
+  await dangNhapAnDanh();
+
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error('Chưa có phiên đăng nhập');
   const { data, error } = await supabase
@@ -110,13 +121,16 @@ export async function xoaSachDuLieu() {
   if (!u.user) return;
   const toi = u.user.id;
 
-  for (const bang of ['su_kien', 'lan_rut', 'ho_so'] as const) {
+  for (const bang of ['su_kien', 'lan_rut', 'thiet_bi', 'ho_so'] as const) {
     const { error } = await supabase.from(bang).delete().eq('nguoi_dung', toi);
     if (error) throw error;
   }
 
   datCoHoSo(false);
   await supabase.auth.signOut();
+  // Tạo ngay phiên mới. App chạy trên giả định lúc nào cũng có một người dùng
+  // ẩn danh: ghi sự kiện, lá bài hôm nay và lưu hồ sơ đều cần tới nó.
+  await dangNhapAnDanh();
 }
 
 export function useHoSo() {

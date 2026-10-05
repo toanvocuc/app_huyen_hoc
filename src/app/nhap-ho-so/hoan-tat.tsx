@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NenSao } from '@/components/nen-sao';
@@ -11,12 +11,20 @@ import { Nut, VanNgan } from '@/components/nen';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { layBanNhap, xoaBanNhap } from '@/lib/ban-nhap';
 import { luuHoSo } from '@/lib/ho-so';
+import { dangKyMaDay, datLichLaBai, xinQuyen } from '@/lib/thong-bao';
 import { soChuDao } from '@/lib/numerology';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
 export default function HoanTat() {
-  const b = layBanNhap();
+  // Chụp bản nhập đúng một lần lúc dựng màn.
+  //
+  // Đọc thẳng layBanNhap() mỗi lần vẽ thì hỏng: lưu xong là xoaBanNhap() dọn sạch
+  // bản nhập, rồi setDangLuu(false) bắt vẽ lại, và lần vẽ đó đọc ra bản rỗng. Màn
+  // chúc mừng loé tên khách một nhịp rồi trắng trơn, cung thành dấu gạch còn số
+  // chủ đạo thành 0.
+  const [b] = useState(layBanNhap);
   const [dangLuu, setDangLuu] = useState(true);
+  const [dangXin, setDangXin] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
 
   const ngay = Number(b.ngay);
@@ -39,6 +47,22 @@ export default function HoanTat() {
       .finally(() => setDangLuu(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function batNhac() {
+    setDangXin(true);
+    try {
+      if (await xinQuyen()) {
+        await datLichLaBai('07:00');
+        await dangKyMaDay();
+      }
+    } catch (e) {
+      console.warn('[thong-bao]', e);
+    } finally {
+      setDangXin(false);
+      // Từ chối quyền cũng đi tiếp. Giữ khách lại ở đây chẳng được gì.
+      router.replace('/(tabs)');
+    }
+  }
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
@@ -78,13 +102,33 @@ export default function HoanTat() {
           ) : null}
         </View>
 
+        {/* Hỏi quyền thông báo ngay tại đây, chỗ khách vừa thấy hồ sơ của mình hiện ra
+            và đang muốn xem tiếp. Hỏi lúc mở app thì khách chưa biết app làm được gì
+            nên phần lớn sẽ bấm Không, mà hộp thoại đó chỉ hiện đúng một lần. */}
         <View className="px-7 pb-3">
           {dangLuu ? (
             <View className="h-[54px] items-center justify-center">
               <ActivityIndicator color={MAU.vang} />
             </View>
           ) : (
-            <Nut nhan="Bắt đầu khám phá" onPress={() => router.replace('/(tabs)')} />
+            <>
+              <Text
+                style={{ fontFamily: CHU.than, fontSize: 13.5, lineHeight: 21 }}
+                className="mx-auto mb-3 max-w-[300px] text-center text-chu-mo">
+                Mỗi sáng một lá bài cho ngày mới. Chỉ một tin, tắt lúc nào cũng được.
+              </Text>
+              <Nut
+                nhan={dangXin ? 'Đang bật…' : 'Bật lời nhắc mỗi sáng'}
+                onPress={batNhac}
+              />
+              <Pressable
+                onPress={() => router.replace('/(tabs)')}
+                className="mt-2 min-h-[44px] items-center justify-center active:opacity-60">
+                <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-phu">
+                  Để sau
+                </Text>
+              </Pressable>
+            </>
           )}
         </View>
       </SafeAreaView>

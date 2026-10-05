@@ -32,6 +32,22 @@ export const VI_TRI: Record<KieuTrai, string[]> = {
 };
 
 /**
+ * Tỷ lệ một lá rút ra bị ngược.
+ *
+ * Bản đầu để 50%, tức mỗi lá tung đồng xu. Nghe thì công bằng nhưng sai cả hai
+ * đường. Xóc bài bằng tay không lật ngược một nửa bộ: muốn có lá ngược thì phải
+ * cố ý xoay một phần bộ bài, nên tỷ lệ thật thấp hơn nhiều. Và lá ngược là nghĩa
+ * xấu, nên 50% nghĩa là cứ hai lần rút ba lá thì một lần khách nhận gần như toàn
+ * tin xấu — đo ra đúng 50,1%.
+ *
+ * Để 30% thì lá ngược vẫn xuất hiện đủ để có sức nặng, mà không thành thường ngày.
+ */
+export const TY_LE_NGUOC = 0.3;
+
+/** Số nguyên 32 bit lớn nhất cộng một, dùng để đưa số ngẫu nhiên về khoảng 0 tới 1. */
+const MOC_32_BIT = 4294967296;
+
+/**
  * Rút ngẫu nhiên không lặp lá.
  * Dùng bộ sinh số ngẫu nhiên của hệ điều hành, không dùng Math.random,
  * vì Math.random đoán được và lá bài là thứ khách cảm thấy phải thật.
@@ -48,7 +64,7 @@ export function rutBai(boBai: LaBai[], kieu: KieuTrai, choPhepNguoc = true): LaD
     const [la] = conLai.splice(chiSo, 1);
     ketQua.push({
       la,
-      nguoc: choPhepNguoc ? soNgauNhien[i * 2 + 1] % 2 === 0 : false,
+      nguoc: choPhepNguoc ? soNgauNhien[i * 2 + 1] / MOC_32_BIT < TY_LE_NGUOC : false,
       viTri: viTri[i],
     });
   }

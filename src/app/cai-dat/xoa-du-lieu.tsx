@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { Khoi, ManHinh, Nut } from '@/components/nen';
+import { CHU } from '@/constants/giao-dien';
 import { xoaSachDuLieu } from '@/lib/ho-so';
 
 export default function XoaDuLieu() {
@@ -25,14 +26,14 @@ export default function XoaDuLieu() {
   return (
     <ManHinh quayLai tieuDe="Xoá toàn bộ dữ liệu">
       <Khoi>
-        <Text className="text-base leading-7 text-chu-chinh">
+        <Text style={{ fontFamily: CHU.than }} className="text-base leading-7 text-chu-chinh">
           {buoc === 1
             ? 'Hồ sơ, ngày sinh và toàn bộ lịch sử rút bài sẽ bị xoá khỏi máy chủ. Không có bản sao nào được giữ lại.'
             : 'Xác nhận lần cuối. Sau khi xoá thì không lấy lại được, kể cả khi bạn cài lại app.'}
         </Text>
       </Khoi>
 
-      {loi ? <Text className="mt-5 text-sm leading-5 text-canh">{loi}</Text> : null}
+      {loi ? <Text style={{ fontFamily: CHU.than }} className="mt-5 text-sm leading-5 text-canh">{loi}</Text> : null}
 
       <View className="mt-7 gap-3">
         {buoc === 1 ? (

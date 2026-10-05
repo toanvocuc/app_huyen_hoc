@@ -21,15 +21,22 @@ export function sinhMaTheoDoi(doDai = 4): string {
   return ma;
 }
 
+/**
+ * Ghi một sự kiện. Trả về true nếu đã ghi được xuống máy chủ.
+ *
+ * Chỗ gọi nào không quan tâm kết quả thì cứ bỏ qua giá trị trả về. Riêng lúc bấm
+ * Zalo thì phải xem, vì mã đưa cho khách mà không có dòng nào dưới máy chủ là
+ * người trực tra không ra, mà khách lại tưởng mình đã được ghi nhận.
+ */
 export async function ghiSuKien(arg: {
   loai: LoaiSuKien;
   manHinh?: string;
   maTheoDoi?: string;
-}): Promise<void> {
-  if (XEM_THU) return;
+}): Promise<boolean> {
+  if (XEM_THU) return true;
   try {
     const { data } = await supabase.auth.getUser();
-    if (!data.user) return;
+    if (!data.user) return false;
 
     const { error } = await supabase.from('su_kien').insert({
       nguoi_dung: data.user.id,
@@ -37,8 +44,28 @@ export async function ghiSuKien(arg: {
       man_hinh: arg.manHinh ?? null,
       ma_theo_doi: arg.maTheoDoi ?? null,
     });
-    if (error) console.warn('[su-kien] ghi that bai:', error.message);
+    if (error) {
+      console.warn('[su-kien] ghi that bai:', error.message);
+      return false;
+    }
+    return true;
   } catch (e) {
     console.warn('[su-kien] ghi that bai:', e);
+    return false;
   }
+}
+
+/**
+ * Sinh mã rồi ghi luôn lượt bấm Zalo. Trả về mã đã ghi được, hoặc null.
+ *
+ * Mã chỉ có 4 ký tự trong bảng 32 chữ nên vẫn có lúc trùng, mà cột ma_theo_doi
+ * lại đánh chỉ mục duy nhất, nên lần ghi đó hỏng. Thử lại vài lần với mã khác là
+ * hết. Thử hết vẫn hỏng thì trả null để chỗ gọi đừng đưa mã ma cho khách.
+ */
+export async function ghiLuotBamZalo(manHinh: string, soLanThu = 3): Promise<string | null> {
+  for (let i = 0; i < soLanThu; i++) {
+    const ma = sinhMaTheoDoi();
+    if (await ghiSuKien({ loai: 'bam_zalo', manHinh, maTheoDoi: ma })) return ma;
+  }
+  return null;
 }
