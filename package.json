@@ -1,5 +1,5 @@
 {
-  "name": "app-huyen-hoc",
+  "name": "omora",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -27,6 +27,7 @@
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
+    "expo-updates": "~57.0.24",
     "expo-web-browser": "~57.0.3",
     "nativewind": "^4.2.7",
     "react": "19.2.3",
@@ -45,6 +46,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -58,9 +61,13 @@
     "kiem-tra": "node --experimental-strip-types --no-warnings kiem-tra/logic.ts && node kiem-tra/doc-csv.mjs",
     "xem-thu": "expo start --web",
     "nap-du-lieu": "node supabase/nap-du-lieu.mjs",
+    "sinh-noi-dung-mau": "node supabase/sinh-noi-dung-mau.mjs",
+    "gui-thong-bao": "node supabase/gui-thong-bao.mjs",
     "kiem-khoa": "node supabase/kiem-khoa-dong.mjs",
     "soat-du-lieu": "node supabase/soat-du-lieu.mjs",
-    "thu-ho-so": "node supabase/thu-luu-ho-so.mjs"
+    "thu-ho-so": "node supabase/thu-luu-ho-so.mjs",
+    "do-kho-tu-vi": "node --experimental-strip-types --no-warnings kiem-tra/do-kho-tu-vi.mts",
+    "thu-xoa-nhap-lai": "node supabase/thu-xoa-roi-nhap-lai.mjs"
   },
   "private": true
 }

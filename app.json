@@ -1,24 +1,23 @@
 {
   "expo": {
-    "name": "Huyền Học",
-    "slug": "app-huyen-hoc",
+    "name": "Omora",
+    "slug": "omora",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "apphuyenhoc",
+    "scheme": "omora",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.apphuyenhoc.mobile",
-      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.nexusgroup.omora",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.apphuyenhoc.mobile",
+      "package": "com.nexusgroup.omora",
       "adaptiveIcon": {
-        "backgroundColor": "#1A1625",
+        "backgroundColor": "#0B1220",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -34,7 +33,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1A1625",
+          "backgroundColor": "#0B1220",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }
@@ -54,9 +53,17 @@
       "reactCompiler": true
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "CHUA_TAO_DIEN_SAU_KHI_CHAY_EAS_INIT"
+        "projectId": "c0085a1e-ffcc-43cc-bd88-8c3c2e6b5336"
       }
+    },
+    "owner": "toanvocuc",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c0085a1e-ffcc-43cc-bd88-8c3c2e6b5336"
     }
   }
 }

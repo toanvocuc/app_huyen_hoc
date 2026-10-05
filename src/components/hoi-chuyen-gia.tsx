@@ -14,10 +14,17 @@ import * as Clipboard from 'expo-clipboard';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, Text, View } from 'react-native';
 
-import { ghiSuKien, sinhMaTheoDoi } from '@/lib/su-kien';
+import { CHU } from '@/constants/giao-dien';
+import { ghiLuotBamZalo, ghiSuKien } from '@/lib/su-kien';
 
-// TODO: thay bằng số Zalo của công ty. Không dùng số riêng của từng thầy —
-// tới Phase 3 mở sàn thì không đi đòi lại số cá nhân đã nằm trong máy khách được.
+/**
+ * Số Zalo nhận câu hỏi của khách, đặt trong EXPO_PUBLIC_ZALO_CONG_TY.
+ *
+ * Hiện đang là số riêng của thầy tư vấn, công ty chọn như vậy. Cần biết: số này
+ * nằm luôn trong bản app đã cài trên máy khách, đổi về sau chỉ ăn với người chịu
+ * cập nhật. Tới Phase 3 mở sàn nhiều thầy thì nên chuyển sang một số tổng đài
+ * của công ty, lúc đó đổi người trực không ảnh hưởng tới khách cũ.
+ */
 const ZALO_CONG_TY = process.env.EXPO_PUBLIC_ZALO_CONG_TY ?? '';
 
 type Props = {
@@ -41,9 +48,10 @@ export function HoiChuyenGia({ loiMoi, manHinh }: Props) {
     if (dangGui) return;
     setDangGui(true);
     try {
-      const ma = sinhMaTheoDoi();
-      await ghiSuKien({ loai: 'bam_zalo', manHinh, maTheoDoi: ma });
-      await Clipboard.setStringAsync(`Mình đến từ app, mã ${ma}`);
+      // Mã chỉ chép cho khách khi máy chủ đã nhận. Chép mã mà không ghi được thì
+      // người trực Zalo tra không ra, còn con số phễu báo lên sếp thì hụt.
+      const ma = await ghiLuotBamZalo(manHinh);
+      await Clipboard.setStringAsync(ma ? `Mình đến từ app, mã ${ma}` : 'Mình đến từ app');
 
       if (!ZALO_CONG_TY) {
         Alert.alert('Chưa đặt số Zalo', 'Điền EXPO_PUBLIC_ZALO_CONG_TY vào file .env.');
@@ -62,14 +70,14 @@ export function HoiChuyenGia({ loiMoi, manHinh }: Props) {
 
   return (
     <View className="mt-8 rounded-2xl border border-vang/30 bg-nen-nhat p-5">
-      <Text className="mb-3 text-base leading-6 text-chu-chinh">{loiMoi}</Text>
+      <Text style={{ fontFamily: CHU.than }} className="mb-3 text-base leading-6 text-chu-chinh">{loiMoi}</Text>
       <Pressable
         onPress={bam}
         disabled={dangGui}
         className="rounded-xl bg-vang px-5 py-3 active:opacity-80">
-        <Text className="text-center font-semibold text-nen">Nhắn cho chuyên gia</Text>
+        <Text style={{ fontFamily: CHU.thanDam }} className="text-center text-nen">Nhắn cho chuyên gia</Text>
       </Pressable>
-      <Text className="mt-3 text-center text-xs text-chu-phu">
+      <Text style={{ fontFamily: CHU.than }} className="mt-3 text-center text-xs text-chu-phu">
         Lời nhắn đã được chép sẵn, bạn chỉ cần dán vào Zalo
       </Text>
     </View>
