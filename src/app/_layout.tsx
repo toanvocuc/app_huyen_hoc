@@ -13,14 +13,19 @@ import { useFonts } from 'expo-font';
 import { Stack, router, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { MAU } from '@/constants/giao-dien';
+import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
+import { batHienKhiDangMo } from '@/lib/thong-bao';
 import { dangNhapAnDanh } from '@/lib/supabase';
 
 SplashScreen.preventAutoHideAsync();
+
+// Khai một lần lúc nạp app, trước khi vẽ gì. Khai bên trong component thì thông
+// báo nổ trước lúc component đó dựng xong sẽ vẫn bị nuốt.
+batHienKhiDangMo();
 
 export default function RootLayout() {
   const [xong, setXong] = useState(false);
@@ -35,8 +40,10 @@ export default function RootLayout() {
     CormorantGaramond_700Bold,
   });
 
-  useEffect(() => {
-    // Hồ sơ ẩn danh tạo ngay lần mở đầu tiên, khách không phải bấm gì.
+  // Hồ sơ ẩn danh tạo ngay lần mở đầu tiên, khách không phải bấm gì.
+  const khoiDong = useCallback(() => {
+    setLoi(null);
+    setXong(false);
     dangNhapAnDanh()
       .then(docHoSo)
       .then((h) => {
@@ -50,6 +57,8 @@ export default function RootLayout() {
         SplashScreen.hideAsync();
       });
   }, []);
+
+  useEffect(khoiDong, [khoiDong]);
 
   // Nhập hồ sơ xong thì ho-so.ts báo lại, nhờ vậy không bị đá ngược về phần nhập.
   useEffect(() => ngheCoHoSo(setCoHoSo), []);
@@ -71,10 +80,24 @@ export default function RootLayout() {
   if (loi) {
     return (
       <View className="flex-1 items-center justify-center bg-nen px-8">
-        <Text className="mb-2 text-center text-lg font-semibold text-chu-chinh">
+        <Text style={{ fontFamily: CHU.thanDam }} className="mb-2 text-center text-lg text-chu-chinh">
           Chưa nối được máy chủ
         </Text>
-        <Text className="text-center text-sm leading-5 text-chu-phu">{loi}</Text>
+        <Text
+          style={{ fontFamily: CHU.than }}
+          className="text-center text-sm leading-5 text-chu-phu">
+          {loi}
+        </Text>
+
+        {/* Không có nút này thì mất mạng lúc mở app là khách kẹt luôn ở màn này,
+            phải thoát hẳn app rồi mở lại mới thử lại được. */}
+        <Pressable
+          onPress={khoiDong}
+          className="mt-7 rounded-xl bg-vang px-7 py-3 active:opacity-80">
+          <Text style={{ fontFamily: CHU.thanDam }} className="text-center text-nen">
+            Thử lại
+          </Text>
+        </Pressable>
       </View>
     );
   }
