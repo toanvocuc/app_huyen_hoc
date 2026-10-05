@@ -148,7 +148,7 @@ export function LaBai({
             contentFit="cover"
           />
         ) : (
-          <GiuCho ten={daRut.la.tenVi} rong={rong} />
+          <GiuCho ten={daRut.la.tenEn} rong={rong} />
         )}
 
         {daRut.nguoc ? (

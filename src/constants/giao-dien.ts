@@ -39,3 +39,10 @@ export const CHU = {
 
 /** Tỷ lệ lá bài Rider-Waite thật: 57mm x 100mm. */
 export const TY_LE_LA_BAI = 57 / 100;
+
+/**
+ * Chiều cao thanh tab dưới, chưa kể lề của thanh điều hướng máy.
+ * Màn hình nằm trong tab phải chừa đệm dưới ít nhất bằng số này cộng lề,
+ * không thì nội dung cuối trang chui xuống dưới thanh tab.
+ */
+export const CAO_THANH_TAB = 62;

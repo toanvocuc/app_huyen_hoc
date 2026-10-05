@@ -12,6 +12,7 @@ import { forwardRef } from 'react';
 import { Text, View } from 'react-native';
 
 import { LaBai } from '@/components/la-bai';
+import { Logo } from '@/components/logo';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { yNghia, type LaDaRut } from '@/lib/tarot';
 
@@ -66,7 +67,7 @@ export const TheChiaSe = forwardRef<View, { daRut: LaDaRut; tyLe?: number }>(
               marginTop: p(44),
               textAlign: 'center',
             }}>
-            {daRut.la.tenVi}
+            {daRut.la.tenEn}
             {daRut.nguoc ? ' (ngược)' : ''}
           </Text>
 
@@ -99,26 +100,7 @@ export const TheChiaSe = forwardRef<View, { daRut: LaDaRut; tyLe?: number }>(
           <View style={{ flex: 1 }} />
 
           <View style={{ alignItems: 'center' }}>
-            <View
-              style={{
-                width: p(26),
-                height: p(26),
-                borderWidth: p(2),
-                borderColor: MAU.vang,
-                transform: [{ rotate: '45deg' }],
-                marginBottom: p(22),
-              }}
-            />
-            <Text
-              style={{
-                fontFamily: CHU.thanDam,
-                fontSize: p(26),
-                letterSpacing: p(8),
-                color: MAU.vang,
-                textTransform: 'uppercase',
-              }}>
-              Huyền Học
-            </Text>
+            <Logo rong={p(230)} />
           </View>
         </View>
       </View>

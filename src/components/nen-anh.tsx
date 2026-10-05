@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { View } from 'react-native';
 
-import { MAU } from '@/constants/giao-dien';
 
 /**
  * Bầu trời sao dọc, phủ cả màn.
@@ -27,16 +26,33 @@ export function NenTroiSao({ mo = 0.72 }: { mo?: number }) {
 }
 
 /**
- * Khung hoa văn vàng viền quanh màn, dùng cho phần Tarot.
- * Ảnh nền đã đen sẵn nên không cần phủ thêm lớp tối.
+ * Khung hoa văn viền quanh màn. Ảnh nền đã đen sẵn nên không cần phủ thêm lớp tối.
+ *
+ * `mo` hạ độ đậm của ảnh xuống. Hai khung số và khung cung có hoa văn ăn khá sâu
+ * vào trong lề, nội dung chạy đè lên là rối mắt, nên chúng chạy mờ hơn khung Tarot.
  */
-export function NenKhungVan() {
+function NenKhung({ nguon, mo = 1 }: { nguon: number; mo?: number }) {
   return (
     <Image
-      source={require('@/assets/nen/khung-hoa-van.jpg')}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      source={nguon}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: mo }}
       contentFit="cover"
       pointerEvents="none"
     />
   );
+}
+
+/** Khung hoa văn vàng, dùng cho phần Tarot. */
+export function NenKhungVan() {
+  return <NenKhung nguon={require('@/assets/nen/khung-hoa-van.jpg')} />;
+}
+
+/** Khung có các con số quanh viền, dùng cho phần Thần số học. */
+export function NenKhungSo() {
+  return <NenKhung nguon={require('@/assets/nen/khung-so.jpg')} mo={0.55} />;
+}
+
+/** Khung có mười hai biểu tượng hoàng đạo quanh viền, dùng cho phần cung hoàng đạo. */
+export function NenKhungCung() {
+  return <NenKhung nguon={require('@/assets/nen/khung-cung.jpg')} mo={0.55} />;
 }
