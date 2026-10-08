@@ -32,10 +32,7 @@ const DO_CONG = 44; // lá ngoài cùng tụt xuống bao nhiêu điểm ảnh
 const GOC_NGOAI = 22; // độ nghiêng của lá ngoài cùng
 
 export default function RutBai() {
-  const { kieu = 'mot-la', cauHoi = '' } = useLocalSearchParams<{
-    kieu: KieuTrai;
-    cauHoi: string;
-  }>();
+  const { kieu = 'mot-la' } = useLocalSearchParams<{ kieu: KieuTrai }>();
   const { boBai, loi, dangTai } = useBoBai();
 
   const canRut = VI_TRI[kieu as KieuTrai]?.length ?? 1;
@@ -63,7 +60,7 @@ export default function RutBai() {
 
   function sangKetQua() {
     if (!ketQua) return;
-    datPhien(ketQua, String(cauHoi));
+    datPhien(ketQua);
     router.replace('/tarot/ket-qua');
   }
 
@@ -159,11 +156,6 @@ export default function RutBai() {
         </View>
 
         <View className="items-center pb-14">
-          <Text
-            style={{ fontFamily: CHU.than }}
-            className="mb-3 px-12 text-center text-[11px] leading-4 text-chu-mo">
-            Lá bài được chọn ngẫu nhiên bằng bộ sinh số của hệ điều hành
-          </Text>
           {canRut > 1 && !dangLat ? (
             <View
               style={{ borderColor: MAU.vien }}

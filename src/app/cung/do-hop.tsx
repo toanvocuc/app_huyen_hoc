@@ -142,6 +142,7 @@ function ChonCung({
                 chon ? 'border-vang bg-vang/15' : 'border-vien bg-nen-nhat'
               }`}>
               <Text
+                numberOfLines={1}
                 style={{ fontFamily: chon ? CHU.thanDam : CHU.than }}
                 className={`text-sm ${chon ? 'text-vang' : 'text-chu-phu'}`}>
                 {c.ten}

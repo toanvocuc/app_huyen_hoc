@@ -43,6 +43,53 @@ export type HoSo = {
   nhac_tin_tuc: boolean | null;
 };
 
+/**
+ * Một bản hồ sơ dùng chung cho cả app.
+ *
+ * Trước đây mỗi màn giữ bản sao riêng, đọc đúng một lần lúc dựng màn. Thẻ tab
+ * không bị huỷ khi chuyển qua lại, nên sửa ngày sinh ở Cá nhân xong là màn Tử vi
+ * và Thần số học vẫn tính theo ngày cũ cho tới khi tắt hẳn app rồi mở lại.
+ *
+ * Giờ chỉ còn một bản. Ai lưu hay xoá thì mọi màn đang mở biết ngay.
+ */
+let hoSoChung: HoSo | null = null;
+let daDoc = false;
+let dangDoc: Promise<HoSo | null> | null = null;
+const ngheHoSo = new Set<(h: HoSo | null) => void>();
+
+/** Đặt lại bản dùng chung rồi báo cho mọi màn đang mở. */
+function datHoSoChung(h: HoSo | null) {
+  hoSoChung = h;
+  daDoc = true;
+  ngheHoSo.forEach((f) => f(h));
+}
+
+/**
+ * Đọc hồ sơ về bản dùng chung.
+ *
+ * Mở app là mấy thẻ tab dựng cùng một lúc. Gom chung một lời gọi để khỏi bắn
+ * mấy lượt hỏi giống hệt nhau lên máy chủ.
+ */
+function docVeChung(buoc = false): Promise<HoSo | null> {
+  if (dangDoc) return dangDoc;
+  if (daDoc && !buoc) return Promise.resolve(hoSoChung);
+
+  dangDoc = docHoSo()
+    .then((h) => {
+      dangDoc = null;
+      datHoSoChung(h);
+      return h;
+    })
+    .catch((e) => {
+      // Hỏng thì KHÔNG đặt daDoc. Mất mạng lúc mở app mà đánh dấu là đã đọc thì
+      // mọi màn sau đều tin rằng khách chưa có hồ sơ, và không ai thử lại nữa.
+      console.warn('[ho-so]', e);
+      dangDoc = null;
+      return hoSoChung;
+    });
+  return dangDoc;
+}
+
 export function tachNgay(ngaySinh: string | null) {
   if (!ngaySinh) return null;
   const [nam, thang, ngay] = ngaySinh.split('-').map(Number);
@@ -105,6 +152,7 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
     .single();
   if (error) throw error;
   if ((data as HoSo).ngay_sinh) datCoHoSo(true);
+  datHoSoChung(data as HoSo);
   return data as HoSo;
 }
 
@@ -127,6 +175,7 @@ export async function xoaSachDuLieu() {
   }
 
   datCoHoSo(false);
+  datHoSoChung(null);
   await supabase.auth.signOut();
   // Tạo ngay phiên mới. App chạy trên giả định lúc nào cũng có một người dùng
   // ẩn danh: ghi sự kiện, lá bài hôm nay và lưu hồ sơ đều cần tới nó.
@@ -134,18 +183,28 @@ export async function xoaSachDuLieu() {
 }
 
 export function useHoSo() {
-  const [hoSo, setHoSo] = useState<HoSo | null>(null);
-  const [dangTai, setDangTai] = useState(true);
+  const [hoSo, datTaiCho] = useState<HoSo | null>(hoSoChung);
+  const [dangTai, datDangTai] = useState(!daDoc);
 
-  const taiLai = useCallback(() => {
-    setDangTai(true);
-    docHoSo()
-      .then(setHoSo)
-      .catch((e) => console.warn('[ho-so]', e))
-      .finally(() => setDangTai(false));
+  useEffect(() => {
+    ngheHoSo.add(datTaiCho);
+    docVeChung().finally(() => datDangTai(false));
+    return () => {
+      ngheHoSo.delete(datTaiCho);
+    };
   }, []);
 
-  useEffect(taiLai, [taiLai]);
+  const taiLai = useCallback(() => {
+    datDangTai(true);
+    docVeChung(true).finally(() => datDangTai(false));
+  }, []);
+
+  /** Sửa tại chỗ cho màn hình nhảy ngay, chưa đụng tới máy chủ. */
+  const setHoSo = useCallback(
+    (f: HoSo | null | ((h: HoSo | null) => HoSo | null)) =>
+      datHoSoChung(typeof f === 'function' ? f(hoSoChung) : f),
+    []
+  );
 
   return { hoSo, dangTai, taiLai, setHoSo };
 }
