@@ -45,7 +45,10 @@ export default function ChiaSe() {
     setDangLam('luu');
     try {
       const MediaLibrary = await import('expo-media-library');
-      const quyen = await MediaLibrary.requestPermissionsAsync();
+      // true = chỉ xin quyền GHI. App chỉ lưu ảnh ra, không bao giờ đọc ảnh của
+      // khách, nên không đụng tới READ_MEDIA_IMAGES. Từ Android 13 trở lên thì
+      // lưu vào thư viện còn chẳng cần quyền nào, lời gọi này trả về luôn.
+      const quyen = await MediaLibrary.requestPermissionsAsync(true);
       if (!quyen.granted) {
         Alert.alert('Chưa có quyền', 'Cho phép app lưu ảnh trong phần cài đặt của máy.');
         return;
