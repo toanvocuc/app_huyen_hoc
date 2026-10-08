@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Khoi, ManHinh, Nut } from '@/components/nen';
+import { ManHinh, Nut } from '@/components/nen';
+import { NoiDungPhapLy } from '@/components/noi-dung-phap-ly';
 import { NenTroiSao } from '@/components/nen-anh';
 import { CHU } from '@/constants/giao-dien';
 
@@ -15,23 +16,7 @@ export default function DieuKhoan() {
       quayLai
       tieuDe="Điều khoản và quyền riêng tư"
       phu="Đọc qua một lượt trước khi bắt đầu.">
-      <Khoi>
-        <Text style={{ fontFamily: CHU.thanVua }} className="text-base leading-6 text-chu-chinh">App lưu những gì</Text>
-        <Text style={{ fontFamily: CHU.than }} className="mt-2 text-sm leading-6 text-chu-phu">
-          Họ tên, ngày sinh, giờ sinh và nơi sinh bạn tự nhập. Những thứ này dùng để tính cung
-          hoàng đạo, số chủ đạo và chọn lá bài của ngày.
-        </Text>
-        <Text style={{ fontFamily: CHU.thanVua }} className="mt-4 text-base leading-6 text-chu-chinh">App không lưu những gì</Text>
-        <Text style={{ fontFamily: CHU.than }} className="mt-2 text-sm leading-6 text-chu-phu">
-          Không đọc danh bạ, không đọc ảnh, không lấy vị trí. Không có quảng cáo và không bán
-          dữ liệu cho bên thứ ba.
-        </Text>
-        <Text style={{ fontFamily: CHU.thanVua }} className="mt-4 text-base leading-6 text-chu-chinh">Xoá lúc nào cũng được</Text>
-        <Text style={{ fontFamily: CHU.than }} className="mt-2 text-sm leading-6 text-chu-phu">
-          Vào mục Cá nhân, chọn xoá dữ liệu. Mọi thứ biến mất khỏi máy chủ ngay, không giữ lại
-          bản sao.
-        </Text>
-      </Khoi>
+      <NoiDungPhapLy />
 
       <Pressable
         onPress={() => setDongY((v) => !v)}

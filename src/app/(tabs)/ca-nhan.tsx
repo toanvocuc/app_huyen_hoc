@@ -8,6 +8,7 @@ import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { DangTai } from '@/components/nen';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CAO_THANH_TAB, CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
+import { napTuHoSo } from '@/lib/ban-nhap';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
@@ -50,7 +51,12 @@ export default function CaNhan() {
               </Text>
 
               <Pressable
-                onPress={() => router.push('/nhap-ho-so/ten')}
+                onPress={() => {
+                  // Nạp hồ sơ đang có vào bản nhập, không thì bước cuối
+                  // ghi đè những mục không đi qua bằng giá trị rỗng.
+                  napTuHoSo(hoSo);
+                  router.push('/nhap-ho-so/ten');
+                }}
                 style={{ borderColor: MAU.vang }}
                 className="mt-4 rounded-full border px-5 py-2 active:opacity-70">
                 <Text style={{ fontFamily: CHU.thanVua }} className="text-sm text-vang">
@@ -72,7 +78,12 @@ export default function CaNhan() {
                 bieu="location-outline"
                 ten="Nơi sinh"
                 gia={hoSo?.noi_sinh ?? 'Chưa có'}
-                onPress={() => router.push('/nhap-ho-so/noi-sinh')}
+                onPress={() => {
+                  // Nạp hồ sơ đang có vào bản nhập, không thì bước cuối
+                  // ghi đè những mục không đi qua bằng giá trị rỗng.
+                  napTuHoSo(hoSo);
+                  router.push('/nhap-ho-so/noi-sinh');
+                }}
               />
               <Ke />
               <DongDan bieu="time-outline" ten="Giờ sinh" gia={hoSo?.gio_sinh ?? 'Chưa có'} />
@@ -83,7 +94,7 @@ export default function CaNhan() {
               <DongDan
                 bieu="shield-checkmark-outline"
                 ten="Quyền riêng tư"
-                onPress={() => router.push('/nhap-ho-so/dieu-khoan')}
+                onPress={() => router.push('/cai-dat/phap-ly')}
               />
               <Ke />
               <DongDan

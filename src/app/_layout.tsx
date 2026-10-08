@@ -106,7 +106,16 @@ export default function RootLayout() {
     <>
       <StatusBar style="light" />
       <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: MAU.nen } }} />
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: MAU.nen },
+          // Mờ dần thay vì trượt ngang. Trượt làm màn mới xô màn cũ đi, hợp với
+          // app công cụ; app này toàn nền trời sao nên mờ dần liền mạch hơn, và
+          // chùm sao bắn ra lúc bấm còn kịp cháy hết trong lúc màn cũ nhạt đi.
+          animation: 'fade',
+          animationDuration: 220,
+        }}
+      />
     </>
   );
 }

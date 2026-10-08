@@ -3,10 +3,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ChumSaoToa } from '@/components/hieu-ung-sao';
 import { NutQuayLai } from '@/components/nut-quay-lai';
 import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 
@@ -117,6 +118,7 @@ export function Nut({
 }) {
   const chu = kieu === 'dac' ? MAU.nen : MAU.vang;
   const lucBam = useRef(0);
+  const [lanBam, setLanBam] = useState(0);
 
   /**
    * Chặn cú bấm thứ hai ngay sau cú đầu.
@@ -128,6 +130,7 @@ export function Nut({
     const gio = Date.now();
     if (gio - lucBam.current < 800) return;
     lucBam.current = gio;
+    setLanBam((n) => n + 1);
     onPress();
   };
 
@@ -146,13 +149,17 @@ export function Nut({
   if (kieu === 'dac') {
     return (
       <Pressable onPress={bam} disabled={tat || dangChay} className={tat ? 'opacity-40' : ''}>
-        <LinearGradient
-          colors={[MAU.vangSang, MAU.vang]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: 14 }}>
-          {ben}
-        </LinearGradient>
+        <View>
+          <LinearGradient
+            colors={[MAU.vangSang, MAU.vang]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 14 }}>
+            {ben}
+          </LinearGradient>
+          {/* Để ngoài LinearGradient: bo góc của nó cắt mất phần sao bay ra mép. */}
+          <ChumSaoToa lan={lanBam} />
+        </View>
       </Pressable>
     );
   }
@@ -166,6 +173,7 @@ export function Nut({
         tat ? 'opacity-40' : ''
       } active:opacity-70`}>
       {ben}
+      <ChumSaoToa lan={lanBam} />
     </Pressable>
   );
 }
