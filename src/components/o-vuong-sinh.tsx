@@ -23,18 +23,26 @@ function tam(so: number) {
   return { x: (cot + 0.5) * O, y: (hang + 0.5) * O };
 }
 
+/**
+ * Bề ngang một chữ số, tính theo cỡ chữ.
+ *
+ * Đo trên file phông Be Vietnam Pro 600: chữ số rộng từ 0,415 tới 0,716 lần cỡ
+ * chữ. Lấy số lớn nhất để cụm số rộng nhất cũng không tràn ô.
+ */
+const RONG_MOT_SO = 0.72;
+
 /** Cỡ chữ của một ô, tính theo số lần con số đó lặp lại. Dùng chung cho cả lưới. */
 export function cuaChuTrongO(lan: number, oCo: number) {
-  // Đo trên phông Cormorant thì một chữ số rộng chừng 0,6 lần cỡ chữ, và cả cụm
-  // chỉ được chiếm 70% bề ngang ô. Ngày 11/11/1991 cho ra sáu số 1 trong một ô.
-  return Math.min(oCo * 0.4, (oCo * 0.7) / (Math.max(lan, 1) * 0.6));
+  // Cả cụm chỉ được chiếm 70% bề ngang ô. Ngày 11/11/1991 cho ra sáu số 1 trong
+  // một ô, lúc đó cỡ chữ phải tụt xuống nhiều.
+  return Math.min(oCo * 0.4, (oCo * 0.7) / (Math.max(lan, 1) * RONG_MOT_SO));
 }
 
 /** Nửa bề ngang của chữ trong ô, cộng thêm một chút cho thoáng. */
 function banKinhChu(lan: number) {
   const n = Math.max(lan, 1);
   const cu = cuaChuTrongO(lan, O); // tính luôn trong hệ toạ độ SVG
-  return (n * cu * 0.6) / 2 + 3;
+  return (n * cu * RONG_MOT_SO) / 2 + 3;
 }
 
 /** Một đoạn kẻ từ ô này sang ô kia, đã cắt ngắn hai đầu, kèm đầu mũi tên nếu là đoạn cuối. */
@@ -192,9 +200,15 @@ export function OVuongSinh({
                   <Text
                     numberOfLines={1}
                     style={{
-                      fontFamily: CHU.hoaDam,
+                      // Phông có chân Cormorant dùng chữ số kiểu cổ: 8 trên 10
+                      // chữ số thòng xuống dưới dòng kẻ, mỗi số một chiều cao.
+                      // Số 3, 5, 7, 9 tụt 275 phần nghìn em còn số 6 vống lên
+                      // 661, nên lưới nhìn như xô lệch. Chữ số ở đây là dữ liệu
+                      // chứ không phải tiêu đề, nên dùng phông thân có chữ số
+                      // thẳng hàng. Phông kia vẫn giữ cho mọi tiêu đề khác.
+                      fontFamily: CHU.thanDam,
                       fontSize: cuaChu,
-                      lineHeight: cuaChu * 1.14,
+                      lineHeight: cuaChu * 1.2,
                       color: coSo ? MAU.vangSang : MAU.chuMo,
                       opacity: coSo ? 1 : 0.5,
                     }}>

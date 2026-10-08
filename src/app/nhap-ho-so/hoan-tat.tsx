@@ -10,7 +10,7 @@ import { VongSo } from '@/components/vong-so';
 import { Nut, VanNgan } from '@/components/nen';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { layBanNhap, xoaBanNhap } from '@/lib/ban-nhap';
-import { luuHoSo } from '@/lib/ho-so';
+import { kiemNgaySinh, luuHoSo } from '@/lib/ho-so';
 import { dangKyMaDay, datLichLaBai, xinQuyen } from '@/lib/thong-bao';
 import { soChuDao } from '@/lib/numerology';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
@@ -35,6 +35,18 @@ export default function HoanTat() {
   const so = soChuDao(ngay, thang, nam);
 
   useEffect(() => {
+    // Lưới an toàn: màn này ghi CẢ hồ sơ, nên vào đây với bản nhập dở là xoá
+    // trắng những mục không đi qua. Đã xảy ra thật khi mấy mục trong phần Cá
+    // nhân dẫn thẳng vào giữa luồng: ngày sinh ghi xuống thành "-00-00".
+    //
+    // Thà dừng và báo còn hơn ghi đè hỏng thứ khách đã nhập.
+    const bao = kiemNgaySinh(ngay, thang, nam);
+    if (bao) {
+      setLoi(`${bao}. Vào lại phần Cá nhân rồi chỉnh sửa hồ sơ từ đầu.`);
+      setDangLuu(false);
+      return;
+    }
+
     luuHoSo({
       ho_ten: b.hoTen,
       ngay_sinh: `${b.nam}-${b.thang.padStart(2, '0')}-${b.ngay.padStart(2, '0')}`,

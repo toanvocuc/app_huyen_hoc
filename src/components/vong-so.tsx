@@ -46,8 +46,13 @@ export function VongSo({ so, co = 190 }: { so: number | null; co?: number }) {
         <Circle cx={c} cy={c} r="27" fill="none" stroke={MAU.vang} strokeWidth="0.4" opacity={0.5} />
       </Svg>
 
+      {/*
+        Dùng phông thân, không dùng phông có chân: Cormorant viết chữ số kiểu cổ
+        nên số 4 nằm thấp còn số 6 nằm cao, đặt giữa vòng tròn là thấy lệch tâm
+        theo từng số. Xem thêm ghi chú ở o-vuong-sinh.tsx.
+      */}
       <Text
-        style={{ fontFamily: CHU.hoaDam, fontSize: co * 0.34, lineHeight: co * 0.4, color: MAU.vang }}>
+        style={{ fontFamily: CHU.thanDam, fontSize: co * 0.34, lineHeight: co * 0.4, color: MAU.vang }}>
         {so ?? '—'}
       </Text>
     </View>

@@ -1,5 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // App chỉ có một bộ màu, nền xanh đêm, không đổi theo sáng tối của máy. Để
+  // mặc định 'media' thì bản web chết ngay lúc dựng: NativeWind ném lỗi
+  // "Cannot manually set color scheme". Không chỗ nào dùng biến thể dark: nên
+  // đổi sang 'class' không làm đổi giao diện.
+  darkMode: 'class',
   content: ['./src/app/**/*.{js,jsx,ts,tsx}', './src/components/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {

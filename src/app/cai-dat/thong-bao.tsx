@@ -9,7 +9,6 @@ import {
   daCoQuyen,
   dangKyMaDay,
   datLichLaBai,
-  guiThu,
   huyLichLaBai,
   vuongMacMaDay,
   xinQuyen,
@@ -21,7 +20,6 @@ export default function CaiDatThongBao() {
   const { hoSo, setHoSo } = useHoSo();
   const [coQuyen, setCoQuyen] = useState<boolean | null>(null);
   const [dangXin, setDangXin] = useState(false);
-  const [daGuiThu, setDaGuiThu] = useState<'xong' | 'hong' | null>(null);
 
   // Khách có thể sang phần cài đặt của máy rồi quay lại, nên đọc lại quyền mỗi lần
   // màn này hiện lên chứ không chỉ đọc một lần lúc dựng.
@@ -165,28 +163,6 @@ export default function CaiDatThongBao() {
           })}
         </View>
       </View>
-
-      {coQuyen ? (
-        <Pressable
-          onPress={async () => {
-            // Báo cả khi hỏng. Trước đây gửi không được thì nút im như không ai
-            // bấm, người thử không biết là app hỏng hay mình bấm hụt.
-            try {
-              setDaGuiThu((await guiThu()) ? 'xong' : 'hong');
-            } catch {
-              setDaGuiThu('hong');
-            }
-          }}
-          className="mt-6 min-h-[48px] justify-center rounded-xl border border-vien bg-nen-nhat px-5 active:opacity-70">
-          <Text style={{ fontFamily: CHU.thanVua }} className="text-center text-sm text-chu-phu">
-            {daGuiThu === 'xong'
-              ? 'Đã gửi, chờ vài giây'
-              : daGuiThu === 'hong'
-                ? 'Chưa gửi được, kiểm lại quyền thông báo trong cài đặt máy'
-                : 'Gửi thử một tin'}
-          </Text>
-        </Pressable>
-      ) : null}
 
       {vuongMac && tinTuc ? (
         <View className="mt-5">

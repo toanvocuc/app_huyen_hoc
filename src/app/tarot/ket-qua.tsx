@@ -7,7 +7,7 @@ import { LaBai } from '@/components/la-bai';
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
 import { NenKhungVan } from '@/components/nen-anh';
 import { CHU } from '@/constants/giao-dien';
-import { layPhien } from '@/lib/phien-rut';
+import { danhDauDaGhi, layPhien } from '@/lib/phien-rut';
 import { ghiSuKien } from '@/lib/su-kien';
 import { maNguoiDung, supabase } from '@/lib/supabase';
 import { yNghia } from '@/lib/tarot';
@@ -24,7 +24,7 @@ export default function KetQua() {
   }, []);
 
   async function luuLanRut() {
-    if (!phien) return;
+    if (!phien || phien.daGhi) return;
     try {
       const ma = await maNguoiDung();
       if (!ma) return;
@@ -32,8 +32,8 @@ export default function KetQua() {
         nguoi_dung: ma,
         kieu_trai: phien.cacLa.length === 1 ? 'mot-la' : 'ba-la',
         cac_la: phien.cacLa.map((l) => ({ ma: l.la.ma, nguoc: l.nguoc, vi_tri: l.viTri })),
-        cau_hoi: phien.cauHoi || null,
       });
+      danhDauDaGhi();
     } catch (e) {
       console.warn('[lan-rut]', e);
     }
@@ -51,7 +51,7 @@ export default function KetQua() {
   const dang = phien.cacLa[dangXem];
 
   return (
-    <ManHinh quayLai nenPhu={<NenKhungVan />} tieuDe={nhieuLa ? 'Ba lá của bạn' : 'Lá bài của bạn'} phu={phien.cauHoi || undefined}>
+    <ManHinh quayLai nenPhu={<NenKhungVan />} tieuDe={nhieuLa ? 'Ba lá của bạn' : 'Lá bài của bạn'}>
       {nhieuLa ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5">
           <View className="flex-row gap-3 px-5">

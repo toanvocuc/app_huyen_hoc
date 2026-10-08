@@ -97,7 +97,7 @@ export default function HomNay() {
               nhan="Lưu ảnh để chia sẻ"
               kieu="vien"
               onPress={() => {
-                datPhien([la], '');
+                datPhien([la]);
                 router.push('/chia-se');
               }}
             />

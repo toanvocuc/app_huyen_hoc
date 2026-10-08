@@ -84,9 +84,10 @@ export function tachGio(gio: string | null | undefined): { gio: number; phut: nu
  * Mặc định expo-notifications NUỐT mọi thông báo nổ lúc app đang ở trước mặt.
  * Nó giao cho app tự quyết, mà không khai thì mặc định là không hiện gì.
  *
- * Vì vậy nút "Gửi thử một tin" bắn tin sau 5 giây, nhưng người bấm thì vẫn đang
- * nhìn màn cài đặt, nên không thấy gì. Đúng cái nút sinh ra để chứng minh thông
- * báo chạy lại là cái duy nhất không chạy.
+ * Chuyện này từng làm nút gửi thử trong màn cài đặt trông như hỏng: tin nổ sau
+ * năm giây mà người bấm vẫn đang nhìn màn hình, nên không thấy gì. Nút đó đã bỏ,
+ * nhưng khai báo vẫn cần: lời nhắc bảy giờ sáng có thể nổ đúng lúc khách đang mở
+ * app, và lúc đó nó cũng sẽ bị nuốt y như vậy.
  *
  * Trên Android phải để `shouldPlaySound` là true: tài liệu của thư viện ghi rõ
  * đặt false thì dải thông báo không bung ra, bất kể mức ưu tiên.
@@ -166,31 +167,6 @@ export async function datLichLaBai(gioNhac: string | null): Promise<boolean> {
       type: SchedulableTriggerInputTypes.DAILY,
       hour: gio,
       minute: phut,
-      channelId: KENH,
-    },
-  });
-  return true;
-}
-
-/**
- * Bắn một tin thử sau vài giây.
- *
- * Lời nhắc thật chỉ chạy lúc 6 tới 8 giờ sáng, nên không có nút này thì muốn biết
- * thông báo có chạy hay không phải đợi tới hôm sau.
- */
-export async function guiThu(): Promise<boolean> {
-  if (XEM_THU) return false;
-  if (!(await daCoQuyen())) return false;
-  await taoKenh();
-  await scheduleNotificationAsync({
-    content: {
-      title: 'Thông báo đang chạy tốt',
-      body: 'Mỗi sáng bạn sẽ nhận được một tin như thế này.',
-      data: { man: '/' },
-    },
-    trigger: {
-      type: SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 5,
       channelId: KENH,
     },
   });
