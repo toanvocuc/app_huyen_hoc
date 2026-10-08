@@ -16,7 +16,6 @@ Nguồn đối chiếu: `trang-web/quyen-rieng-tu.html` mục 2, và `src/lib/`.
 | Giờ sinh | Lúc lập hồ sơ | Không |
 | Nơi sinh | Lúc lập hồ sơ | Không |
 | Giới tính | Lúc lập hồ sơ | Có |
-| Câu hỏi gõ khi rút bài | Khi người dùng tự gõ | Không |
 | Lịch sử rút bài | Mỗi lần rút | Có |
 | Mã tài khoản ẩn danh | Lần mở app đầu tiên | Có |
 | Mã thiết bị nhận thông báo | Chỉ khi người dùng bật thông báo | Không |
@@ -31,8 +30,8 @@ thanh toán, email, mật khẩu.
 
 ## Google Play — mục "Data safety"
 
-Đường đi: Play Console → app → **Policy and programmes** → **App content** →
-**Data safety** → Start / Manage.
+Đường đi: Play Console → app → **Monitor and improve** → **Policy and**
+**programmes** → **App content** → **Data safety** → Start / Manage.
 
 ### Bước 1 — hai câu hỏi mở đầu
 
@@ -67,15 +66,20 @@ Tick đúng bốn nhóm dưới, không tick gì thêm.
 | Required or optional | **Required** |
 | Purposes | App functionality, Personalisation |
 
-#### App activity → Other user-generated content
-*(câu hỏi khách gõ khi rút bài, và lịch sử rút bài)*
+#### App activity → Other actions
+*(lịch sử rút bài)*
+
+> Không chọn *Other user-generated content*. Mục đó dành cho chữ do khách tự
+> viết: tiểu sử, ghi chú, câu trả lời mở. Từ lúc bỏ ô câu hỏi khi rút bài thì
+> app không còn lưu chữ nào do khách gõ. Lịch sử rút bài là **hành động trong
+> app**, nên thuộc *Other actions*.
 
 | Trường | Chọn |
 |---|---|
 | Collected | Yes |
 | Shared | **No** |
 | Processed ephemerally | No |
-| Required or optional | **Optional** |
+| Required or optional | **Required** |
 | Purposes | App functionality |
 
 #### App activity → App interactions
@@ -89,8 +93,8 @@ Tick đúng bốn nhóm dưới, không tick gì thêm.
 | Required or optional | **Required** |
 | Purposes | **Analytics**, App functionality |
 
-#### Device or other IDs → Device or other IDs
-*(mã tài khoản ẩn danh và mã thiết bị nhận thông báo)*
+#### Personal info → User IDs
+*(mã tài khoản ẩn danh)*
 
 | Trường | Chọn |
 |---|---|
@@ -99,6 +103,29 @@ Tick đúng bốn nhóm dưới, không tick gì thêm.
 | Processed ephemerally | No |
 | Required or optional | **Required** |
 | Purposes | App functionality |
+
+#### Device or other IDs → Device or other IDs
+*(mã thiết bị nhận thông báo)*
+
+> Google tách hai thứ này: *User IDs* là mã gắn với một tài khoản, *Device or
+> other IDs* là mã gắn với một máy. Mã tài khoản Supabase thuộc loại đầu, mã
+> nhận thông báo thuộc loại sau. Trước đây tôi gộp cả hai vào một mục, như vậy
+> là khai thiếu.
+
+| Trường | Chọn |
+|---|---|
+| Collected | Yes |
+| Shared | **No** |
+| Processed ephemerally | No |
+| Required or optional | **Optional** |
+| Purposes | App functionality, **Developer communications** |
+
+> Đây là ô DUY NHẤT chọn Optional. `dangKyMaDay` chỉ chạy sau khi `xinQuyen`
+> trả về true, nên khách từ chối quyền thông báo là không có mã nào được tạo.
+> Mấy ô kia app tự thu, khách không tắt được.
+>
+> Có Developer communications vì ngoài lời nhắc lá bài, còn một kênh gửi tin
+> theo đợt từ phía công ty qua `supabase/gui-thong-bao.mjs`.
 
 > Supabase và Expo là **nhà cung cấp hạ tầng xử lý thay mình**, không tính là
 > "shared" theo định nghĩa của Google. Vì vậy mọi dòng đều trả lời Shared = No.
@@ -146,7 +173,7 @@ sang app hay website khác, và không chia sẻ dữ liệu cho mạng quảng 
 | Loại dữ liệu Apple | Tương ứng | Purpose | Linked to You | Tracking |
 |---|---|---|---|---|
 | Contact Info → **Name** | Họ và tên | App Functionality | **Yes** | No |
-| User Content → **Other User Content** | Câu hỏi khi rút bài, lịch sử rút bài | App Functionality | **Yes** | No |
+| Usage Data → **Product Interaction** | Lịch sử rút bài | App Functionality | **Yes** | No |
 | Identifiers → **User ID** | Mã tài khoản ẩn danh | App Functionality | **Yes** | No |
 | Identifiers → **Device ID** | Mã thiết bị nhận thông báo | App Functionality | **Yes** | No |
 | Usage Data → **Product Interaction** | Ba mốc sử dụng | Analytics, App Functionality | **Yes** | No |
