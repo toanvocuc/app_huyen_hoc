@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +10,7 @@ import { NenKhungVan } from '@/components/nen-anh';
 import { DangTai, Nut, Trong } from '@/components/nen';
 import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
+import { SO_LUOT_MOI_NGAY, useLuotRut } from '@/lib/luot-rut';
 import type { KieuTrai } from '@/lib/tarot';
 
 const KIEU: { ma: KieuTrai; ten: string; mo: string; so: number }[] = [
@@ -20,8 +21,12 @@ const KIEU: { ma: KieuTrai; ten: string; mo: string; so: number }[] = [
 export default function ChonKieuTrai() {
   const { boBai, loi, dangTai } = useBoBai();
   const [kieu, setKieu] = useState<KieuTrai>('mot-la');
-  const [cauHoi, setCauHoi] = useState('');
   const le = useSafeAreaInsets();
+  const { conLai, hetLuot, taiLai } = useLuotRut();
+
+  // Đếm lại mỗi lần màn này hiện lên. Rút xong khách quay về đây, không đọc lại
+  // thì số lượt còn lại vẫn là số cũ.
+  useFocusEffect(useCallback(() => taiLai(), [taiLai]));
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
@@ -67,28 +72,26 @@ export default function ChonKieuTrai() {
             ))}
           </View>
 
-          <View
-            style={{ borderColor: MAU.vien }}
-            className="mt-5 flex-row items-start gap-2 rounded-2xl border bg-nen-nhat px-4 py-3">
-            <TextInput
-              value={cauHoi}
-              onChangeText={setCauHoi}
-              placeholder="Câu hỏi của bạn (không bắt buộc)"
-              placeholderTextColor={MAU.chuMo}
-              multiline
-              style={{ fontFamily: CHU.than, minHeight: 44, flex: 1 }}
-              className="text-base leading-6 text-chu-chinh"
-              textAlignVertical="top"
-            />
-            <Ionicons name="pencil-outline" size={17} color={MAU.chuMo} style={{ marginTop: 3 }} />
-          </View>
-
           <View className="mt-5">
             <Nut
-              nhan="Bắt đầu rút bài"
-              tat={!boBai?.length}
-              onPress={() => router.push({ pathname: '/tarot/rut', params: { kieu, cauHoi } })}
+              nhan={hetLuot ? 'Hết lượt hôm nay' : 'Bắt đầu rút bài'}
+              tat={!boBai?.length || hetLuot}
+              onPress={() => router.push({ pathname: '/tarot/rut', params: { kieu } })}
             />
+            {hetLuot ? (
+              <Text
+                style={{ fontFamily: CHU.than, fontSize: 14, lineHeight: 22 }}
+                className="mt-3 text-center text-chu-phu">
+                Hôm nay bạn đã rút đủ {SO_LUOT_MOI_NGAY} lần. Hỏi đi hỏi lại một chuyện thì quẻ
+                loãng dần, nên mai hẵng rút tiếp. Lá bài hôm nay vẫn xem được bình thường.
+              </Text>
+            ) : (
+              <Text
+                style={{ fontFamily: CHU.than, fontSize: 13 }}
+                className="mt-3 text-center text-chu-mo">
+                Còn {conLai} trên {SO_LUOT_MOI_NGAY} lượt hôm nay
+              </Text>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>

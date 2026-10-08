@@ -3,10 +3,21 @@ import { MAU_LA_BAI } from '@/data/noi-dung-mau';
 import { VI_TRI, type LaDaRut } from '@/lib/tarot';
 import { XEM_THU } from '@/lib/xem-thu';
 
-let phien: { cacLa: LaDaRut[]; cauHoi: string } | null = null;
+let phien: { cacLa: LaDaRut[]; daGhi: boolean } | null = null;
 
-export function datPhien(cacLa: LaDaRut[], cauHoi = '') {
-  phien = { cacLa, cauHoi };
+export function datPhien(cacLa: LaDaRut[]) {
+  phien = { cacLa, daGhi: false };
+}
+
+/**
+ * Đánh dấu lần rút này đã ghi xuống máy chủ.
+ *
+ * Màn kết quả ghi vào bảng lan_rut lúc dựng. Quay lại màn đó, ví dụ từ màn chia
+ * sẻ, là nó dựng lại và ghi thêm một dòng nữa. Mà số dòng trong ngày chính là số
+ * lượt rút còn lại, nên khách mất một lượt mình không hề dùng.
+ */
+export function danhDauDaGhi() {
+  if (phien) phien.daGhi = true;
 }
 
 /**
@@ -23,7 +34,8 @@ export function layPhien() {
         nguoc: i === 1,
         viTri: v,
       })),
-      cauHoi: 'Công việc sắp tới của mình thế nào?',
+      // Chế độ xem thử không ghi gì xuống máy chủ, nên coi như đã ghi rồi.
+      daGhi: true,
     };
   }
   return phien;
