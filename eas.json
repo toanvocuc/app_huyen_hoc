@@ -28,6 +28,14 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6818451984",
+        "appleTeamId": "U5PXQTH7K8",
+        "ascApiKeyPath": "D:/khoa-apple/AuthKey_QWA3JZA77Z.p8",
+        "ascApiKeyId": "QWA3JZA77Z",
+        "ascApiKeyIssuerId": "67bb22a5-302e-4cbb-9364-fb4201b6f51a"
+      }
+    }
   }
 }
