@@ -8,9 +8,13 @@ ngoặc là độ dài thật của đoạn bên dưới.
 ## Tên ứng dụng (tối đa 30)
 
 ```
-Omora — Tarot & Tử vi
+Omora – Tarot & Chiêm tinh
 ```
-(20 ký tự)
+(26 ký tự)
+
+Dùng chung cho cả Google Play và App Store, để hai chợ không lệch nhau.
+Tên dưới biểu tượng trên máy vẫn để `Omora` cho ngắn — thứ đó nằm ở
+`app.json`, đổi là phải đóng gói lại.
 
 Không nhét từ khoá vào tên. Google phạt chuyện đó, và tên dài bị cắt cụt trên
 máy khách.
