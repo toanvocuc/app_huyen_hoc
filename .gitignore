@@ -52,3 +52,6 @@ example
 
 # khoa quan tri, KHONG BAO GIO dua vao app
 .env.quan-tri
+
+# Ban web xuat tam de chup anh nop cho
+dist-web/
