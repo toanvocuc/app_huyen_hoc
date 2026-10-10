@@ -207,6 +207,28 @@ sang app hay website khác, và không chia sẻ dữ liệu cho mạng quảng 
 
 ---
 
+## Năm mục App Store chặn mà không ai nhắc trước
+
+Bấm **Add for Review** rồi mới hiện ra, và không đọc được qua API — nên kiểm
+bằng mắt trước khi bấm.
+
+| Mục | Ở đâu | Điền gì |
+|---|---|---|
+| **Copyright** | trang phiên bản | `2026 NEXUS GROUP INVESTMENT JOINT STOCK COMPANY` |
+| **Content Rights** | App Information | Có dùng nội dung bên thứ ba — tranh Rider-Waite 1909 đã hết hạn bản quyền, phông Google Fonts giấy phép mở |
+| **App Review Contact** | trang phiên bản | Tên, điện thoại, email người Apple gọi khi có thắc mắc |
+| **Pricing** | mục Pricing riêng | Chọn **Free**. Không chọn là không nộp được, dù app miễn phí |
+| **App Privacy** | mục App Privacy riêng | Điền xong phải bấm **Publish**, không thì Apple vẫn tính là chưa khai |
+
+> Chỗ hay nhầm nhất là **App Privacy**: tick đủ các loại dữ liệu rồi tưởng xong,
+> nhưng còn một nút **Publish** riêng. Chưa bấm thì Apple vẫn chặn.
+
+> Ô **App Review Contact** nên kèm ghi chú cho người duyệt: app không cần đăng
+> nhập nên không có tài khoản thử, câu tuyên bố "chỉ mang tính giải trí" nằm
+> ngay trong app, và nút hỏi chuyên gia chỉ mở Zalo chứ không thu tiền.
+
+---
+
 ## Những chỗ dễ bị từ chối
 
 | Rủi ro | Cách tránh |
