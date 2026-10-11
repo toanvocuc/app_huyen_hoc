@@ -147,6 +147,33 @@ cụ thể, tóm tắt là mất manh mối.
 
 ---
 
+## Trước mỗi lần đẩy cập nhật từ xa, so vân tay đã
+
+Bản cập nhật chỉ tới được máy khách khi vân tay của nó **khớp đúng** vân tay
+của bản đã cài. Lệch một chút là nó rơi vào khoảng không: không ai nhận, mà
+lệnh vẫn báo thành công, không có lỗi nào.
+
+```
+npx eas-cli fingerprint:compare --build-id <ma ban dong goi dang song>
+```
+
+Khớp thì mới đẩy. Lệch thì nó in ra đúng những file nào gây lệch.
+
+> Đã sập một lần: thêm `credentials.json` vào `.gitignore` và thêm cấu hình
+> chứng chỉ iOS vào `eas.json` lúc làm bản iOS. Cả hai chẳng đụng gì tới phần
+> native, nhưng vân tay vẫn đổi, và bản Android trên chợ mất đường nhận cập
+> nhật mà không ai biết.
+>
+> Chữa được bằng cách trả hai file đó về đúng trạng thái lúc đóng gói, đẩy,
+> rồi khôi phục — vì bản JavaScript thật sự vẫn tương thích. Nhưng tốt nhất là
+> so trước.
+>
+> `.gitignore` giờ đã được bỏ ra trong `fingerprint.config.js`. `eas.json` thì
+> không, vì trong đó có `env` và `channel` — hai thứ đổi thật thì bản cũ chạy
+> hỏng.
+
+---
+
 ## Mấy chỗ hay vướng
 
 **Tài khoản tổ chức không phải chạy thử nghiệm kín.** Google bắt tài khoản cá
