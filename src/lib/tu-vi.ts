@@ -110,16 +110,35 @@ export function buocDi(nhip: number, co: number): number {
 /**
  * Chọn một bài trong kho. Kho rỗng thì trả null chứ không làm app chết.
  *
- * Phần theo ngày đi đều để chắc chắn không lặp sớm, còn phần theo cung thì băm
- * để 12 cung không dắt tay nhau cùng nhảy sang bài kế tiếp.
+ * Hai phần cộng lại: phần theo ngày và phần theo cung.
  *
- * Thử dùng băm cho cả hai phần rồi, và bài kiểm bắt được: năm ngày liên tiếp với
- * kho năm bài chỉ ra ba bài khác nhau, tức là có hôm lặp lại bài của hôm trước.
+ * Phần theo ngày đi đều một bước nguyên tố cùng nhau với cỡ kho, nên đi hết kho
+ * mới quay lại. Thử băm cho phần này rồi và bài kiểm bắt được: năm ngày liên
+ * tiếp với kho năm bài chỉ ra ba bài, tức có hôm lặp lại bài hôm trước.
+ *
+ * Phần theo cung TRƯỚC ĐÂY cũng băm, và đó là một lỗi. Băm thì hai cung khác
+ * nhau vẫn có thể cho ra cùng một số dư, nên mỗi ngày có chừng hai trong mười
+ * hai cung đọc ra chữ y hệt. Mục tình cảm, công việc, sức khoẻ không có bài
+ * riêng cho từng cung nên cả mười hai cùng bốc một rổ, lỗi này lộ rõ nhất ở đó:
+ * hai người bạn khác cung ngồi so điện thoại là thấy ngay.
+ *
+ * Giờ dùng bước nhảy thay cho băm. Nhân thứ tự cung với một bước nguyên tố cùng
+ * nhau với cỡ kho thì mười hai tích đó chắc chắn khác nhau — không còn chuyện
+ * may rủi. Kho nhỏ hơn mười hai thì trùng là không tránh được, nhưng không kho
+ * nào nhỏ vậy.
  */
 function chon(kho: DongTuVi[], moc: number, muc: MucTuVi, cung: MaCung): string | null {
-  if (kho.length === 0) return null;
-  const i = (moc * buocDi(NHIP[muc], kho.length) + bam(`${muc}|${cung}`)) % kho.length;
-  return kho[i].noi_dung;
+  const co = kho.length;
+  if (co === 0) return null;
+
+  const buocNgay = buocDi(NHIP[muc], co);
+  // Bước giữa hai cung phải khác bước ngày, không thì cung này hôm nay trùng
+  // cung kế bên hôm qua — vẫn là một kiểu lặp, chỉ khó thấy hơn.
+  let buocCung = buocDi(NHIP[muc] + 7, co);
+  if (buocCung === buocNgay) buocCung = buocDi(buocCung + 1, co);
+
+  const thuTu = Math.max(0, THU_TU_CUNG.indexOf(cung));
+  return kho[(moc * buocNgay + thuTu * buocCung) % co].noi_dung;
 }
 
 export type BaiTuVi = {

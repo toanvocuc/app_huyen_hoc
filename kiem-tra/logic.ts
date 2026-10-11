@@ -196,6 +196,28 @@ const soTheoCung = CUNG.map((c) => layBaiTuVi([], c.ma, 'ngay', luc1).soMayMan);
 const buoc = soTheoCung.slice(1).map((v, i) => v - soTheoCung[i]);
 kiem('so may man khong chay thanh day deu', new Set(buoc).size > 3, true);
 
+// Ba muc tinh_cam, cong_viec, suc_khoe khong co bai rieng cho tung cung: ca 12
+// cung boc chung mot ro. Vay ma van phai ra 12 bai khac nhau, khong ngay nao trung.
+//
+// Truoc day phan theo cung dung ham bam. Bam thi hai cung khac nhau van co the
+// cho cung mot so du, nen do thuc te moi ngay co chung hai trong muoi hai cung
+// doc ra chu y het. Hai nguoi ban khac cung ngoi so dien thoai la thay.
+const khoChung = lam('tinh_cam', 'chung', 30);
+let soNgayTrung = 0;
+for (let i = 0; i < 400; i++) {
+  const luc = new Date(Date.UTC(2026, 0, 1 + i, 5));
+  const bai = CUNG.map((c) => layBaiTuVi(khoChung, c.ma, 'ngay', luc).tinhCam);
+  if (new Set(bai).size !== 12) soNgayTrung++;
+}
+kiem('mot ro dung chung: 12 cung khong trung, do 400 ngay', soNgayTrung, 0);
+
+// Cung mot cung thi doi ngay van phai doi bai, dung de viec gian 12 cung lam hong
+// phan di theo ngay.
+const theoNgay = Array.from({ length: 30 }, (_, i) =>
+  layBaiTuVi(khoChung, 'leo', 'ngay', new Date(Date.UTC(2026, 0, 1 + i, 5))).tinhCam
+);
+kiem('mot cung, 30 ngay lien ra 30 bai khac nhau', new Set(theoNgay).size, 30);
+
 const diemTheoCung = CUNG.map((c) => layBaiTuVi([], c.ma, 'ngay', luc1).diem);
 kiem('diem sao khong lap theo chu ky 4', diemTheoCung[0] !== diemTheoCung[4] || diemTheoCung[1] !== diemTheoCung[5], true);
 
