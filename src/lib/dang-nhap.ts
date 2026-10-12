@@ -74,7 +74,17 @@ export class KhachHuy extends Error {
  */
 async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   const ve = duongQuayVe();
-  const tuyChon = { redirectTo: ve, skipBrowserRedirect: true };
+  const tuyChon = {
+    redirectTo: ve,
+    skipBrowserRedirect: true,
+    // Bắt Google hiện bảng chọn tài khoản.
+    //
+    // Mặc định nó im lặng dùng luôn tài khoản đang đăng nhập sẵn trên máy, nên
+    // khách muốn đổi sang tài khoản khác thì không có đường nào: bấm bao nhiêu
+    // lần cũng ra đúng tài khoản cũ. Apple thì luôn tự hiện bảng chọn nên không
+    // cần, và nhét thêm tham số lạ vào có khi nó từ chối.
+    ...(nha === 'google' ? { queryParams: { prompt: 'select_account' } } : {}),
+  };
 
   const { data, error } = gan
     ? await supabase.auth.linkIdentity({ provider: nha, options: tuyChon })
