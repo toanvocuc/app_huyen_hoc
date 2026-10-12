@@ -24,9 +24,9 @@ const { width: RONG, height: CAO } = Dimensions.get('window');
  * đúng dữ liệu đó. Đừng thêm dòng nào về sao lưu hay mua bán khi chưa có.
  */
 const LOI_ICH = [
-  'Đổi máy hay cài lại app, hồ sơ vẫn còn nguyên',
-  'Xem lại mọi lần rút bài trước đây',
-  'Một hồ sơ dùng chung trên nhiều máy',
+  'Đổi máy vẫn giữ nguyên hồ sơ',
+  'Xem lại mọi lần rút bài cũ',
+  'Một hồ sơ, dùng trên nhiều máy',
 ];
 
 export default function DangNhap() {
@@ -70,11 +70,11 @@ export default function DangNhap() {
       />
 
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
-        <View className="items-center pt-8">
-          <Logo rong={118} />
+        {/* Logo đặt ở khoảng một phần ba trên, cho cân với mảng ngân hà.
+            Dính sát đỉnh thì nửa trên màn hình trống hoác. */}
+        <View className="flex-1 items-center justify-center">
+          <Logo rong={132} />
         </View>
-
-        <View className="flex-1" />
 
         <View className="px-8">
           <Text
@@ -84,17 +84,24 @@ export default function DangNhap() {
             <Text style={{ color: MAU.vang }}>hồ sơ của bạn</Text>
           </Text>
 
-          <View className="mx-auto mt-6 max-w-[320px] gap-2.5">
-            {LOI_ICH.map((d) => (
-              <View key={d} className="flex-row items-start gap-2.5">
-                <Ionicons name="sparkles" size={15} color={MAU.vang} style={{ marginTop: 3 }} />
+          {/* Trước đây mỗi dòng có một biểu tượng sao ở lề trái. Ba ngôi xếp
+              dọc trông vụn, và dòng nào dài quá thì xuống hàng làm lệch nhịp
+              cả cột. Giờ căn giữa, một dấu sao duy nhất làm mốc cho cả khối. */}
+          <View className="mt-5 items-center">
+            <Ionicons name="sparkles" size={14} color={MAU.vang} />
+            <View className="mt-3 gap-1.5">
+              {LOI_ICH.map((d) => (
                 <Text
-                  style={{ fontFamily: CHU.than, fontSize: 14.5, lineHeight: 22 }}
-                  className="flex-1 text-chu-phu">
+                  key={d}
+                  // KHÔNG khoá một dòng. Đo ra: máy nhỏ 320dp để cỡ chữ lớn thì
+                  // hai dòng tràn khung, mà khoá lại là cắt cụt chữ. Căn giữa
+                  // nên xuống hàng vẫn cân, cắt cụt thì không chữa được.
+                  style={{ fontFamily: CHU.than, fontSize: 14.5, lineHeight: 24 }}
+                  className="text-center text-chu-phu">
                   {d}
                 </Text>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
         </View>
 
@@ -147,9 +154,8 @@ export default function DangNhap() {
           <Text
             style={{ fontFamily: CHU.than }}
             className="mt-4 text-center text-[11px] leading-5 text-chu-mo">
-            Chọn cách dùng ngay thì hồ sơ chỉ nằm trên máy này. Đổi máy hoặc gỡ app là mất, và
-            không khôi phục được. Vào mục Cá nhân đăng nhập sau lúc nào cũng được, dữ liệu đang có
-            vẫn giữ nguyên.
+            Dùng ngay thì hồ sơ chỉ nằm trên máy này. Đăng nhập sau trong mục Cá nhân cũng
+            được, dữ liệu vẫn giữ nguyên.
           </Text>
         </View>
       </SafeAreaView>
