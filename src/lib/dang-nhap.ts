@@ -123,8 +123,15 @@ export const ganApple = () => chayOAuth('apple', true);
 export function loiDeHieu(e: unknown): string {
   if (e instanceof KhachHuy) return e.message;
   const tho = e instanceof Error ? e.message : String(e);
-  if (/already|exists|duplicate/i.test(tho)) {
-    return 'Tài khoản này đã gắn với một hồ sơ khác. Đăng xuất rồi đăng nhập thẳng bằng nó.';
+  if (/already|exists|duplicate|identity_already/i.test(tho)) {
+    // Hay gặp nhất: khách từng bấm đăng nhập ở màn mở đầu bằng chính tài khoản
+    // này, nên nó đã thành một hồ sơ riêng. Supabase không cho một danh tính
+    // thuộc về hai hồ sơ, nên phải chọn giữ cái nào.
+    return (
+      'Tài khoản này đã dùng cho một hồ sơ khác rồi, nên không gắn thêm được. ' +
+      'Muốn dùng nó thì đăng xuất rồi đăng nhập thẳng bằng nó — nhưng hồ sơ đang ' +
+      'mở ở máy này sẽ không theo sang. Hoặc chọn một tài khoản khác.'
+    );
   }
   if (/not enabled|unsupported provider/i.test(tho)) {
     return 'Cách đăng nhập này chưa được bật. Báo lại giúp chúng tôi.';

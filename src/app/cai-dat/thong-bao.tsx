@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Linking, Pressable, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, Switch, Text, View } from 'react-native';
 
 import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -81,8 +81,30 @@ export default function CaiDatThongBao() {
         if (laBai) await datLichLaBai(hoSo?.gio_nhac ?? '07:00');
         await dangKyMaDay();
       } else {
-        // Hộp thoại của hệ điều hành chỉ hiện một lần. Từ lần sau phải vào cài đặt máy.
-        Linking.openSettings().catch(() => {});
+        // Hộp thoại xin quyền của hệ điều hành chỉ hiện ĐÚNG MỘT LẦN. Khách lỡ
+        // từ chối thì từ đó về sau bấm bao nhiêu lần cũng không hiện lại, phải
+        // tự vào cài đặt máy mà bật.
+        //
+        // Trước đây chỗ này gọi mở cài đặt rồi nuốt mọi lỗi. Máy nào không mở
+        // được là khách bấm mà chẳng thấy gì xảy ra, tưởng app hỏng.
+        Alert.alert(
+          'Cần bật trong cài đặt máy',
+          'Máy đang chặn thông báo của Omora. Bật lại trong phần cài đặt của ' +
+            'máy rồi quay lại đây.',
+          [
+            { text: 'Để sau', style: 'cancel' },
+            {
+              text: 'Mở cài đặt',
+              onPress: () =>
+                Linking.openSettings().catch(() =>
+                  Alert.alert(
+                    'Không mở được',
+                    'Vào Cài đặt máy → Ứng dụng → Omora → Thông báo để bật.'
+                  )
+                ),
+            },
+          ]
+        );
       }
     } finally {
       setDangXin(false);
