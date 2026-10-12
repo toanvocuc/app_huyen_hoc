@@ -15,7 +15,14 @@ import { Alert, Platform, Pressable, Text, View } from 'react-native';
 
 import { NutDangNhap } from '@/components/nut-dang-nhap';
 import { CHU, MAU } from '@/constants/giao-dien';
-import { dangXuat, ganApple, ganGoogle, KhachHuy, loiDeHieu } from '@/lib/dang-nhap';
+import {
+  DaCoHoSoKhac,
+  dangXuat,
+  ganApple,
+  ganGoogle,
+  KhachHuy,
+  loiDeHieu,
+} from '@/lib/dang-nhap';
 import { tinTaiKhoan, type TinTaiKhoan } from '@/lib/supabase';
 
 const LOI_ICH = ['Đổi máy vẫn giữ nguyên hồ sơ', 'Xem lại mọi lần rút bài cũ'];
@@ -45,10 +52,56 @@ export function KhoiTaiKhoan({ xongThi }: { xongThi: () => void }) {
       setTin(await tinTaiKhoan());
       xongThi();
     } catch (e) {
-      if (!(e instanceof KhachHuy)) setLoi(loiDeHieu(e));
+      if (e instanceof DaCoHoSoKhac) hoiChonHoSo(hang);
+      else if (!(e instanceof KhachHuy)) setLoi(loiDeHieu(e));
     } finally {
       setDangChay(null);
     }
+  }
+
+  /**
+   * Tài khoản vừa chọn đã thuộc về một hồ sơ Omora khác.
+   *
+   * Không phải ngõ cụt, và cũng không phải lỗi của khách. Hai hồ sơ thì không
+   * gộp được — gộp tự động là chắc chắn mất một bên mà không ai biết bên nào —
+   * nên đưa ra cho khách chọn, và nói thẳng cái giá của mỗi đường.
+   */
+  function hoiChonHoSo(hang: 'google' | 'apple') {
+    Alert.alert(
+      'Tài khoản này đã có hồ sơ riêng',
+      'Bạn từng đăng nhập Omora bằng tài khoản này, nên nó đã có một hồ sơ riêng. ' +
+        'Hai hồ sơ không gộp lại được, phải chọn giữ một.',
+      [
+        {
+          // Chọn lại nhà cung cấp, lần này bảng chọn tài khoản sẽ hiện ra nhờ
+          // tham số prompt=select_account, nên khách đổi được sang tài khoản khác.
+          text: 'Chọn tài khoản khác',
+          onPress: () => gan(hang),
+        },
+        {
+          // Đăng xuất là hồ sơ ẩn danh đang mở MẤT ĐƯỜNG VỀ: nó không gắn với
+          // tài khoản nào nên không đăng nhập lại được. Phải nói thẳng.
+          text: 'Bỏ hồ sơ này, dùng hồ sơ cũ',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Bỏ hồ sơ đang mở?',
+              'Hồ sơ trên máy này chưa gắn tài khoản nào, nên bỏ rồi là không ' +
+                'lấy lại được. Sau đó bạn đăng nhập lại bằng tài khoản vừa chọn ' +
+                'để về hồ sơ cũ.',
+              [
+                { text: 'Thôi', style: 'cancel' },
+                {
+                  text: 'Bỏ và đăng nhập',
+                  style: 'destructive',
+                  onPress: () => dangXuat().catch((e) => setLoi(loiDeHieu(e))),
+                },
+              ]
+            ),
+        },
+        { text: 'Để sau', style: 'cancel' },
+      ]
+    );
   }
 
   function hoiRoiThoat() {

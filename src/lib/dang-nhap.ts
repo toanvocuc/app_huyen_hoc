@@ -61,6 +61,20 @@ export class KhachHuy extends Error {
 }
 
 /**
+ * Tài khoản vừa chọn đã thuộc về một hồ sơ Omora khác.
+ *
+ * Supabase không cho một danh tính thuộc về hai hồ sơ, nên không gắn thêm được.
+ * Đây KHÔNG phải lỗi của khách và cũng không phải ngõ cụt: còn hai đường đi
+ * tiếp, và màn hình phải đưa ra cho khách chọn chứ đừng chỉ báo lỗi rồi đứng im.
+ */
+export class DaCoHoSoKhac extends Error {
+  constructor() {
+    super('Tài khoản này đã có một hồ sơ Omora khác');
+    this.name = 'DaCoHoSoKhac';
+  }
+}
+
+/**
  * Chạy một vòng OAuth.
  *
  * `gan` quyết định cách gọi:
@@ -89,7 +103,7 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   const { data, error } = gan
     ? await supabase.auth.linkIdentity({ provider: nha, options: tuyChon })
     : await supabase.auth.signInWithOAuth({ provider: nha, options: tuyChon });
-  if (error) throw error;
+  if (error) throw doiLoi(error, gan);
   if (!data?.url) throw new Error(`Chưa bật đăng nhập ${TEN[nha]} ở phía máy chủ.`);
 
   const kq = await WebBrowser.openAuthSessionAsync(data.url, ve);
@@ -99,7 +113,14 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   if (!ma) throw new Error('Trình duyệt quay về nhưng thiếu mã đăng nhập.');
 
   const { error: loiDoi } = await supabase.auth.exchangeCodeForSession(ma);
-  if (loiDoi) throw loiDoi;
+  if (loiDoi) throw doiLoi(loiDoi, gan);
+}
+
+/** Nhận ra trường hợp danh tính đã thuộc hồ sơ khác, để màn hình xử riêng. */
+function doiLoi(e: unknown, gan: boolean): unknown {
+  if (!gan) return e;
+  const tho = e instanceof Error ? e.message : String(e);
+  return /already|exists|duplicate|identity_already/i.test(tho) ? new DaCoHoSoKhac() : e;
 }
 
 /** Đăng nhập mới. Dùng ở màn mở đầu, lúc khách chưa chọn gì. */
