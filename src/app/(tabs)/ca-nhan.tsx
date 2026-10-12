@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
+import { DongPhienBan } from '@/components/dong-phien-ban';
 import { KhoiTaiKhoan } from '@/components/khoi-tai-khoan';
 import { DangTai } from '@/components/nen';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
@@ -114,6 +115,8 @@ export default function CaNhan() {
               className="mt-9 text-center text-xs leading-5 text-chu-mo">
               Nội dung trong app chỉ mang tính giải trí và tham khảo
             </Text>
+
+            <DongPhienBan />
           </ScrollView>
         )}
       </SafeAreaView>
