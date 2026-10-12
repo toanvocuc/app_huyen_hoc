@@ -127,20 +127,6 @@ export default function DangNhap() {
             />
           </View>
 
-          {/* Google hiện địa chỉ máy chủ nhận đăng nhập, mà máy chủ đó là
-              Supabase chứ không phải Omora — nó không biết "Omora" là gì. Khách
-              thấy một tên miền lạ hoắc thì nghi là trang giả. Báo trước ở ngay
-              chỗ họ sắp bấm thì hết nghi.
-
-              Đổi được dòng đó, nhưng phải trỏ tên miền riêng vào Supabase và
-              việc đó đòi gói trả phí. Để dành tới khi app có doanh thu. */}
-          <Text
-            style={{ fontFamily: CHU.than }}
-            className="mt-3 text-center text-[11px] leading-4 text-chu-mo">
-            Trang đăng nhập là của Google. Địa chỉ supabase.co hiện ở đó là máy chủ giữ hồ sơ
-            cho Omora.
-          </Text>
-
           <View className="my-5 flex-row items-center gap-3">
             <View style={{ backgroundColor: MAU.vien }} className="h-px flex-1" />
             <Text style={{ fontFamily: CHU.than }} className="text-xs text-chu-mo">
