@@ -28,10 +28,16 @@ const TEN: Record<NhaCungCap, string> = { google: 'Google', apple: 'Apple' };
 /**
  * Địa chỉ trình duyệt quay về sau khi đăng nhập xong.
  *
- * Phải khai đúng chuỗi này ở hai nơi. Thiếu một là trình duyệt đăng nhập xong
- * rồi đứng im, không biết quay về đâu:
- *   - Supabase: Authentication → URL Configuration → Redirect URLs
- *   - Google Cloud: Authorized redirect URIs của mã ứng dụng
+ * Chuỗi này khai ở Supabase: Authentication → URL Configuration → Redirect URLs.
+ *
+ * ĐỪNG khai nó bên Google Cloud. Google không bao giờ gọi thẳng vào app: nó trả
+ * về cho Supabase trước, rồi Supabase mới đẩy tiếp về đây. Nên bên Google phải
+ * khai địa chỉ của Supabase:
+ *
+ *     https://dgoyowwhblqmdsnpxwgo.supabase.co/auth/v1/callback
+ *
+ * Khai nhầm `omora://...` vào ô của Google là Google từ chối ngay từ đầu, vì nó
+ * chỉ nhận địa chỉ bắt đầu bằng https.
  */
 export function duongQuayVe(): string {
   return Linking.createURL('dang-nhap-xong');
