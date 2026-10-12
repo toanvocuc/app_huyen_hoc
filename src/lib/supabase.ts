@@ -33,6 +33,10 @@ export const supabase = createClient(url ?? 'https://xem-thu.invalid', anonKey ?
     persistSession: true,
     // Tắt vì app di động không có địa chỉ trang web để đọc mã đăng nhập.
     detectSessionInUrl: false,
+    // Luồng PKCE: trình duyệt trả về một mã dùng một lần, app đổi mã đó lấy
+    // phiên. Luồng kia nhét thẳng thẻ đăng nhập vào địa chỉ, mà địa chỉ thì
+    // nằm lại trong lịch sử trình duyệt và trong log hệ thống.
+    flowType: 'pkce',
   },
 });
 
@@ -55,4 +59,17 @@ export async function maNguoiDung(): Promise<string | null> {
   if (XEM_THU) return 'xem-thu';
   const { data } = await supabase.auth.getUser();
   return data.user?.id ?? null;
+}
+
+/**
+ * Phiên hiện tại có phải tài khoản ẩn danh không.
+ *
+ * Dùng để màn Cá nhân biết lúc nào nên mời khách đăng nhập thật. Supabase đánh
+ * dấu sẵn bằng cờ `is_anonymous`, không phải tự suy ra từ chuyện có email hay
+ * không — tài khoản thật đăng nhập bằng Apple cũng có thể giấu email.
+ */
+export async function laAnDanh(): Promise<boolean> {
+  if (XEM_THU) return true;
+  const { data } = await supabase.auth.getUser();
+  return data.user?.is_anonymous ?? false;
 }
