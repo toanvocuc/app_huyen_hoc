@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
+import { MoiDangNhap } from '@/components/moi-dang-nhap';
 import { DangTai } from '@/components/nen';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CAO_THANH_TAB, CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
@@ -13,7 +14,7 @@ import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
 export default function CaNhan() {
-  const { hoSo, dangTai } = useHoSo();
+  const { hoSo, dangTai, taiLai } = useHoSo();
   const ns = tachNgay(hoSo?.ngay_sinh ?? null);
   const ma = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
   const le = useSafeAreaInsets();
@@ -64,6 +65,10 @@ export default function CaNhan() {
                 </Text>
               </Pressable>
             </View>
+
+            {/* Chỉ hiện khi đang dùng tài khoản ẩn danh. Gắn xong thì đọc lại
+                hồ sơ, vì gắn tài khoản có thể bổ sung tên từ phía Google. */}
+            <MoiDangNhap xongThi={taiLai} />
 
             <Muc nhan="Cá nhân hoá" />
             <Nhom>

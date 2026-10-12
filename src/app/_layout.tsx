@@ -19,7 +19,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
 import { batHienKhiDangMo } from '@/lib/thong-bao';
-import { dangNhapAnDanh } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { XEM_THU } from '@/lib/xem-thu';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +31,7 @@ batHienKhiDangMo();
 export default function RootLayout() {
   const [xong, setXong] = useState(false);
   const [coHoSo, setCoHoSo] = useState(false);
+  const [coPhien, setCoPhien] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
   const doan = useSegments();
   const [phongXong] = useFonts({
@@ -40,12 +42,24 @@ export default function RootLayout() {
     CormorantGaramond_700Bold,
   });
 
-  // Hồ sơ ẩn danh tạo ngay lần mở đầu tiên, khách không phải bấm gì.
+  /**
+   * Mở app thì chỉ ĐỌC xem đã có phiên chưa, không tạo gì cả.
+   *
+   * Trước đây chỗ này tự tạo tài khoản ẩn danh ngay lần mở đầu. Làm vậy thì
+   * khách không bao giờ được hỏi, và người muốn đăng nhập thật để hồ sơ theo
+   * được sang máy khác thì đã lỡ mang một tài khoản ẩn danh rồi.
+   */
   const khoiDong = useCallback(() => {
     setLoi(null);
     setXong(false);
-    dangNhapAnDanh()
-      .then(docHoSo)
+    (XEM_THU
+      ? Promise.resolve(true)
+      : supabase.auth.getSession().then(({ data }) => Boolean(data.session))
+    )
+      .then(async (co) => {
+        setCoPhien(co);
+        return co ? docHoSo() : null;
+      })
       .then((h) => {
         const co = Boolean(h?.ngay_sinh);
         setCoHoSo(co);
@@ -63,11 +77,25 @@ export default function RootLayout() {
   // Nhập hồ sơ xong thì ho-so.ts báo lại, nhờ vậy không bị đá ngược về phần nhập.
   useEffect(() => ngheCoHoSo(setCoHoSo), []);
 
+  // Màn đăng nhập tạo phiên xong thì báo về đây, nhờ vậy không bị đá ngược ra.
+  // Nghe thẳng Supabase chứ không tự gọi lại, vì cách này bắt được cả lúc đăng
+  // xuất lẫn lúc phiên hết hạn.
+  useEffect(() => {
+    if (XEM_THU) return;
+    const { data } = supabase.auth.onAuthStateChange((_, phien) => setCoPhien(Boolean(phien)));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     if (!xong || !phongXong || loi) return;
-    const dangNhapLieu = doan[0] === 'nhap-ho-so';
-    if (!coHoSo && !dangNhapLieu) router.replace('/nhap-ho-so');
-  }, [xong, phongXong, loi, coHoSo, doan]);
+    const dau = doan[0];
+    // Chưa có phiên thì phải chọn cách vào trước, chưa bàn tới hồ sơ.
+    if (!coPhien) {
+      if (dau !== 'dang-nhap') router.replace('/dang-nhap');
+      return;
+    }
+    if (!coHoSo && dau !== 'nhap-ho-so') router.replace('/nhap-ho-so');
+  }, [xong, phongXong, loi, coPhien, coHoSo, doan]);
 
   if (!xong || !phongXong) {
     return (

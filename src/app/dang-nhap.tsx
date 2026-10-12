@@ -10,7 +10,8 @@ import { Logo } from '@/components/logo';
 import { Nut } from '@/components/nen';
 import { NutDangNhap } from '@/components/nut-dang-nhap';
 import { CHU, MAU } from '@/constants/giao-dien';
-import { dangNhapApple, dangNhapGoogle } from '@/lib/dang-nhap';
+import { dangNhapApple, dangNhapGoogle, KhachHuy, loiDeHieu } from '@/lib/dang-nhap';
+import { datCoHoSo, docHoSo } from '@/lib/ho-so';
 import { dangNhapAnDanh } from '@/lib/supabase';
 
 const { width: RONG, height: CAO } = Dimensions.get('window');
@@ -39,9 +40,16 @@ export default function DangNhap() {
       if (cach === 'google') await dangNhapGoogle();
       else if (cach === 'apple') await dangNhapApple();
       else await dangNhapAnDanh();
-      router.replace('/nhap-ho-so');
+
+      // Khách cũ đăng nhập lại ở máy mới thì hồ sơ đã nằm sẵn trên máy chủ.
+      // Không đọc lại ở đây là bắt họ nhập lại năm bước và ghi đè lên hồ sơ cũ.
+      const h = await docHoSo();
+      const coHoSo = Boolean(h?.ngay_sinh);
+      datCoHoSo(coHoSo);
+      router.replace(coHoSo ? '/' : '/nhap-ho-so');
     } catch (e) {
-      setLoi(e instanceof Error ? e.message : 'Chưa đăng nhập được, thử lại giúp tôi');
+      // Khách tự bấm huỷ thì im lặng quay về, đừng doạ người ta bằng chữ đỏ.
+      if (!(e instanceof KhachHuy)) setLoi(loiDeHieu(e));
       setDangChay(null);
     }
   }
