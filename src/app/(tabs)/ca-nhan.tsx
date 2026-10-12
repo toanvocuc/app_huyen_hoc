@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
-import { MoiDangNhap } from '@/components/moi-dang-nhap';
+import { KhoiTaiKhoan } from '@/components/khoi-tai-khoan';
 import { DangTai } from '@/components/nen';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CAO_THANH_TAB, CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
@@ -66,9 +66,9 @@ export default function CaNhan() {
               </Pressable>
             </View>
 
-            {/* Chỉ hiện khi đang dùng tài khoản ẩn danh. Gắn xong thì đọc lại
-                hồ sơ, vì gắn tài khoản có thể bổ sung tên từ phía Google. */}
-            <MoiDangNhap xongThi={taiLai} />
+            {/* Hai bộ mặt: đang ẩn danh thì mời gắn tài khoản, đã đăng nhập
+                thì hiện đang dùng tài khoản nào kèm nút đăng xuất. */}
+            <KhoiTaiKhoan xongThi={taiLai} />
 
             <Muc nhan="Cá nhân hoá" />
             <Nhom>

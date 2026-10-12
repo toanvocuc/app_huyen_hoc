@@ -61,15 +61,24 @@ export async function maNguoiDung(): Promise<string | null> {
   return data.user?.id ?? null;
 }
 
-/**
- * Phiên hiện tại có phải tài khoản ẩn danh không.
- *
- * Dùng để màn Cá nhân biết lúc nào nên mời khách đăng nhập thật. Supabase đánh
- * dấu sẵn bằng cờ `is_anonymous`, không phải tự suy ra từ chuyện có email hay
- * không — tài khoản thật đăng nhập bằng Apple cũng có thể giấu email.
- */
-export async function laAnDanh(): Promise<boolean> {
-  if (XEM_THU) return true;
+export type TinTaiKhoan = {
+  /** Supabase đánh dấu sẵn bằng cờ riêng, đừng tự suy ra từ chuyện có email
+   *  hay không — khách đăng nhập Apple có quyền giấu email thật. */
+  anDanh: boolean;
+  email: string | null;
+  /** 'google' | 'apple' | 'anonymous'. Dùng để hiện đúng tên nhà cung cấp. */
+  nha: string | null;
+};
+
+/** Khách hiện tại là ai. Trả null khi chưa có phiên nào. */
+export async function tinTaiKhoan(): Promise<TinTaiKhoan | null> {
+  if (XEM_THU) return { anDanh: true, email: null, nha: null };
   const { data } = await supabase.auth.getUser();
-  return data.user?.is_anonymous ?? false;
+  const u = data.user;
+  if (!u) return null;
+  return {
+    anDanh: u.is_anonymous ?? false,
+    email: u.email ?? null,
+    nha: (u.app_metadata?.provider as string | undefined) ?? null,
+  };
 }

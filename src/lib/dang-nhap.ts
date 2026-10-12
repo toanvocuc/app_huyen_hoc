@@ -124,3 +124,18 @@ export function loiDeHieu(e: unknown): string {
   }
   return tho;
 }
+
+/**
+ * Đăng xuất, để đổi sang tài khoản khác.
+ *
+ * KHÔNG mất gì cả. Hồ sơ và lịch sử rút bài nằm trên máy chủ, gắn với tài khoản
+ * Google hay Apple đó; đăng nhập lại là thấy y nguyên. Chữ trên nút phải nói rõ
+ * điều này, không thì khách sợ không dám bấm.
+ *
+ * Màn gốc nghe onAuthStateChange nên đăng xuất xong nó tự đưa về màn chọn, ở
+ * đây không phải điều hướng gì.
+ */
+export async function dangXuat(): Promise<void> {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
