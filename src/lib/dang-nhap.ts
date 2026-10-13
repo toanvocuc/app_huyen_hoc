@@ -106,10 +106,10 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   if (error) throw doiLoi(error, gan);
   if (!data?.url) throw new Error(`Chưa bật đăng nhập ${TEN[nha]} ở phía máy chủ.`);
 
-  const kq = await WebBrowser.openAuthSessionAsync(data.url, ve);
-  if (kq.type !== 'success') throw new KhachHuy();
+  const duong = await moVaCho(data.url, ve);
+  if (!duong) throw new KhachHuy();
 
-  const ma = layMa(kq.url);
+  const ma = layMa(duong);
   if (!ma) throw new Error('Trình duyệt quay về nhưng thiếu mã đăng nhập.');
 
   const { error: loiDoi } = await supabase.auth.exchangeCodeForSession(ma);
@@ -119,6 +119,46 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   // nên mấy thông tin trong đó vẫn là của lúc đó. Không làm bước này thì gắn
   // xong màn Cá nhân vẫn tưởng khách chưa đăng nhập.
   await supabase.auth.refreshSession().catch(() => {});
+}
+
+/**
+ * Mở trình duyệt đăng nhập và chờ địa chỉ quay về. Trả null nếu khách huỷ.
+ *
+ * Bắt ở HAI đường vì hệ điều hành không phải lúc nào cũng trả qua đường thứ
+ * nhất:
+ *
+ *   1. `openAuthSessionAsync` trả thẳng địa chỉ cho chỗ gọi — đường chuẩn.
+ *   2. Hệ điều hành đẩy `omora://...` vào app như một đường dẫn sâu, và
+ *      expo-router nhận trước. Khi đó đường thứ nhất không bao giờ trả về mã.
+ *
+ * Đã gặp thật: khách chọn tài khoản Google xong bị đá về màn chủ, mà tài khoản
+ * không được nhận — vì mã đăng nhập đi theo đường thứ hai rồi trôi mất.
+ *
+ * Nghe cả hai, cái nào tới trước thì dùng, rồi dọn cả hai.
+ */
+async function moVaCho(duongDangNhap: string, ve: string): Promise<string | null> {
+  let tra: (duong: string) => void = () => {};
+  const choDuongDanSau = new Promise<string>((r) => {
+    tra = r;
+  });
+
+  const nghe = Linking.addEventListener('url', (sk) => {
+    if (sk.url.startsWith(ve) || sk.url.includes('code=')) tra(sk.url);
+  });
+
+  try {
+    const kq = await Promise.race([
+      WebBrowser.openAuthSessionAsync(duongDangNhap, ve).then((r) =>
+        r.type === 'success' ? r.url : null
+      ),
+      choDuongDanSau,
+    ]);
+    // Bắt được qua đường dẫn sâu thì trình duyệt vẫn đang mở, phải tự đóng.
+    if (kq) WebBrowser.dismissBrowser();
+    return kq;
+  } finally {
+    nghe.remove();
+  }
 }
 
 /** Nhận ra trường hợp danh tính đã thuộc hồ sơ khác, để màn hình xử riêng. */

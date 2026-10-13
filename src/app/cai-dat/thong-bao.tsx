@@ -25,7 +25,18 @@ export default function CaiDatThongBao() {
   // màn này hiện lên chứ không chỉ đọc một lần lúc dựng.
   useFocusEffect(
     useCallback(() => {
-      daCoQuyen().then(setCoQuyen);
+      // PHẢI có nhánh bắt lỗi. Màn này vẽ vòng xoay khi chưa biết quyền, nên
+      // daCoQuyen hỏng mà không bắt là coQuyen kẹt ở null và vòng xoay quay
+      // mãi không dừng — khách tưởng app treo.
+      //
+      // Hỏng thì coi như chưa có quyền: khối "bật thông báo" hiện ra, khách
+      // bấm được và tự biết chuyện gì đang xảy ra.
+      daCoQuyen()
+        .then(setCoQuyen)
+        .catch((e) => {
+          console.warn('[thong-bao] doc quyen that bai:', e);
+          setCoQuyen(false);
+        });
     }, [])
   );
 
@@ -41,6 +52,16 @@ export default function CaiDatThongBao() {
       await luuHoSo(phan);
     } catch (e) {
       console.warn('[thong-bao]', e);
+    }
+  }
+
+  /** Bọc một thao tác công tắc, hỏng thì báo chứ đừng nuốt. */
+  async function thu(viec: () => Promise<void>) {
+    try {
+      await viec();
+    } catch (e) {
+      console.warn('[thong-bao]', e);
+      Alert.alert('Chưa đổi được', 'Thử lại giúp tôi, hoặc kiểm tra mạng.');
     }
   }
 
@@ -151,7 +172,7 @@ export default function CaiDatThongBao() {
           mo="Mỗi sáng một lá"
           gia={coQuyen && laBai}
           tat={!coQuyen}
-          dat={doiLaBai}
+          dat={(b) => thu(() => doiLaBai(b))}
         />
         <View className="h-px bg-vien" />
         <Dong
@@ -159,7 +180,7 @@ export default function CaiDatThongBao() {
           mo="Thỉnh thoảng, không nhiều"
           gia={coQuyen && tinTuc}
           tat={!coQuyen}
-          dat={doiTinTuc}
+          dat={(b) => thu(() => doiTinTuc(b))}
         />
       </Khoi>
 
@@ -171,7 +192,7 @@ export default function CaiDatThongBao() {
             return (
               <Pressable
                 key={g}
-                onPress={() => doiGio(g)}
+                onPress={() => thu(() => doiGio(g))}
                 className={`min-h-[44px] justify-center rounded-xl border px-5 active:opacity-70 ${
                   chon ? 'border-vang bg-vang/15' : 'border-vien bg-nen-nhat'
                 }`}>
