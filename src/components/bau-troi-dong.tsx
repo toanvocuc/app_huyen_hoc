@@ -104,7 +104,7 @@ export function BauTroiDong() {
   );
 
   const giamChuyenDong = useReducedMotion();
-  const sao = useMemo(raiSao, []);
+  const sao = useMemo(() => raiSao(), []);
   const dong = hienRa && !giamChuyenDong;
 
   return (
@@ -168,9 +168,13 @@ function SaoNhay({ x, y, co, nhip, tre, dong }: ViSao & { dong: boolean }) {
  * Bay cùng lúc thì trông như hiệu ứng máy móc. Lệch vài trăm mili giây là mắt
  * đọc ra thành một đàn, tự nhiên hơn hẳn.
  */
+type Tuyen = ReturnType<typeof veTuyen> & { tre: number };
+
 function DotSaoBang() {
-  const [lan, datLan] = useState(0);
-  const [so, datSo] = useState(1);
+  // Cả đợt nằm trong MỘT ô nhớ: số ngôi và đường bay của từng ngôi sinh cùng
+  // lúc với lượt đếm. Tách ra làm hai thì có một nhịp vẽ lạc giữa chừng, lúc
+  // ấy số ngôi đã đổi mà đường bay thì chưa.
+  const [dot, datDot] = useState<Tuyen[]>([]);
   const hen = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -180,8 +184,14 @@ function DotSaoBang() {
       const cho = CHO_IT_NHAT + Math.random() * (CHO_NHIEU_NHAT - CHO_IT_NHAT);
       hen.current = setTimeout(() => {
         if (!song) return;
-        datSo(1 + Math.floor(Math.random() * TOI_DA_MOT_DOT));
-        datLan((n) => n + 1);
+        const so = 1 + Math.floor(Math.random() * TOI_DA_MOT_DOT);
+        datDot(
+          Array.from({ length: so }, (_, i) => ({
+            ...veTuyen(),
+            // Ngôi sau chờ ngôi trước một nhịp ngắn.
+            tre: i * (180 + Math.random() * 320),
+          }))
+        );
         datLich();
       }, cho);
     }
@@ -195,29 +205,24 @@ function DotSaoBang() {
 
   return (
     <>
-      {Array.from({ length: TOI_DA_MOT_DOT }, (_, i) => (
-        <MotSaoBang key={i} lan={lan} bay={i < so} thuTu={i} />
+      {dot.map((t, i) => (
+        <MotSaoBang key={i} tuyen={t} />
       ))}
     </>
   );
 }
 
-function MotSaoBang({ lan, bay, thuTu }: { lan: number; bay: boolean; thuTu: number }) {
-  const [tuyen, datTuyen] = useState(veTuyen);
+function MotSaoBang({ tuyen }: { tuyen: Tuyen }) {
   const tien = useSharedValue(0);
 
   useEffect(() => {
-    if (lan === 0 || !bay) return;
-    const t = veTuyen();
-    datTuyen(t);
     tien.value = 0;
     tien.value = withDelay(
-      // Ngôi sau chờ ngôi trước một nhịp ngắn.
-      thuTu * (180 + Math.random() * 320),
-      withTiming(1, { duration: t.lau, easing: Easing.linear })
+      tuyen.tre,
+      withTiming(1, { duration: tuyen.lau, easing: Easing.linear })
     );
     return () => cancelAnimation(tien);
-  }, [lan, bay, thuTu, tien]);
+  }, [tuyen, tien]);
 
   const kieu = useAnimatedStyle(() => ({
     opacity: interpolate(tien.value, [0, 0.12, 0.78, 1], [0, 1, 1, 0]),
@@ -230,7 +235,10 @@ function MotSaoBang({ lan, bay, thuTu }: { lan: number; bay: boolean; thuTu: num
 
   return (
     <Animated.View
-      style={[{ position: 'absolute', left: 0, top: 0, flexDirection: 'row', alignItems: 'center' }, kieu]}>
+      style={[
+        { position: 'absolute', left: 0, top: 0, flexDirection: 'row', alignItems: 'center' },
+        kieu,
+      ]}>
       {/* Vệt sáng nhạt dần về đuôi... */}
       <LinearGradient
         colors={['transparent', 'rgba(212,168,75,0.45)', 'rgba(232,198,115,0.95)']}

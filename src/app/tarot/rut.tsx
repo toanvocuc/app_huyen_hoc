@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MatSau } from '@/components/mat-sau';
 import { NenKhungVan } from '@/components/nen-anh';
+import { BauTroiDong } from '@/components/bau-troi-dong';
 import { DangTai, Trong, VanNgan } from '@/components/nen';
 import { NutQuayLai } from '@/components/nut-quay-lai';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -92,6 +93,7 @@ export default function RutBai() {
   return (
     <View className="flex-1 bg-nen">
       <NenKhungVan />
+      <BauTroiDong />
       <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
         <View className="ml-8 mt-6">
           <NutQuayLai />

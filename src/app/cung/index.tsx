@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { Trong } from '@/components/nen';
 import { NenKhungCung } from '@/components/nen-anh';
+import { BauTroiDong } from '@/components/bau-troi-dong';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
@@ -24,6 +25,7 @@ export default function LuoiCung() {
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
       <NenKhungCung />
+      <BauTroiDong />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ThanhTieuDe ten="12 cung hoàng đạo" />
 

@@ -8,6 +8,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChumSaoToa } from '@/components/hieu-ung-sao';
+import { BauTroiDong } from '@/components/bau-troi-dong';
 import { NutQuayLai } from '@/components/nut-quay-lai';
 import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 
@@ -32,6 +33,7 @@ export function ManHinh({
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
       {nenPhu}
+      <BauTroiDong />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView
           contentContainerClassName="px-5 pt-3"

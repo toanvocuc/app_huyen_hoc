@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Dimensions, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BauTroiDong } from '@/components/bau-troi-dong';
 import { Logo } from '@/components/logo';
 import { Nut } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -25,6 +26,7 @@ export default function ChaoMung() {
         locations={[0, 0.5, 0.88]}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, height: CAO * 0.72 }}
       />
+      <BauTroiDong />
 
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <View className="items-center pt-10">

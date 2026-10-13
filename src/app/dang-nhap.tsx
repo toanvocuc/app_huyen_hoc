@@ -7,6 +7,7 @@ import { Dimensions, Platform, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from '@/components/logo';
+import { BauTroiDong } from '@/components/bau-troi-dong';
 import { Nut } from '@/components/nen';
 import { NutDangNhap } from '@/components/nut-dang-nhap';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -68,6 +69,7 @@ export default function DangNhap() {
         locations={[0, 0.48, 0.9]}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, height: CAO * 0.62 }}
       />
+      <BauTroiDong />
 
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         {/* Logo đặt ở khoảng một phần ba trên, cho cân với mảng ngân hà.
