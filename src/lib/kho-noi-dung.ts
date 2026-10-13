@@ -10,6 +10,7 @@ import {
   MAU_MUI_TEN_BIEU_DO,
   MAU_SO_CHU_DAO,
   MAU_SO_VAN_MENH,
+  MAU_CHUYEN_GIA,
   MAU_TU_VI,
 } from '@/data/noi-dung-mau';
 import { supabase } from '@/lib/supabase';
@@ -132,6 +133,31 @@ export type DongConSo = {
   khi_nhieu: string;
 };
 
+/**
+ * Hồ sơ thầy tư vấn.
+ *
+ * Mọi ô ngoài mã, tên và lời giới thiệu đều có thể trống: lúc mới dựng thì chưa
+ * hỏi được thầy giá bao nhiêu, chưa có ảnh. Màn hình phải vẽ được cả khi thiếu
+ * gần hết, chứ không chờ đủ mới hiện.
+ */
+export type DongChuyenGia = {
+  ma: string;
+  ten: string;
+  anh: string | null;
+  nam_kinh_nghiem: number | null;
+  chuyen_sau: string | null;
+  hoc_tu: string | null;
+  so_nguoi_da_xem: number | null;
+  gioi_thieu: string;
+  gia_tu: number | null;
+  gom_gi: string | null;
+  thoi_gian_tra_loi: string | null;
+  gio_lam_viec: string | null;
+  zalo: string | null;
+  dang_nhan: boolean;
+  thu_tu: number;
+};
+
 const MAU_BANG: Record<string, unknown[]> = {
   cung_hoang_dao: MAU_CUNG,
   do_hop_cung: MAU_DO_HOP,
@@ -140,6 +166,7 @@ const MAU_BANG: Record<string, unknown[]> = {
   mui_ten_bieu_do: MAU_MUI_TEN_BIEU_DO,
   con_so_bieu_do: MAU_CON_SO_BIEU_DO,
   tu_vi_mau: MAU_TU_VI,
+  chuyen_gia: MAU_CHUYEN_GIA,
 };
 
 function useBang<T>(bang: string) {
@@ -175,3 +202,12 @@ export const useSoVanMenh = () => useBang<DongSoVanMenh>('so_van_menh');
 export const useMuiTen = () => useBang<DongMuiTen>('mui_ten_bieu_do');
 export const useConSo = () => useBang<DongConSo>('con_so_bieu_do');
 export const useTuVi = () => useBang<DongTuVi>('tu_vi_mau');
+
+/** Thầy đang nhận khách, xếp theo thứ tự đã định. */
+export function useChuyenGia() {
+  const { dong, loi, dangTai } = useBang<DongChuyenGia>('chuyen_gia');
+  const ds = dong
+    ? [...dong].filter((t) => t.dang_nhan).sort((a, b) => a.thu_tu - b.thu_tu)
+    : null;
+  return { dong: ds, loi, dangTai };
+}

@@ -41,7 +41,23 @@ function docMoiTruong(ten) {
 }
 
 /** Cột nào là số thì đổi kiểu, không thì Postgres báo lỗi. */
-const SO = new Set(['so', 'diem', 'thu_tu']);
+const SO = new Set(['so', 'diem', 'thu_tu', 'nam_kinh_nghiem', 'so_nguoi_da_xem', 'gia_tu']);
+
+/** Cột đúng/sai, để chuỗi 'true' trong CSV thành giá trị Postgres hiểu được. */
+const DUNG_SAI = new Set(['dang_nhan']);
+
+/**
+ * Ô trống trong CSV phải thành null, không phải chuỗi rỗng.
+ *
+ * Hồ sơ thầy có nhiều ô chưa biết — chưa hỏi được giá, chưa có ảnh. Để chuỗi
+ * rỗng thì Postgres từ chối ngay ở cột số, mà ở cột chữ thì app lại tưởng là
+ * "có dữ liệu, nội dung rỗng" và vẽ ra một dòng trắng.
+ */
+function doiO(k, v) {
+  if (v === '' || v === undefined) return null;
+  if (DUNG_SAI.has(k)) return v === 'true' || v === '1';
+  return SO.has(k) ? Number(v) : v;
+}
 
 /**
  * Cột nào trong CSV thì bỏ, vì bảng không có.
@@ -61,6 +77,7 @@ const BANG = [
   ['mui_ten_bieu_do', 'mui_ten_bieu_do.csv'],
   ['con_so_bieu_do', 'con_so_bieu_do.csv'],
   ['tu_vi_mau', 'tu_vi_mau.csv'],
+  ['chuyen_gia', 'chuyen_gia.csv'],
 ];
 
 const mt = docMoiTruong('.env.quan-tri');
@@ -80,7 +97,7 @@ for (const [bang, file] of BANG) {
     const ra = {};
     for (const [k, v] of Object.entries(d)) {
       if (bo.includes(k)) continue;
-      ra[k] = SO.has(k) ? Number(v) : v;
+      ra[k] = doiO(k, v);
     }
     return ra;
   });

@@ -47,6 +47,7 @@ const BANG = [
   ['MAU_MUI_TEN_BIEU_DO', 'mui_ten_bieu_do.csv', ''],
   ['MAU_CON_SO_BIEU_DO', 'con_so_bieu_do.csv', ''],
   ['MAU_TU_VI', 'tu_vi_mau.csv', ''],
+  ['MAU_CHUYEN_GIA', 'chuyen_gia.csv', ''],
 ];
 
 const phan = [

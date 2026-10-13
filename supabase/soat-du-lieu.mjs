@@ -49,6 +49,7 @@ for (const [bang, n] of [
   ['mui_ten_bieu_do', 16],
   ['con_so_bieu_do', 9],
   ['tu_vi_mau', 252],
+  ['chuyen_gia', 1],
 ]) {
   const { count } = await db.from(bang).select('*', { count: 'exact', head: true });
   ket(count === n, `${bang} có ${n} dòng`, `đếm được ${count}`);
