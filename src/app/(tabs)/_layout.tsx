@@ -20,10 +20,12 @@ export default function TabsLayout() {
           backgroundColor: MAU.nenNhat,
           borderTopColor: MAU.vien,
           height: CAO_THANH_TAB + le.bottom,
-          paddingBottom: 8 + le.bottom,
+          paddingBottom: 10 + le.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontFamily: CHU.thanVua, fontSize: 11 },
+        // lineHeight đặt thẳng tay: để trống thì mỗi nền một kiểu suy ra từ
+        // thước phông, và thước của Be Vietnam Pro cao hơn hẳn mức thường gặp.
+        tabBarLabelStyle: { fontFamily: CHU.thanVua, fontSize: 11, lineHeight: 15, marginTop: 2 },
       }}>
       <Tabs.Screen
         name="index"

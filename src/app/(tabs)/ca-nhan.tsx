@@ -8,6 +8,7 @@ import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { DongPhienBan } from '@/components/dong-phien-ban';
 import { KhoiTaiKhoan } from '@/components/khoi-tai-khoan';
 import { DangTai } from '@/components/nen';
+import { NenTroiSao } from '@/components/nen-anh';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CAO_THANH_TAB, CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { napTuHoSo } from '@/lib/ban-nhap';
@@ -22,6 +23,11 @@ export default function CaNhan() {
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
+      {/* Ảnh trời sao ĐỨNG YÊN, không phải lớp sao nhấp nháy như các màn khác —
+          màn này là chỗ chỉnh cài đặt, chữ nhiều và khách dừng lâu, nhấp nháy
+          sau lưng chữ chỉ làm rối. Nhưng để trơ nền phẳng thì nó lạc hẳn khỏi
+          phần còn lại của app, nên lấy vân ảnh ở mức chìm. */}
+      <NenTroiSao mo={0.88} />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ThanhTieuDe ten="Cá nhân" quayLai={false} />
 

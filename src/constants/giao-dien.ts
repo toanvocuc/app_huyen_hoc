@@ -44,5 +44,11 @@ export const TY_LE_LA_BAI = 57 / 100;
  * Chiều cao thanh tab dưới, chưa kể lề của thanh điều hướng máy.
  * Màn hình nằm trong tab phải chừa đệm dưới ít nhất bằng số này cộng lề,
  * không thì nội dung cuối trang chui xuống dưới thanh tab.
+ *
+ * 70 chứ không phải 62. Cộng từng lớp một: đệm trên 6 + biểu tượng 24 + cách
+ * chữ 2 + hộp dòng của nhãn + đệm dưới 10. Hộp dòng mới là chỗ tính hụt: phông
+ * Be Vietnam Pro khai winAscent 1261 trên 1000 phần em, nên ở cỡ 11 nó chiếm
+ * 16,8px chứ không phải 13,2px như nhân 11 với 1,2. Cộng đúng ra 59 trên 62 —
+ * còn ba pixel, và dấu tiếng Việt đội lên là mất chân chữ.
  */
-export const CAO_THANH_TAB = 62;
+export const CAO_THANH_TAB = 70;

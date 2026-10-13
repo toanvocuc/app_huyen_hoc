@@ -17,8 +17,27 @@ import { docCsv } from './doc-csv.mjs';
 
 const GOC = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Cột nào là số thì đổi kiểu, để so sánh bằng === trong app không hụt. */
-const SO = new Set(['so', 'diem', 'thu_tu']);
+/**
+ * Cột nào là số thì đổi kiểu, để so sánh bằng === trong app không hụt.
+ *
+ * Thiếu một cột ở đây là sai lặng lẽ, không ai báo: chuỗi '200000' gọi
+ * toLocaleString sẽ trả lại đúng '200000' chứ không thêm dấu chấm nào, nên
+ * ảnh chụp nộp chợ hiện giá liền một mạch. Thêm cột số mới vào bảng nào thì
+ * nhớ khai ở đây.
+ */
+const SO = new Set([
+  'so',
+  'diem',
+  'thu_tu',
+  'nam_kinh_nghiem',
+  'so_nguoi_da_xem',
+  'gia_tu',
+  'diem_tb',
+  'so_danh_gia',
+]);
+
+/** Cột đúng/sai. Chuỗi 'false' là giá trị ĐÚNG trong JavaScript, nên phải đổi. */
+const DUNG_SAI = new Set(['dang_nhan']);
 
 /** Cột nào bỏ đi, giống hệt danh sách bên nap-du-lieu.mjs. */
 const BO_COT = { 'do_hop_cung.csv': ['ten_a', 'ten_b'] };
@@ -69,7 +88,9 @@ for (const [ten, file, kieu] of BANG) {
     for (const [k, v] of Object.entries(d)) {
       if (bo.includes(k)) continue;
       const khoa = ten === 'MAU_LA_BAI' ? (DOI_TEN_LA_BAI[k] ?? k) : k;
-      ra[khoa] = SO.has(k) ? Number(v) : v;
+      if (SO.has(k)) ra[khoa] = v === '' ? null : Number(v);
+      else if (DUNG_SAI.has(k)) ra[khoa] = v === 'true';
+      else ra[khoa] = v;
     }
     return ra;
   });

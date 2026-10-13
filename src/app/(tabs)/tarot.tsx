@@ -7,7 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { BauTroiDong } from '@/components/bau-troi-dong';
 import { MatSau } from '@/components/mat-sau';
-import { NenKhungVan } from '@/components/nen-anh';
+import { NenKhungVan, SAU_HOA_VAN } from '@/components/nen-anh';
 import { DangTai, Nut, Trong } from '@/components/nen';
 import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
@@ -77,11 +77,16 @@ export default function ChonKieuTrai() {
       <BauTroiDong />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView
-          contentContainerClassName="px-5 pt-4"
+          contentContainerClassName="px-5"
           // flexGrow để nội dung giãn đầy màn hình. Không có nó thì mọi thứ dồn
           // lên đỉnh, chừa một mảng trống to dưới nút bắt đầu.
           contentContainerStyle={{
             flexGrow: 1,
+            // Đẩy chữ xuống dưới đường kẻ vàng của khung. Chữ "Rút bài" cũng
+            // màu vàng, rơi đúng lên đường kẻ thì hai thứ cùng màu chồng nhau
+            // và không đọc ra cái nào. Máy có tai thỏ thì lề trên đã đủ sâu
+            // nên không cộng thêm nữa.
+            paddingTop: Math.max(16, SAU_HOA_VAN.van + 8 - le.top),
             paddingBottom: CAO_THANH_TAB + 16 + le.bottom,
           }}
           keyboardShouldPersistTaps="handled">

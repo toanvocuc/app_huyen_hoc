@@ -26,6 +26,16 @@ export function NenTroiSao({ mo = 0.72 }: { mo?: number }) {
 }
 
 /**
+ * Dải hoa văn mép trên của mỗi khung ăn sâu xuống bao nhiêu dp, đo ở khoảng
+ * GIỮA màn hình (110–302dp) — chỗ tiêu đề nằm. Hai bên mép thì hoa văn chạy
+ * dọc suốt màn nên không có số nào để tránh.
+ *
+ * Đo bằng cách đọc thẳng ảnh gốc: ảnh phủ kiểu cover nên khít chiều cao, đổi
+ * dòng ảnh sang dp theo tỷ lệ 915 trên chiều cao ảnh.
+ */
+export const SAU_HOA_VAN = { van: 61, so: 56, cung: 76 } as const;
+
+/**
  * Khung hoa văn viền quanh màn. Ảnh nền đã đen sẵn nên không cần phủ thêm lớp tối.
  *
  * `mo` hạ độ đậm của ảnh xuống. Hai khung số và khung cung có hoa văn ăn khá sâu
