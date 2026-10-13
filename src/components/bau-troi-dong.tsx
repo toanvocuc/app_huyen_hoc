@@ -1,6 +1,6 @@
 /**
- * Bầu trời sống: những vì sao xa nhấp nháy, và thi thoảng một ngôi sao băng
- * vụt ngang nửa trên màn hình.
+ * Bầu trời sống: những vì sao xa nhấp nháy, và thi thoảng một đợt sao băng vụt
+ * ngang nửa trên màn hình.
  *
  * Ba thứ giữ cho nó không thành gánh nặng:
  *
@@ -27,9 +27,9 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withDelay,
-  withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 
 const { width: RONG, height: CAO } = Dimensions.get('window');
 
@@ -38,6 +38,17 @@ const SO_SAO = 16;
 const TRAN_BAY = CAO * 0.5;
 const CHO_IT_NHAT = 10_000;
 const CHO_NHIEU_NHAT = 35_000;
+/** Mỗi đợt bay tối đa ba ngôi. */
+const TOI_DA_MOT_DOT = 3;
+
+/**
+ * Ngôi sao bốn cánh.
+ *
+ * Không dùng sao năm cánh: ở cỡ vài pixel nó thành một cục mờ không rõ hình.
+ * Bốn cánh nhọn và thưa nên nhỏ cỡ nào cũng còn nhận ra là ngôi sao.
+ */
+const DUONG_SAO =
+  'M12 0 C13 8 16 11 24 12 C16 13 13 16 12 24 C11 16 8 13 0 12 C8 11 11 8 12 0 Z';
 
 type ViSao = { x: number; y: number; co: number; nhip: number; tre: number };
 
@@ -46,7 +57,8 @@ function raiSao(): ViSao[] {
     x: Math.random() * RONG,
     // Dồn về phía trên, nơi nền trời đậm nhất.
     y: Math.random() * CAO * 0.62,
-    co: 1.4 + Math.random() * 1.8,
+    // 7–14dp: duoi 7 thi bon canh nhoe thanh mot cuc tron, dung y nghia ngoi sao.
+    co: 7 + Math.random() * 7,
     nhip: 1400 + Math.random() * 2200,
     tre: Math.random() * 2600,
   }));
@@ -55,7 +67,7 @@ function raiSao(): ViSao[] {
 /** Một đường bay: vào từ mép này, ra ở mép kia, luôn chếch xuống. */
 function veTuyen() {
   const traiSangPhai = Math.random() < 0.5;
-  const dai = 90 + Math.random() * 70;
+  const dai = 110 + Math.random() * 90;
   // Góc chếch 18–34 độ. Dốc hơn thì giống sao rơi, thoải hơn thì giống vệt máy bay.
   const doc = (18 + Math.random() * 16) * (Math.PI / 180);
   const batDauY = Math.random() * TRAN_BAY * 0.55;
@@ -68,7 +80,8 @@ function veTuyen() {
     y2: batDauY + Math.sin(doc) * chay,
     goc: (traiSangPhai ? doc : Math.PI - doc) * (180 / Math.PI),
     dai,
-    lau: 850 + Math.random() * 500,
+    // Chậm hơn hẳn bản đầu: bay vèo một cái thì khách chưa kịp nhìn đã hết.
+    lau: 2000 + Math.random() * 1200,
   };
 }
 
@@ -92,53 +105,65 @@ export function BauTroiDong() {
       {sao.map((s, i) => (
         <SaoNhay key={i} {...s} dong={dong} />
       ))}
-      {dong ? <SaoBang /> : null}
+      {dong ? <DotSaoBang /> : null}
     </View>
   );
 }
 
 function SaoNhay({ x, y, co, nhip, tre, dong }: ViSao & { dong: boolean }) {
-  const sang = useSharedValue(0.35);
+  const sang = useSharedValue(0.4);
 
   useEffect(() => {
     if (!dong) {
       cancelAnimation(sang);
-      sang.value = 0.45;
+      sang.value = 0.5;
       return;
     }
-    sang.value = withDelay(
-      tre,
-      withRepeat(withTiming(1, { duration: nhip, easing: Easing.inOut(Easing.quad) }), -1, true)
-    );
-    return () => cancelAnimation(sang);
+    // Tự lặp bằng hàm gọi lại thay vì withRepeat, để mỗi vòng lấy một quãng
+    // nghỉ khác nhau — nhấp nháy đều tăm tắp thì giống đèn báo hơn giống sao.
+    let song = true;
+    const mo = () => {
+      if (!song) return;
+      sang.value = withTiming(1, { duration: nhip, easing: Easing.inOut(Easing.quad) }, () => {
+        if (!song) return;
+        sang.value = withTiming(0.3, { duration: nhip * 1.2, easing: Easing.inOut(Easing.quad) });
+      });
+    };
+    sang.value = withDelay(tre, withTiming(0.3, { duration: 1 }));
+    const nhipTay = setInterval(mo, nhip * 2.4);
+    const batDau = setTimeout(mo, tre);
+
+    return () => {
+      song = false;
+      clearInterval(nhipTay);
+      clearTimeout(batDau);
+      cancelAnimation(sang);
+    };
   }, [dong, nhip, tre, sang]);
 
   const kieu = useAnimatedStyle(() => ({
-    opacity: sang.value * 0.9,
-    transform: [{ scale: 0.75 + sang.value * 0.45 }],
+    opacity: sang.value * 0.95,
+    transform: [{ scale: 0.7 + sang.value * 0.5 }],
   }));
 
   return (
-    <Animated.View
-      style={[
-        {
-          position: 'absolute',
-          left: x,
-          top: y,
-          width: co,
-          height: co,
-          borderRadius: co,
-          backgroundColor: '#FFF7E3',
-        },
-        kieu,
-      ]}
-    />
+    <Animated.View style={[{ position: 'absolute', left: x, top: y }, kieu]}>
+      <Svg width={co} height={co} viewBox="0 0 24 24">
+        <Path d={DUONG_SAO} fill="#FFF7E3" />
+      </Svg>
+    </Animated.View>
   );
 }
 
-function SaoBang() {
-  const [tuyen, datTuyen] = useState(veTuyen);
-  const tien = useSharedValue(0);
+/**
+ * Một đợt sao băng: một tới ba ngôi, lệch nhau một chút.
+ *
+ * Bay cùng lúc thì trông như hiệu ứng máy móc. Lệch vài trăm mili giây là mắt
+ * đọc ra thành một đàn, tự nhiên hơn hẳn.
+ */
+function DotSaoBang() {
+  const [lan, datLan] = useState(0);
+  const [so, datSo] = useState(1);
   const hen = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -148,10 +173,8 @@ function SaoBang() {
       const cho = CHO_IT_NHAT + Math.random() * (CHO_NHIEU_NHAT - CHO_IT_NHAT);
       hen.current = setTimeout(() => {
         if (!song) return;
-        const t = veTuyen();
-        datTuyen(t);
-        tien.value = 0;
-        tien.value = withTiming(1, { duration: t.lau, easing: Easing.linear });
+        datSo(1 + Math.floor(Math.random() * TOI_DA_MOT_DOT));
+        datLan((n) => n + 1);
         datLich();
       }, cho);
     }
@@ -160,9 +183,34 @@ function SaoBang() {
     return () => {
       song = false;
       if (hen.current) clearTimeout(hen.current);
-      cancelAnimation(tien);
     };
-  }, [tien]);
+  }, []);
+
+  return (
+    <>
+      {Array.from({ length: TOI_DA_MOT_DOT }, (_, i) => (
+        <MotSaoBang key={i} lan={lan} bay={i < so} thuTu={i} />
+      ))}
+    </>
+  );
+}
+
+function MotSaoBang({ lan, bay, thuTu }: { lan: number; bay: boolean; thuTu: number }) {
+  const [tuyen, datTuyen] = useState(veTuyen);
+  const tien = useSharedValue(0);
+
+  useEffect(() => {
+    if (lan === 0 || !bay) return;
+    const t = veTuyen();
+    datTuyen(t);
+    tien.value = 0;
+    tien.value = withDelay(
+      // Ngôi sau chờ ngôi trước một nhịp ngắn.
+      thuTu * (180 + Math.random() * 320),
+      withTiming(1, { duration: t.lau, easing: Easing.linear })
+    );
+    return () => cancelAnimation(tien);
+  }, [lan, bay, thuTu, tien]);
 
   const kieu = useAnimatedStyle(() => ({
     opacity: interpolate(tien.value, [0, 0.12, 0.78, 1], [0, 1, 1, 0]),
@@ -174,14 +222,21 @@ function SaoBang() {
   }));
 
   return (
-    <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, kieu]}>
-      {/* Vệt sáng nhạt dần về đuôi, đầu sáng nhất ở bên phải. */}
+    <Animated.View
+      style={[{ position: 'absolute', left: 0, top: 0, flexDirection: 'row', alignItems: 'center' }, kieu]}>
+      {/* Vệt sáng nhạt dần về đuôi... */}
       <LinearGradient
-        colors={['transparent', 'rgba(255,247,227,0.55)', '#FFFFFF']}
+        colors={['transparent', 'rgba(255,247,227,0.5)', 'rgba(255,255,255,0.95)']}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={{ width: tuyen.dai, height: 2, borderRadius: 2 }}
       />
+      {/* ...và một ngôi sao nhỏ ở đầu vệt, để nhận ra ngay là sao băng. */}
+      <View style={{ marginLeft: -3 }}>
+        <Svg width={13} height={13} viewBox="0 0 24 24">
+          <Path d={DUONG_SAO} fill="#FFFFFF" />
+        </Svg>
+      </View>
     </Animated.View>
   );
 }
