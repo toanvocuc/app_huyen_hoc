@@ -58,7 +58,7 @@ function TheGon({ thay }: { thay: DongChuyenGia }) {
 
   return (
     <Pressable
-      onPress={() => router.push({ pathname: '/chuyen-gia/chi-tiet', params: { ma: thay.ma } })}
+      onPress={() => router.push({ pathname: '/ho-so-thay', params: { ma: thay.ma } })}
       style={{ borderColor: MAU.vien }}
       className="flex-row items-center gap-4 rounded-2xl border bg-nen-nhat px-4 py-4 active:opacity-75">
       {thay.anh ? (

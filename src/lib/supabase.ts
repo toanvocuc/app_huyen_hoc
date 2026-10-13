@@ -70,15 +70,30 @@ export type TinTaiKhoan = {
   nha: string | null;
 };
 
-/** Khách hiện tại là ai. Trả null khi chưa có phiên nào. */
+/**
+ * Khách hiện tại là ai. Trả null khi chưa có phiên nào.
+ *
+ * KHÔNG chỉ dựa vào cờ `is_anonymous`. Sau khi gắn tài khoản Google vào hồ sơ
+ * ẩn danh, cờ đó không chắc đã đổi ngay trong thẻ đăng nhập đang cầm — tài liệu
+ * Supabase không nói rõ, và thực tế đã gặp cảnh khách gắn xong mà màn Cá nhân
+ * vẫn hiện lời mời đăng nhập.
+ *
+ * Nên xét cả ba dấu hiệu, có một là đủ coi như tài khoản thật: cờ đã tắt, có
+ * email, hoặc có một danh tính nào khác 'anonymous'. Dấu hiệu nào cũng chỉ xuất
+ * hiện sau khi gắn thành công, nên không có đường báo nhầm.
+ */
 export async function tinTaiKhoan(): Promise<TinTaiKhoan | null> {
   if (XEM_THU) return { anDanh: true, email: null, nha: null };
   const { data } = await supabase.auth.getUser();
   const u = data.user;
   if (!u) return null;
+
+  const danhTinh = (u.identities ?? []).filter((d) => d.provider !== 'anonymous');
+  const anDanh = (u.is_anonymous ?? false) && !u.email && danhTinh.length === 0;
+
   return {
-    anDanh: u.is_anonymous ?? false,
+    anDanh,
     email: u.email ?? null,
-    nha: (u.app_metadata?.provider as string | undefined) ?? null,
+    nha: danhTinh[0]?.provider ?? (u.app_metadata?.provider as string | undefined) ?? null,
   };
 }

@@ -13,6 +13,38 @@ import { useBoBai } from '@/lib/kho-noi-dung';
 import { SO_LUOT_MOI_NGAY, useLuotRut } from '@/lib/luot-rut';
 import type { KieuTrai } from '@/lib/tarot';
 
+/**
+ * Câu mở đầu, bốc ngẫu nhiên mỗi lần khách vào màn này.
+ *
+ * Trước đây chỉ có một dòng cố định "Nghĩ về câu hỏi của bạn rồi chọn kiểu trải"
+ * — đúng việc nhưng cộc lốc, và đọc tới lần thứ ba thì thành một cái nhãn.
+ *
+ * Mấy câu này dùng phông CÓ CHÂN chứ không dùng phông thân như chữ khác trong
+ * app. Đây là chỗ duy nhất trên màn mang giọng nghi lễ, nên để nó khác hẳn.
+ */
+const CAU_MO = [
+  'Vũ trụ đang lắng nghe.',
+  'Những lá bài đang chờ được lật mở.',
+  'Có những lời hồi đáp đến từ sự tĩnh lặng.',
+  'Đêm nay, những vì sao muốn kể bạn nghe một điều.',
+  'Đôi khi, định mệnh bắt đầu bằng một câu hỏi.',
+  'Hãy để trực giác dẫn lối.',
+  'Mỗi lá bài là một cánh cửa chưa mở.',
+  'Có những điều chỉ trái tim mới thấu hiểu.',
+  'Những bí mật đang chờ được hé lộ.',
+  'Có lẽ, đây là lúc bạn cần một lời hồi đáp.',
+  'Vũ trụ luôn có cách riêng để thì thầm.',
+  'Điều bạn tìm kiếm có thể gần hơn bạn nghĩ.',
+  'Hãy để những vì sao soi sáng con đường phía trước.',
+  'Một thông điệp đang chờ bạn khám phá.',
+  'Đôi khi, điều chưa biết lại chứa đựng câu trả lời.',
+  'Hãy lắng nghe điều mà tâm trí thường bỏ qua.',
+  'Mọi hành trình khám phá đều bắt đầu từ bên trong.',
+  'Có những câu trả lời chỉ xuất hiện khi ta sẵn sàng.',
+  'Hãy để màn đêm kể câu chuyện của riêng bạn.',
+  'Một khoảnh khắc tĩnh lặng, một cánh cửa mới.',
+];
+
 const KIEU: { ma: KieuTrai; ten: string; mo: string; so: number }[] = [
   { ma: 'mot-la', ten: 'Một lá', mo: 'Cho một câu hỏi nhanh', so: 1 },
   { ma: 'ba-la', ten: 'Ba lá', mo: 'Quá khứ, hiện tại, tương lai', so: 3 },
@@ -24,9 +56,17 @@ export default function ChonKieuTrai() {
   const le = useSafeAreaInsets();
   const { conLai, hetLuot, taiLai } = useLuotRut();
 
+  const [cauMo, setCauMo] = useState(() => CAU_MO[Math.floor(Math.random() * CAU_MO.length)]);
+
   // Đếm lại mỗi lần màn này hiện lên. Rút xong khách quay về đây, không đọc lại
-  // thì số lượt còn lại vẫn là số cũ.
-  useFocusEffect(useCallback(() => taiLai(), [taiLai]));
+  // thì số lượt còn lại vẫn là số cũ. Tiện thể bốc câu mở đầu mới, để lần nào
+  // vào cũng gặp một câu khác.
+  useFocusEffect(
+    useCallback(() => {
+      taiLai();
+      setCauMo(CAU_MO[Math.floor(Math.random() * CAU_MO.length)]);
+    }, [taiLai])
+  );
 
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
@@ -34,7 +74,12 @@ export default function ChonKieuTrai() {
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView
           contentContainerClassName="px-5 pt-4"
-          contentContainerStyle={{ paddingBottom: CAO_THANH_TAB + 16 + le.bottom }}
+          // flexGrow để nội dung giãn đầy màn hình. Không có nó thì mọi thứ dồn
+          // lên đỉnh, chừa một mảng trống to dưới nút bắt đầu.
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingBottom: CAO_THANH_TAB + 16 + le.bottom,
+          }}
           keyboardShouldPersistTaps="handled">
           <Text
             style={{ fontFamily: CHU.hoaDam, fontSize: 40, lineHeight: 46, color: MAU.vang }}
@@ -42,9 +87,15 @@ export default function ChonKieuTrai() {
             Rút bài
           </Text>
           <Text
-            style={{ fontFamily: CHU.than, fontSize: 15, lineHeight: 23 }}
-            className="mt-1 text-center text-chu-phu">
-            Nghĩ về câu hỏi của bạn{'\n'}rồi chọn kiểu trải
+            style={{ fontFamily: CHU.hoa, fontSize: 23, lineHeight: 31 }}
+            className="mt-3 px-2 text-center text-chu-chinh">
+            {cauMo}
+          </Text>
+          <Text
+            style={{ fontFamily: CHU.than, fontSize: 14.5, lineHeight: 24 }}
+            className="mt-2.5 px-1 text-center text-chu-phu">
+            Có điều gì đang khiến trái tim bạn băn khoăn? Hãy giữ câu hỏi ấy trong tâm trí, rồi
+            chọn cách để những lá bài dẫn lối.
           </Text>
 
           {dangTai ? <DangTai /> : null}
@@ -59,7 +110,9 @@ export default function ChonKieuTrai() {
             </View>
           ) : null}
 
-          <View className="mt-5 gap-3">
+          <View className="min-h-[20px] flex-1" />
+
+          <View className="gap-3">
             {KIEU.map((k) => (
               <TheKieu
                 key={k.ma}
@@ -72,7 +125,9 @@ export default function ChonKieuTrai() {
             ))}
           </View>
 
-          <View className="mt-5">
+          <View className="min-h-[20px] flex-1" />
+
+          <View>
             <Nut
               nhan={hetLuot ? 'Hết lượt hôm nay' : 'Bắt đầu rút bài'}
               tat={!boBai?.length || hetLuot}

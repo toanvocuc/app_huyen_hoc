@@ -114,6 +114,11 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
 
   const { error: loiDoi } = await supabase.auth.exchangeCodeForSession(ma);
   if (loiDoi) throw doiLoi(loiDoi, gan);
+
+  // Lấy thẻ đăng nhập mới sau khi gắn. Thẻ đang cầm được cấp lúc còn ẩn danh,
+  // nên mấy thông tin trong đó vẫn là của lúc đó. Không làm bước này thì gắn
+  // xong màn Cá nhân vẫn tưởng khách chưa đăng nhập.
+  await supabase.auth.refreshSession().catch(() => {});
 }
 
 /** Nhận ra trường hợp danh tính đã thuộc hồ sơ khác, để màn hình xử riêng. */
