@@ -25,17 +25,25 @@ export default function KetQua() {
 
   async function luuLanRut() {
     if (!phien || phien.daGhi) return;
+    // Bật cờ TRƯỚC khi chờ mạng, không phải sau. Màn này dựng lại trong lúc lệnh
+    // ghi còn đang bay thì lần dựng thứ hai thấy cờ vẫn tắt và ghi thêm một dòng
+    // nữa — mà số dòng trong ngày chính là số lượt, nên khách mất một lượt mình
+    // không hề dùng. Hỏng thì gỡ cờ ra để lần sau còn thử lại.
+    danhDauDaGhi();
     try {
       const ma = await maNguoiDung();
-      if (!ma) return;
+      if (!ma) {
+        danhDauDaGhi(false);
+        return;
+      }
       await supabase.from('lan_rut').insert({
         nguoi_dung: ma,
         kieu_trai: phien.cacLa.length === 1 ? 'mot-la' : 'ba-la',
         cac_la: phien.cacLa.map((l) => ({ ma: l.la.ma, nguoc: l.nguoc, vi_tri: l.viTri })),
       });
-      danhDauDaGhi();
     } catch (e) {
       console.warn('[lan-rut]', e);
+      danhDauDaGhi(false);
     }
   }
 

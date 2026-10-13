@@ -53,13 +53,18 @@ const MOC_32_BIT = 4294967296;
  * vì Math.random đoán được và lá bài là thứ khách cảm thấy phải thật.
  */
 export function rutBai(boBai: LaBai[], kieu: KieuTrai, choPhepNguoc = true): LaDaRut[] {
-  const viTri = VI_TRI[kieu];
+  // Kiểu trải đi từ tham số đường dẫn, mà đường dẫn thì ai gõ gì cũng được.
+  // Không chặn thì VI_TRI trả undefined và dòng dưới nổ ngay khi đọc `.length`.
+  const viTri = VI_TRI[kieu] ?? VI_TRI['mot-la'];
+  // Thiếu lá thì splice trả mảng rỗng, lá rút ra là undefined, và màn kết quả
+  // chết trắng ở chỗ đọc `la.la.tenEn`. Rút ít hơn còn hơn đưa ra một lá rỗng.
+  const soLa = Math.min(viTri.length, boBai.length);
   const conLai = [...boBai];
   const ketQua: LaDaRut[] = [];
 
-  const soNgauNhien = Crypto.getRandomValues(new Uint32Array(viTri.length * 2));
+  const soNgauNhien = Crypto.getRandomValues(new Uint32Array(Math.max(1, soLa) * 2));
 
-  for (let i = 0; i < viTri.length; i++) {
+  for (let i = 0; i < soLa; i++) {
     const chiSo = soNgauNhien[i * 2] % conLai.length;
     const [la] = conLai.splice(chiSo, 1);
     ketQua.push({

@@ -36,15 +36,20 @@ export default function RutBai() {
   const { kieu = 'mot-la' } = useLocalSearchParams<{ kieu: KieuTrai }>();
   const { boBai, loi, dangTai } = useBoBai();
 
-  const canRut = VI_TRI[kieu as KieuTrai]?.length ?? 1;
+  // Chuẩn hoá MỘT lần ở đây rồi dùng khắp nơi. Trước đây dòng tính canRut có
+  // dấu `?.` phòng kiểu trải sai, mà dòng gọi rutBai ngay dưới thì không — một
+  // dòng thủ, dòng kế bên hở.
+  const kieuHopLe: KieuTrai = kieu in VI_TRI ? (kieu as KieuTrai) : 'mot-la';
+  const canRut = VI_TRI[kieuHopLe].length;
+  const duLa = (boBai?.length ?? 0) >= canRut;
   const [daChon, setDaChon] = useState<number[]>([]);
   const [dangLat, setDangLat] = useState(false);
   const lat = useSharedValue(0);
 
   // Rút sẵn ngay khi vào màn, để bấm hai lần không ra kết quả khác nhau.
   const ketQua = useMemo<LaDaRut[] | null>(
-    () => (boBai?.length ? rutBai(boBai, kieu as KieuTrai) : null),
-    [boBai, kieu]
+    () => (boBai && duLa ? rutBai(boBai, kieuHopLe) : null),
+    [boBai, duLa, kieuHopLe]
   );
 
   function chon(i: number) {
@@ -72,11 +77,17 @@ export default function RutBai() {
 
   // Phải chặn lỗi TRƯỚC vòng quay. Tải hỏng thì dangTai hết true nhưng ketQua
   // vẫn null, nên để nguyên thứ tự cũ là màn quay mãi không bao giờ thoát.
-  if (loi || boBai?.length === 0) {
+  if (loi || (boBai && !duLa)) {
     return (
       <View className="flex-1 bg-nen px-5 pt-24">
         <Trong
-          loi={loi ? `Chưa tải được nội dung. ${loi}` : 'Kho lá bài đang trống, chưa rút được.'}
+          loi={
+            loi
+              ? `Chưa tải được nội dung. ${loi}`
+              : boBai?.length
+                ? `Kho lá bài chỉ còn ${boBai.length} lá, không đủ cho kiểu trải này.`
+                : 'Kho lá bài đang trống, chưa rút được.'
+          }
         />
       </View>
     );

@@ -18,7 +18,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
-import { batHienKhiDangMo } from '@/lib/thong-bao';
+import { batHienKhiDangMo, doiLoiNhac } from '@/lib/thong-bao';
 import { supabase } from '@/lib/supabase';
 import { XEM_THU } from '@/lib/xem-thu';
 
@@ -64,6 +64,10 @@ export default function RootLayout() {
         const co = Boolean(h?.ngay_sinh);
         setCoHoSo(co);
         datCoHoSo(co);
+        // Hẹn lại lời nhắc sáng bằng một câu khác. Lịch lặp hằng ngày giữ nguyên
+        // chữ đã hẹn, nên không làm ở đây thì khách đọc đúng một câu suốt đời.
+        // Hàm tự bỏ qua khi không có lịch nào đang treo.
+        doiLoiNhac(h?.gio_nhac ?? null);
       })
       .catch((e) => setLoi(e instanceof Error ? e.message : String(e)))
       .finally(() => {
@@ -86,15 +90,29 @@ export default function RootLayout() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  /**
+   * Hai màn được phép đứng khi chưa có phiên.
+   *
+   * `dang-nhap-xong` là màn hứng đường dẫn trình duyệt trả về. Đoạn đường của nó
+   * là 'dang-nhap-xong' chứ KHÔNG phải 'dang-nhap' — thiếu nó ở đây thì lúc
+   * khách đăng nhập Google lần đầu, deep link vừa về tới nơi mà việc đổi mã lấy
+   * thẻ còn đang chạy, hiệu ứng này thấy chưa có phiên và đá ngược ra màn đăng
+   * nhập. Đúng con bug "bị dịch chuyển" đã gặp một lần rồi.
+   */
+  const DUOC_DUNG_KHI_CHUA_CO_PHIEN = ['dang-nhap', 'dang-nhap-xong'];
+
   useEffect(() => {
     if (!xong || !phongXong || loi) return;
     const dau = doan[0];
     // Chưa có phiên thì phải chọn cách vào trước, chưa bàn tới hồ sơ.
     if (!coPhien) {
-      if (dau !== 'dang-nhap') router.replace('/dang-nhap');
+      if (!DUOC_DUNG_KHI_CHUA_CO_PHIEN.includes(dau)) router.replace('/dang-nhap');
       return;
     }
-    if (!coHoSo && dau !== 'nhap-ho-so') router.replace('/nhap-ho-so');
+    if (!coHoSo && dau !== 'nhap-ho-so' && dau !== 'dang-nhap-xong') {
+      router.replace('/nhap-ho-so');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xong, phongXong, loi, coPhien, coHoSo, doan]);
 
   if (!xong || !phongXong) {

@@ -182,14 +182,28 @@ function useBang<T>(bang: string) {
       return;
     }
     let huy = false;
-    supabase
-      .from(bang)
-      .select('*')
-      .then(({ data, error }) => {
+
+    /**
+     * Bọc try/catch chứ không nối `.catch`.
+     *
+     * Thứ `supabase.from().select()` trả về không phải một lời hứa thật, chỉ là
+     * một vật có hàm `then`, nên nó KHÔNG có `.catch` để nối vào — trình biên
+     * dịch báo thẳng ra điều đó. Và `dangTai` tính bằng "chưa có dòng nào VÀ
+     * chưa có lỗi nào", nên vật đó mà vỡ thì cả hai ô cùng ở null và vòng xoay
+     * quay mãi, đúng hình dạng con bug đã sửa ở màn thông báo.
+     */
+    (async () => {
+      try {
+        const { data, error } = await supabase.from(bang).select('*');
         if (huy) return;
         if (error) setLoi(error.message);
         else setDong(data as T[]);
-      });
+      } catch (e) {
+        if (huy) return;
+        setLoi(e instanceof Error ? e.message : String(e));
+      }
+    })();
+
     return () => {
       huy = true;
     };

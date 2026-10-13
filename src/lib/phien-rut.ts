@@ -16,8 +16,8 @@ export function datPhien(cacLa: LaDaRut[]) {
  * sẻ, là nó dựng lại và ghi thêm một dòng nữa. Mà số dòng trong ngày chính là số
  * lượt rút còn lại, nên khách mất một lượt mình không hề dùng.
  */
-export function danhDauDaGhi() {
-  if (phien) phien.daGhi = true;
+export function danhDauDaGhi(da = true) {
+  if (phien) phien.daGhi = da;
 }
 
 /**

@@ -67,9 +67,15 @@ const LOI_NHAC = [
   { tieuDe: 'Một lá cho hôm nay', than: 'Xem rồi hẵng bắt đầu ngày mới.' },
 ];
 
-/** Tách chuỗi '07:00' hoặc '07:00:00' thành giờ và phút. */
+/**
+ * Tách chuỗi '07:00' hoặc '07:00:00' thành giờ và phút.
+ *
+ * Dùng `||` chứ không dùng `??`: `??` chỉ bắt null và undefined, lọt chuỗi rỗng.
+ * Mà chuỗi rỗng thì `Number('')` ra 0 — một con số hợp lệ — nên lời nhắc rơi về
+ * NỬA ĐÊM chứ không về 7 giờ như mặc định ghi ở đây.
+ */
 export function tachGio(gio: string | null | undefined): { gio: number; phut: number } {
-  const [g, p] = (gio ?? '07:00').split(':');
+  const [g, p] = (gio?.trim() || '07:00').split(':');
   const soGio = Number(g);
   const soPhut = Number(p);
   return {
@@ -149,16 +155,27 @@ export async function xinQuyen(): Promise<boolean> {
   }
 }
 
-/** Hẹn lời nhắc lá bài mỗi ngày vào đúng giờ khách chọn. */
+/**
+ * Hẹn lời nhắc lá bài mỗi ngày vào đúng giờ khách chọn.
+ *
+ * Lịch kiểu DAILY lặp lại NGUYÊN VĂN nội dung đã hẹn, hệ điều hành không có
+ * đường đổi chữ giữa chừng. Nên câu chọn ở đây là câu khách đọc mỗi sáng cho tới
+ * lần hẹn sau — mảng năm câu bên trên trước đây chỉ có tác dụng đúng một lần.
+ *
+ * Cách chữa: mỗi lần mở app thì hẹn lại bằng một câu khác, xem `doiLoiNhac`.
+ * Vẫn giữ kiểu DAILY chứ không rải sẵn N ngày, vì rải sẵn thì người lâu không mở
+ * app sẽ hết lời nhắc — mà đó đúng là người cần được nhắc nhất.
+ */
 export async function datLichLaBai(gioNhac: string | null): Promise<boolean> {
   if (XEM_THU) return false;
   if (!(await daCoQuyen())) return false;
 
+  const dangDung = await tieuDeDangHen();
   await taoKenh();
   await huyLichLaBai();
 
   const { gio, phut } = tachGio(gioNhac);
-  const loi = LOI_NHAC[Math.floor(Math.random() * LOI_NHAC.length)];
+  const loi = chonLoiNhac(dangDung);
 
   await scheduleNotificationAsync({
     identifier: MA_NHAC_LA_BAI,
@@ -171,6 +188,44 @@ export async function datLichLaBai(gioNhac: string | null): Promise<boolean> {
     },
   });
   return true;
+}
+
+/**
+ * Bốc một câu khác câu đang treo.
+ *
+ * Bốc thuần ngẫu nhiên trong năm câu thì cứ năm lần có một lần ra lại đúng câu
+ * cũ, mà hai sáng liền nhau giống hệt là thứ khách nhận ra ngay.
+ */
+function chonLoiNhac(tieuDeCu: string | null) {
+  const con = LOI_NHAC.filter((l) => l.tieuDe !== tieuDeCu);
+  const tu = con.length ? con : LOI_NHAC;
+  return tu[Math.floor(Math.random() * tu.length)];
+}
+
+/** Tiêu đề của lời nhắc đang treo, để lần hẹn sau tránh lặp lại nó. */
+async function tieuDeDangHen(): Promise<string | null> {
+  try {
+    const ds = await getAllScheduledNotificationsAsync();
+    const dang = ds.find((n) => n.identifier === MA_NHAC_LA_BAI);
+    return dang?.content?.title ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Mở app thì hẹn lại bằng câu khác, nhưng CHỈ khi đang thật sự có lịch.
+ *
+ * Không có lịch mà gọi hàm này là tự dưng bật thông báo cho người đã tắt.
+ */
+export async function doiLoiNhac(gioNhac: string | null) {
+  if (XEM_THU) return;
+  try {
+    if (!(await dangHenLaBai())) return;
+    await datLichLaBai(gioNhac);
+  } catch (e) {
+    console.warn('[thong-bao] doi loi nhac that bai:', e);
+  }
 }
 
 export async function huyLichLaBai() {

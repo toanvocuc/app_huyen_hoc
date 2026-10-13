@@ -7,6 +7,7 @@ import { CHU, MAU } from '@/constants/giao-dien';
 import { luuHoSo, useHoSo } from '@/lib/ho-so';
 import {
   daCoQuyen,
+  dangHenLaBai,
   dangKyMaDay,
   datLichLaBai,
   huyLichLaBai,
@@ -20,6 +21,7 @@ export default function CaiDatThongBao() {
   const { hoSo, setHoSo } = useHoSo();
   const [coQuyen, setCoQuyen] = useState<boolean | null>(null);
   const [dangXin, setDangXin] = useState(false);
+  const [dangHen, datDangHen] = useState<boolean | null>(null);
 
   // Khách có thể sang phần cài đặt của máy rồi quay lại, nên đọc lại quyền mỗi lần
   // màn này hiện lên chứ không chỉ đọc một lần lúc dựng.
@@ -37,10 +39,19 @@ export default function CaiDatThongBao() {
           console.warn('[thong-bao] doc quyen that bai:', e);
           setCoQuyen(false);
         });
+
+      // Hỏi hệ điều hành xem có lịch nào đang treo thật không. Cột
+      // `nhac_la_bai` dưới máy chủ mặc định là bật, nên tin vào nó thì người
+      // chưa từng cấp quyền vẫn thấy công tắc bật mà chẳng có lời nhắc nào.
+      dangHenLaBai()
+        .then(datDangHen)
+        .catch(() => datDangHen(false));
     }, [])
   );
 
-  const laBai = hoSo?.nhac_la_bai ?? true;
+  // Lịch thật là thước đo, không phải ý định lưu dưới máy chủ. Chưa đọc xong
+  // thì tạm tin cột kia để công tắc không nhảy một nhịp lúc màn vừa mở.
+  const laBai = dangHen ?? (hoSo?.nhac_la_bai ?? false);
   const tinTuc = hoSo?.nhac_tin_tuc ?? false;
   const dangChon = (hoSo?.gio_nhac ?? '07:00').slice(0, 5);
   const vuongMac = vuongMacMaDay();
@@ -71,9 +82,10 @@ export default function CaiDatThongBao() {
       const duoc = await xinQuyen();
       setCoQuyen(duoc);
       if (!duoc) return; // Khách từ chối thì công tắc giữ nguyên ở vị trí tắt.
-      await datLichLaBai(hoSo?.gio_nhac ?? '07:00');
+      datDangHen(await datLichLaBai(hoSo?.gio_nhac ?? '07:00'));
     } else {
       await huyLichLaBai();
+      datDangHen(false);
     }
     await luu({ nhac_la_bai: bat });
   }
@@ -99,7 +111,9 @@ export default function CaiDatThongBao() {
       const duoc = await xinQuyen();
       setCoQuyen(duoc);
       if (duoc) {
-        if (laBai) await datLichLaBai(hoSo?.gio_nhac ?? '07:00');
+        if (hoSo?.nhac_la_bai ?? true) {
+          datDangHen(await datLichLaBai(hoSo?.gio_nhac ?? '07:00'));
+        }
         await dangKyMaDay();
       } else {
         // Hộp thoại xin quyền của hệ điều hành chỉ hiện ĐÚNG MỘT LẦN. Khách lỡ

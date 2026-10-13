@@ -31,16 +31,48 @@ const TEN_NHA: Record<string, string> = { google: 'Google', apple: 'Apple' };
 
 export function KhoiTaiKhoan({ xongThi }: { xongThi: () => void }) {
   const [tin, setTin] = useState<TinTaiKhoan | null>(null);
+  const [khongDoc, setKhongDoc] = useState(false);
   const [dangChay, setDangChay] = useState<'google' | 'apple' | null>(null);
   const [loi, setLoi] = useState<string | null>(null);
 
+  /**
+   * Hỏi xem khách hiện tại là ai.
+   *
+   * PHẢI có nhánh bắt lỗi. `tinTaiKhoan` gọi mạng, và khối này biến mất hẳn khi
+   * không có tin — nên hỏng mà không bắt thì cả nút đăng nhập lẫn nút đăng xuất
+   * cùng biến mất, không một dòng báo nào. Khách tưởng app mất chức năng.
+   */
+  const hoiLai = useCallback(() => {
+    setKhongDoc(false);
+    tinTaiKhoan()
+      .then((t) => {
+        setTin(t);
+        // Có phiên mà đọc ra null nghĩa là hỏi máy chủ không xong, không phải
+        // là khách chưa đăng nhập.
+        setKhongDoc(t === null);
+      })
+      .catch((e) => {
+        console.warn('[tai-khoan]', e);
+        setKhongDoc(true);
+      });
+  }, []);
+
   // Đọc lại mỗi lần màn này hiện lên, không chỉ lúc dựng. Khách đăng nhập hay
   // đăng xuất ở chỗ khác rồi quay về thì khối này phải đổi mặt theo.
-  useFocusEffect(
-    useCallback(() => {
-      tinTaiKhoan().then(setTin);
-    }, [])
-  );
+  useFocusEffect(hoiLai);
+
+  if (khongDoc) {
+    return (
+      <Pressable
+        onPress={hoiLai}
+        style={{ borderColor: MAU.vien }}
+        className="rounded-2xl border border-dashed p-5 active:opacity-70">
+        <Text style={{ fontFamily: CHU.than }} className="text-sm leading-6 text-chu-phu">
+          Chưa đọc được tài khoản của bạn. Kiểm tra mạng rồi chạm vào đây để thử lại.
+        </Text>
+      </Pressable>
+    );
+  }
 
   if (!tin) return null;
 

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
@@ -22,14 +22,41 @@ export default function HomNay() {
   const { hoSo } = useHoSo();
   const [la, setLa] = useState<LaDaRut | null>(null);
 
-  useEffect(() => {
+  const [khongDocDuoc, setKhongDocDuoc] = useState(false);
+
+  /**
+   * Lá bài của ngày tính từ mã người dùng, nên phải hỏi mã trước.
+   *
+   * `maNguoiDung` gọi mạng và trả null khi hỏi không xong, chứ không ném lỗi.
+   * Bỏ qua nhánh đó thì màn này hiện đúng tiêu đề với ngày tháng rồi hết —
+   * không vòng xoay, không báo lỗi, chỉ một mảng trống.
+   */
+  const timLa = useCallback(() => {
     if (!boBai?.length) return;
-    maNguoiDung().then((ma) => {
-      if (!ma) return;
-      setLa(laHomNay(boBai, ma));
-      ghiSuKien({ loai: 'xem_ket_qua', manHinh: 'hom-nay' });
-    });
+    maNguoiDung()
+      .then((ma) => {
+        if (!ma) {
+          setKhongDocDuoc(true);
+          return;
+        }
+        setLa(laHomNay(boBai, ma));
+        ghiSuKien({ loai: 'xem_ket_qua', manHinh: 'hom-nay' });
+      })
+      .catch((e) => {
+        console.warn('[hom-nay]', e);
+        setKhongDocDuoc(true);
+      });
   }, [boBai]);
+
+  useEffect(timLa, [timLa]);
+
+  // Nút thử lại: gỡ cờ báo lỗi rồi hỏi lại. Gỡ cờ nằm ở đây chứ không nằm trong
+  // timLa, vì timLa chạy thẳng trong hiệu ứng và đặt trạng thái ngay trong thân
+  // hiệu ứng là kéo thêm một vòng vẽ thừa — eslint bắt đúng chỗ này.
+  const thuLai = useCallback(() => {
+    setKhongDocDuoc(false);
+    timLa();
+  }, [timLa]);
 
   const d = new Date();
   const ngayChu = `${THU[d.getDay()]}, ngày ${d.getDate()} tháng ${d.getMonth() + 1}`;
@@ -44,6 +71,15 @@ export default function HomNay() {
       {loi ? <Trong loi={`Chưa tải được nội dung. ${loi}`} /> : null}
       {boBai?.length === 0 ? (
         <Trong loi="Kho lá bài đang trống. Nạp data/tarot_78_la.csv vào bảng la_bai rồi mở lại." />
+      ) : null}
+
+      {khongDocDuoc ? (
+        <View>
+          <Trong loi="Chưa đọc được tài khoản của bạn nên chưa biết lá nào là của hôm nay. Kiểm tra mạng giúp tôi." />
+          <View className="mt-5">
+            <Nut nhan="Thử lại" kieu="vien" onPress={thuLai} />
+          </View>
+        </View>
       ) : null}
 
       {la ? (

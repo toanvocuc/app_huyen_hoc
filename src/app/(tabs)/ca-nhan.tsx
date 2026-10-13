@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { DongPhienBan } from '@/components/dong-phien-ban';
 import { KhoiTaiKhoan } from '@/components/khoi-tai-khoan';
 import { DangTai } from '@/components/nen';
+import { dangHenLaBai } from '@/lib/thong-bao';
 import { NenTroiSao } from '@/components/nen-anh';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
 import { CAO_THANH_TAB, CHU, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
@@ -17,6 +19,25 @@ import { cungTheoNgay, timCung } from '@/lib/zodiac';
 
 export default function CaNhan() {
   const { hoSo, dangTai, taiLai } = useHoSo();
+
+  /**
+   * Thật sự đang có lời nhắc nào treo không.
+   *
+   * Trước đây dòng này vẽ một công tắc viết cứng ở trạng thái BẬT, mà gạt nó thì
+   * không tắt gì cả, chỉ nhảy sang màn cài đặt. Khách tắt thông báo rồi quay lại
+   * vẫn thấy "Mỗi sáng lúc 07:00".
+   *
+   * Hỏi thẳng hệ điều hành chứ không tin cột `nhac_la_bai` dưới máy chủ: cột đó
+   * mặc định là bật, còn lịch thì chỉ có khi khách đã cấp quyền và bật thật.
+   */
+  const [dangHen, datDangHen] = useState<boolean | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      dangHenLaBai()
+        .then(datDangHen)
+        .catch(() => datDangHen(false));
+    }, [])
+  );
   const ns = tachNgay(hoSo?.ngay_sinh ?? null);
   const ma = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
   const le = useSafeAreaInsets();
@@ -79,10 +100,16 @@ export default function CaNhan() {
 
             <Muc nhan="Cá nhân hoá" />
             <Nhom>
-              <DongBat
+              <DongDan
                 bieu="notifications-outline"
                 ten="Thông báo lá bài"
-                mo={`Mỗi sáng lúc ${(hoSo?.gio_nhac ?? '07:00').slice(0, 5)}`}
+                gia={
+                  dangHen === null
+                    ? undefined
+                    : dangHen
+                      ? `Mỗi sáng lúc ${(hoSo?.gio_nhac ?? '07:00').slice(0, 5)}`
+                      : 'Đang tắt'
+                }
                 onPress={() => router.push('/cai-dat/thong-bao')}
               />
               <Ke />
@@ -184,36 +211,3 @@ function DongDan({
   );
 }
 
-function DongBat({
-  bieu,
-  ten,
-  mo,
-  onPress,
-}: {
-  bieu: keyof typeof Ionicons.glyphMap;
-  ten: string;
-  mo: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className="min-h-[62px] flex-row items-center gap-3.5 px-4 py-3 active:opacity-60">
-      <Ionicons name={bieu} size={19} color={MAU.vang} />
-      <View className="flex-1">
-        <Text style={{ fontFamily: CHU.than }} className="text-base text-chu-chinh">
-          {ten}
-        </Text>
-        <Text style={{ fontFamily: CHU.than }} className="mt-0.5 text-xs text-chu-mo">
-          {mo}
-        </Text>
-      </View>
-      <Switch
-        value
-        onValueChange={onPress}
-        trackColor={{ false: MAU.vien, true: MAU.vang }}
-        thumbColor={MAU.chuChinh}
-      />
-    </Pressable>
-  );
-}

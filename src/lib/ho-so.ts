@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { dangNhapAnDanh, supabase } from '@/lib/supabase';
+import { huyLichLaBai } from '@/lib/thong-bao';
 import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
 
 export type GioiTinh = 'nam' | 'nu' | 'khac';
@@ -157,22 +158,42 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
 }
 
 /**
+ * Mọi bảng có cột `nguoi_dung`. Thiếu một bảng ở đây là dữ liệu của khách còn
+ * nằm lại sau khi họ bấm xoá, mà màn xoá thì viết "không có bản sao nào được
+ * giữ lại". Thêm bảng mới có cột đó thì phải khai vào đây.
+ *
+ * Trước đây thiếu `danh_gia`: điểm sao khách chấm cho thầy sống sót qua lệnh
+ * xoá, vẫn tính vào điểm trung bình của thầy.
+ */
+const BANG_CO_NGUOI_DUNG = ['su_kien', 'lan_rut', 'thiet_bi', 'danh_gia', 'ho_so'] as const;
+
+/**
  * Xoá sạch dữ liệu của người đang đăng nhập.
  *
- * Phải xoá đích danh cả ba bảng. Hai bảng kia tham chiếu auth.users chứ không phải
+ * Phải xoá đích danh từng bảng. Mấy bảng kia tham chiếu auth.users chứ không phải
  * ho_so, nên xoá mỗi dòng hồ sơ là chúng vẫn nằm lại. App không xoá được tài khoản
  * vì việc đó cần khoá quản trị, thứ không bao giờ để trong app.
+ *
+ * KHÔNG được âm thầm trả về khi không đọc ra người dùng. `getUser` gọi mạng, và
+ * supabase nuốt lỗi mạng thành `user: null` chứ không ném ra. Trả về lặng lẽ thì
+ * màn xoá tưởng là xong, đá khách về phần nhập hồ sơ, mà dưới máy chủ còn nguyên.
  */
 export async function xoaSachDuLieu() {
   if (XEM_THU) return;
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return;
+  const { data: u, error: loiDoc } = await supabase.auth.getUser();
+  if (loiDoc) throw loiDoc;
+  if (!u.user) throw new Error('Chưa đọc được tài khoản. Kiểm tra mạng rồi thử lại.');
   const toi = u.user.id;
 
-  for (const bang of ['su_kien', 'lan_rut', 'thiet_bi', 'ho_so'] as const) {
+  for (const bang of BANG_CO_NGUOI_DUNG) {
     const { error } = await supabase.from(bang).delete().eq('nguoi_dung', toi);
     if (error) throw error;
   }
+
+  // Huỷ lời nhắc đã hẹn trên máy. Lịch này nằm ở hệ điều hành chứ không nằm
+  // dưới máy chủ, nên xoá bảng bao nhiêu cũng không đụng tới nó — thiếu dòng
+  // này thì khách xoá sạch xong vẫn bị đánh thức mỗi sáng.
+  await huyLichLaBai();
 
   datCoHoSo(false);
   datHoSoChung(null);
