@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BauTroiDong } from '@/components/bau-troi-dong';
 import { MatSau } from '@/components/mat-sau';
 import { NenKhungVan } from '@/components/nen-anh';
 import { DangTai, Nut, Trong } from '@/components/nen';
@@ -71,6 +72,9 @@ export default function ChonKieuTrai() {
   return (
     <LinearGradient colors={NEN_CHUYEN} locations={[0, 0.45, 1]} style={{ flex: 1 }}>
       <NenKhungVan />
+      {/* Lớp sao động nằm trên nền, dưới nội dung. Không nhận chạm nên không
+          cản khách bấm vào thẻ phía dưới. */}
+      <BauTroiDong />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView
           contentContainerClassName="px-5 pt-4"
@@ -90,12 +94,6 @@ export default function ChonKieuTrai() {
             style={{ fontFamily: CHU.hoa, fontSize: 23, lineHeight: 31 }}
             className="mt-3 px-2 text-center text-chu-chinh">
             {cauMo}
-          </Text>
-          <Text
-            style={{ fontFamily: CHU.than, fontSize: 14.5, lineHeight: 24 }}
-            className="mt-2.5 px-1 text-center text-chu-phu">
-            Có điều gì đang khiến trái tim bạn băn khoăn? Hãy giữ câu hỏi ấy trong tâm trí, rồi
-            chọn cách để những lá bài dẫn lối.
           </Text>
 
           {dangTai ? <DangTai /> : null}
