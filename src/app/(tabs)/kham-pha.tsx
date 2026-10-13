@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { ManHinh, Nhan, Trong } from '@/components/nen';
+import { NenTinhVan } from '@/components/nen-anh';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { soChuDao } from '@/lib/numerology';
@@ -17,7 +18,10 @@ export default function KhamPha() {
   const so = ns ? soChuDao(ns.ngay, ns.thang, ns.nam) : null;
 
   return (
-    <ManHinh tieuDe="Khám phá" phu="Chiêm tinh phương Tây và thần số học.">
+    <ManHinh
+      tieuDe="Khám phá"
+      phu="Chiêm tinh phương Tây và thần số học."
+      nenPhu={<NenTinhVan />}>
       {!ns ? (
         <Trong loi="Chưa có ngày sinh. Vào mục Cá nhân điền ngày sinh rồi quay lại." />
       ) : (

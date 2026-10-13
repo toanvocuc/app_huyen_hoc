@@ -26,6 +26,26 @@ export function NenTroiSao({ mo = 0.72 }: { mo?: number }) {
 }
 
 /**
+ * Tinh vân dọc, phủ cả màn Khám phá.
+ *
+ * Ảnh này sáng hơn hẳn mấy ảnh nền khác — lõi sao trắng ở khoảng một phần ba
+ * trên rơi đúng chỗ huy hiệu cung đứng — nên phải phủ một lớp màu nền khá dày.
+ * `mo` để hở: cần sáng hơn hay tối hơn thì chỉnh ở đây, không phải sửa ảnh.
+ */
+export function NenTinhVan({ mo = 0.44 }: { mo?: number }) {
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+      <Image source={require('@/assets/nen/tinh-van.jpg')} style={{ flex: 1 }} contentFit="cover" />
+      {/* Đậm dần xuống dưới: phần dưới màn là chỗ xếp các thẻ có chữ. */}
+      <LinearGradient
+        colors={[`rgba(11,18,32,${mo})`, `rgba(11,18,32,${Math.min(1, mo + 0.16)})`]}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+    </View>
+  );
+}
+
+/**
  * Dải hoa văn mép trên của mỗi khung ăn sâu xuống bao nhiêu dp, đo ở khoảng
  * GIỮA màn hình (110–302dp) — chỗ tiêu đề nằm. Hai bên mép thì hoa văn chạy
  * dọc suốt màn nên không có số nào để tránh.
