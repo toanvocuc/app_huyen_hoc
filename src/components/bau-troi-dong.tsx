@@ -31,6 +31,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
+import { MAU } from '@/constants/giao-dien';
+
 const { width: RONG, height: CAO } = Dimensions.get('window');
 
 const SO_SAO = 16;
@@ -41,11 +43,17 @@ const CHO_NHIEU_NHAT = 35_000;
 /** Mỗi đợt bay tối đa ba ngôi. */
 const TOI_DA_MOT_DOT = 3;
 
+/** Vàng sáng, cùng tông với mọi nét trang trí khác trong app. */
+const MAU_SAO = MAU.vangSang;
+
 /**
  * Ngôi sao bốn cánh.
  *
  * Không dùng sao năm cánh: ở cỡ vài pixel nó thành một cục mờ không rõ hình.
  * Bốn cánh nhọn và thưa nên nhỏ cỡ nào cũng còn nhận ra là ngôi sao.
+ *
+ * Nhỏ 4–8dp thôi. Độ nét do mật độ điểm ảnh của máy quyết định chứ không phải
+ * số dp: máy 3x thì 4dp đã là 12 điểm ảnh thật, thừa chỗ để thấy bốn cánh.
  */
 const DUONG_SAO =
   'M12 0 C13 8 16 11 24 12 C16 13 13 16 12 24 C11 16 8 13 0 12 C8 11 11 8 12 0 Z';
@@ -57,8 +65,7 @@ function raiSao(): ViSao[] {
     x: Math.random() * RONG,
     // Dồn về phía trên, nơi nền trời đậm nhất.
     y: Math.random() * CAO * 0.62,
-    // 7–14dp: duoi 7 thi bon canh nhoe thanh mot cuc tron, dung y nghia ngoi sao.
-    co: 7 + Math.random() * 7,
+    co: 4 + Math.random() * 4,
     nhip: 1400 + Math.random() * 2200,
     tre: Math.random() * 2600,
   }));
@@ -149,7 +156,7 @@ function SaoNhay({ x, y, co, nhip, tre, dong }: ViSao & { dong: boolean }) {
   return (
     <Animated.View style={[{ position: 'absolute', left: x, top: y }, kieu]}>
       <Svg width={co} height={co} viewBox="0 0 24 24">
-        <Path d={DUONG_SAO} fill="#FFF7E3" />
+        <Path d={DUONG_SAO} fill={MAU_SAO} />
       </Svg>
     </Animated.View>
   );
@@ -226,15 +233,15 @@ function MotSaoBang({ lan, bay, thuTu }: { lan: number; bay: boolean; thuTu: num
       style={[{ position: 'absolute', left: 0, top: 0, flexDirection: 'row', alignItems: 'center' }, kieu]}>
       {/* Vệt sáng nhạt dần về đuôi... */}
       <LinearGradient
-        colors={['transparent', 'rgba(255,247,227,0.5)', 'rgba(255,255,255,0.95)']}
+        colors={['transparent', 'rgba(212,168,75,0.45)', 'rgba(232,198,115,0.95)']}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={{ width: tuyen.dai, height: 2, borderRadius: 2 }}
       />
       {/* ...và một ngôi sao nhỏ ở đầu vệt, để nhận ra ngay là sao băng. */}
       <View style={{ marginLeft: -3 }}>
-        <Svg width={13} height={13} viewBox="0 0 24 24">
-          <Path d={DUONG_SAO} fill="#FFFFFF" />
+        <Svg width={9} height={9} viewBox="0 0 24 24">
+          <Path d={DUONG_SAO} fill={MAU_SAO} />
         </Svg>
       </View>
     </Animated.View>
