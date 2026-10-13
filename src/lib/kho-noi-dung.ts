@@ -156,6 +156,9 @@ export type DongChuyenGia = {
   zalo: string | null;
   dang_nhan: boolean;
   thu_tu: number;
+  /** Máy chủ tự tính lại mỗi khi có đánh giá mới. Null khi chưa ai chấm. */
+  diem_tb: number | null;
+  so_danh_gia: number;
 };
 
 const MAU_BANG: Record<string, unknown[]> = {
