@@ -61,7 +61,7 @@ const NGAY_TRUOC = (n: number) => new Date(Date.now() - n * 86400000).toISOStrin
 const MAU_YEU_CAU: YeuCau[] = [
   {
     ma: 'xem-thu-1',
-    chuyen_gia: 'thay-thu-1',
+    chuyen_gia: 'luna-chiem-tinh',
     chu_de: 'Tarot',
     khung_gio: 'Tối, 19h tới 21h',
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
@@ -70,8 +70,8 @@ const MAU_YEU_CAU: YeuCau[] = [
   },
   {
     ma: 'xem-thu-2',
-    chuyen_gia: 'thay-thu-2',
-    chu_de: 'Thần số học',
+    chuyen_gia: 'luna-chiem-tinh',
+    chu_de: 'Chiêm tinh',
     khung_gio: 'Sáng, 9h tới 11h',
     cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
     trang_thai: 'cho_nhan',
@@ -79,7 +79,7 @@ const MAU_YEU_CAU: YeuCau[] = [
   },
   {
     ma: 'xem-thu-3',
-    chuyen_gia: 'thay-thu-1',
+    chuyen_gia: 'luna-chiem-tinh',
     chu_de: 'Tử vi',
     khung_gio: 'Chiều, 14h tới 16h',
     cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
@@ -88,8 +88,8 @@ const MAU_YEU_CAU: YeuCau[] = [
   },
   {
     ma: 'xem-thu-4',
-    chuyen_gia: 'thay-thu-2',
-    chu_de: 'Thần số học',
+    chuyen_gia: 'luna-chiem-tinh',
+    chu_de: 'Chiêm tinh',
     khung_gio: 'Giờ nào cũng được',
     cau_hoi: 'Em đặt thử rồi lại bận mất, xin phép huỷ ạ.',
     trang_thai: 'da_huy',

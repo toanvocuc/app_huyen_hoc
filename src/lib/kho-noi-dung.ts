@@ -154,6 +154,8 @@ export type DongChuyenGia = {
   thoi_gian_tra_loi: string | null;
   gio_lam_viec: string | null;
   zalo: string | null;
+  /** Trang công khai của thầy, ví dụ TikTok. Để khách tự kiểm chứng người thật. */
+  trang_ca_nhan: string | null;
   dang_nhan: boolean;
   thu_tu: number;
   /** Máy chủ tự tính lại mỗi khi có đánh giá mới. Null khi chưa ai chấm. */

@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
 
 import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
 import { Sao, SaoKemSo } from '@/components/sao';
@@ -135,6 +135,21 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
       <Text style={{ fontFamily: CHU.than }} className="mt-5 text-[15px] leading-7 text-chu-chinh">
         {thay.gioi_thieu}
       </Text>
+
+      {/* Trang công khai của thầy. Để đây vì khách muốn tự kiểm chứng trước khi
+          trả tiền cho một người lạ — và một kênh có người theo dõi nói được
+          nhiều hơn mọi lời tự giới thiệu. */}
+      {thay.trang_ca_nhan ? (
+        <Pressable
+          onPress={() => Linking.openURL(thay.trang_ca_nhan!).catch(() => {})}
+          style={{ borderColor: MAU.vien }}
+          className="mt-4 flex-row items-center gap-2.5 self-start rounded-xl border px-4 py-2.5 active:opacity-70">
+          <Ionicons name="open-outline" size={15} color={MAU.vang} />
+          <Text style={{ fontFamily: CHU.than }} className="text-sm text-vang">
+            Xem trang của {thay.ten}
+          </Text>
+        </Pressable>
+      ) : null}
 
       {cachLamViec.length ? (
         <View
