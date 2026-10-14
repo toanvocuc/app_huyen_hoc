@@ -165,7 +165,14 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
  * Trước đây thiếu `danh_gia`: điểm sao khách chấm cho thầy sống sót qua lệnh
  * xoá, vẫn tính vào điểm trung bình của thầy.
  */
-const BANG_CO_NGUOI_DUNG = ['su_kien', 'lan_rut', 'thiet_bi', 'danh_gia', 'ho_so'] as const;
+const BANG_CO_NGUOI_DUNG = [
+  'su_kien',
+  'lan_rut',
+  'thiet_bi',
+  'danh_gia',
+  'yeu_cau_tu_van',
+  'ho_so',
+] as const;
 
 /**
  * Xoá sạch dữ liệu của người đang đăng nhập.

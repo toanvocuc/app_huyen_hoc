@@ -29,6 +29,22 @@ export default function KhamPha() {
           {ma && cung ? <HuyHieu ma={ma} ten={cung.ten} /> : null}
 
           <View className="gap-4">
+            {/* Tarot đứng đầu danh sách này vì hai thẻ tab cũ của nó — Lá bài
+                hôm nay và Rút bài — đã nhường chỗ cho Chuyên gia và Lịch của
+                tôi. Vẫn vào được đủ, chỉ là sâu thêm một tầng. */}
+            <The
+              nhan="Tarot"
+              ten="Lá bài hôm nay"
+              mo="Một lá cố định cho cả ngày, mỗi người một lá"
+              onPress={() => router.push('/hom-nay')}
+            />
+            <The
+              nhan="Tarot"
+              ten="Rút bài"
+              mo="Một lá cho câu hỏi nhanh, hoặc ba lá cho quá khứ hiện tại tương lai"
+              onPress={() => router.push('/rut-bai')}
+            />
+
             {/* Không nhắc lại tên cung ở đây: huy hiệu ngay phía trên đã nói
                 rồi, đọc liền hai lần nghe như máy lặp. */}
             <The
@@ -53,7 +69,7 @@ export default function KhamPha() {
               nhan="Hỏi người thật"
               ten="Chuyên gia"
               mo="Khi muốn hỏi một câu cụ thể mà app chưa trả lời được"
-              onPress={() => router.push('/chuyen-gia')}
+              onPress={() => router.push('/')}
             />
           </View>
         </View>

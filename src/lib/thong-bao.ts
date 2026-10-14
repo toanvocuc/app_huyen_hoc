@@ -179,7 +179,7 @@ export async function datLichLaBai(gioNhac: string | null): Promise<boolean> {
 
   await scheduleNotificationAsync({
     identifier: MA_NHAC_LA_BAI,
-    content: { title: loi.tieuDe, body: loi.than, data: { man: '/' } },
+    content: { title: loi.tieuDe, body: loi.than, data: { man: '/hom-nay' } },
     trigger: {
       type: SchedulableTriggerInputTypes.DAILY,
       hour: gio,

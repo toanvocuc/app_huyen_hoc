@@ -114,7 +114,7 @@ export default function KetQua() {
 
       <View className="mt-6 flex-row gap-3">
         <View className="flex-1">
-          <Nut nhan="Rút lại" kieu="vien" onPress={() => router.replace('/(tabs)/tarot')} />
+          <Nut nhan="Rút lại" kieu="vien" onPress={() => router.replace('/rut-bai')} />
         </View>
         <View className="flex-1">
           <Nut nhan="Lưu ảnh" onPress={() => router.push('/chia-se')} />

@@ -1,0 +1,145 @@
+/**
+ * Yêu cầu tư vấn: khách gửi, rồi theo dõi nó đi tới đâu.
+ *
+ * Đây là chức năng CHÍNH của app sau khi đổi trục, nên nó phải chạy trọn vẹn
+ * trong app. Trước đây bấm vào thầy là mở thẳng Zalo — làm vậy thì app chỉ còn
+ * là lối tắt sang ứng dụng khác, không có việc gì của riêng mình.
+ *
+ * Zalo vẫn còn, nhưng lùi xuống làm bước cuối: gửi yêu cầu xuống máy chủ xong
+ * mới mở Zalo để thầy trả lời. Hỏng bước Zalo thì yêu cầu vẫn nằm đó, thầy vẫn
+ * thấy, khách vẫn theo dõi được.
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+
+import { maNguoiDung, supabase } from '@/lib/supabase';
+import { XEM_THU } from '@/lib/xem-thu';
+
+export type TrangThai = 'cho_nhan' | 'da_nhan' | 'da_xong' | 'da_huy';
+
+export type YeuCau = {
+  ma: string;
+  chuyen_gia: string;
+  chu_de: string;
+  khung_gio: string;
+  cau_hoi: string;
+  trang_thai: TrangThai;
+  tao_luc: string;
+};
+
+/** Khung giờ cho sẵn. Cố ý không cho chọn ngày giờ chính xác, xem migration 0011. */
+export const KHUNG_GIO = [
+  'Sáng, 9h tới 11h',
+  'Chiều, 14h tới 16h',
+  'Tối, 19h tới 21h',
+  'Giờ nào cũng được',
+] as const;
+
+/** Chữ hiện ra cho từng trạng thái, kèm màu để màn danh sách khỏi tự chế. */
+export const TEN_TRANG_THAI: Record<TrangThai, { chu: string; y: 'cho' | 'xong' | 'huy' }> = {
+  cho_nhan: { chu: 'Chờ thầy nhận', y: 'cho' },
+  da_nhan: { chu: 'Thầy đã nhận', y: 'cho' },
+  da_xong: { chu: 'Đã tư vấn xong', y: 'xong' },
+  da_huy: { chu: 'Đã huỷ', y: 'huy' },
+};
+
+/** Chủ đề của một thầy, tách từ cột chuyen_sau. */
+export function tachChuDe(chuyenSau: string | null | undefined): string[] {
+  return (chuyenSau ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const MAU_YEU_CAU: YeuCau[] = [
+  {
+    ma: 'xem-thu-1',
+    chuyen_gia: 'thay-thu-1',
+    chu_de: 'Tarot',
+    khung_gio: 'Tối, 19h tới 21h',
+    cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
+    trang_thai: 'da_nhan',
+    tao_luc: new Date().toISOString(),
+  },
+];
+
+/** Gửi một yêu cầu mới. Trả về dòng vừa ghi. */
+export async function guiYeuCau(phan: {
+  chuyenGia: string;
+  chuDe: string;
+  khungGio: string;
+  cauHoi: string;
+}): Promise<YeuCau> {
+  if (XEM_THU) return { ...MAU_YEU_CAU[0], ...{ trang_thai: 'cho_nhan' as const } };
+
+  const toi = await maNguoiDung();
+  if (!toi) throw new Error('Chưa đọc được tài khoản. Kiểm tra mạng rồi thử lại.');
+
+  const { data, error } = await supabase
+    .from('yeu_cau_tu_van')
+    .insert({
+      chuyen_gia: phan.chuyenGia,
+      nguoi_dung: toi,
+      chu_de: phan.chuDe,
+      khung_gio: phan.khungGio,
+      cau_hoi: phan.cauHoi.trim(),
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as YeuCau;
+}
+
+/** Khách tự huỷ, chỉ được khi thầy chưa nhận. Luật khoá dòng cũng chặn thêm một lớp. */
+export async function huyYeuCau(ma: string) {
+  if (XEM_THU) return;
+  const { error } = await supabase
+    .from('yeu_cau_tu_van')
+    .update({ trang_thai: 'da_huy' })
+    .eq('ma', ma);
+  if (error) throw error;
+}
+
+/** Danh sách yêu cầu của chính mình, mới nhất lên trước. */
+export function useYeuCauCuaToi() {
+  // Chế độ xem thử nạp sẵn ngay lúc dựng chứ không đặt trong hiệu ứng: đặt
+  // trạng thái ngay trong thân hiệu ứng là kéo thêm một vòng vẽ thừa, eslint bắt.
+  const [dong, datDong] = useState<YeuCau[] | null>(XEM_THU ? MAU_YEU_CAU : null);
+  const [loi, datLoi] = useState<string | null>(null);
+
+  const taiLai = useCallback(() => {
+    if (XEM_THU) return;
+    // Bọc try/catch chứ không nối .catch: thứ postgrest trả về không phải lời
+    // hứa thật nên không có .catch, và `dangTai` tính bằng "chưa có dòng VÀ chưa
+    // có lỗi" nên vỡ mà không bắt là vòng xoay quay mãi.
+    (async () => {
+      try {
+        const toi = await maNguoiDung();
+        if (!toi) {
+          datLoi('Chưa đọc được tài khoản. Kiểm tra mạng giúp tôi.');
+          return;
+        }
+        const { data, error } = await supabase
+          .from('yeu_cau_tu_van')
+          .select('*')
+          .eq('nguoi_dung', toi)
+          .order('tao_luc', { ascending: false });
+        if (error) datLoi(error.message);
+        else datDong(data as YeuCau[]);
+      } catch (e) {
+        datLoi(e instanceof Error ? e.message : String(e));
+      }
+    })();
+  }, []);
+
+  useEffect(taiLai, [taiLai]);
+
+  const lamMoi = useCallback(() => {
+    if (XEM_THU) return;
+    datDong(null);
+    datLoi(null);
+    taiLai();
+  }, [taiLai]);
+
+  return { dong, loi, dangTai: dong === null && loi === null, lamMoi };
+}

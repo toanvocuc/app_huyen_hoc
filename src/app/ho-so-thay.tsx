@@ -12,7 +12,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -21,7 +21,6 @@ import { Sao, SaoKemSo } from '@/components/sao';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { chamSao, useDiemCuaToi } from '@/lib/danh-gia';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
-import { moZalo } from '@/lib/nhan-zalo';
 
 function tien(d: number): string {
   return `${d.toLocaleString('vi-VN')}đ`;
@@ -58,7 +57,6 @@ export default function HoSoChuyenGia() {
 // ------------------------------------------------------------------ phần trên
 
 function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>['dong']>[number] }) {
-  const [dangMo, setDangMo] = useState(false);
 
   const soLieu = [
     thay.nam_kinh_nghiem ? `${thay.nam_kinh_nghiem} năm trong nghề` : null,
@@ -76,14 +74,15 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
     ].filter(Boolean) as [string, string][]
   );
 
-  async function nhan() {
-    if (dangMo) return;
-    setDangMo(true);
-    try {
-      await moZalo(thay.zalo, 'chuyen-gia');
-    } finally {
-      setDangMo(false);
-    }
+  /**
+   * Dẫn sang màn đặt lịch chứ KHÔNG mở Zalo thẳng như trước.
+   *
+   * Mở Zalo thẳng thì app không giữ lại gì: thầy không có hồ sơ yêu cầu, khách
+   * không biết mình đã gửi hay chưa, và chức năng chính của app rút lại thành
+   * một cái nút chuyển sang ứng dụng khác.
+   */
+  function datLich() {
+    router.push({ pathname: '/dat-lich', params: { thay: thay.ma } });
   }
 
   return (
@@ -159,15 +158,14 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
       ) : null}
 
       <Pressable
-        onPress={nhan}
-        disabled={dangMo}
+        onPress={datLich}
         className="mt-5 rounded-xl bg-vang px-5 py-3.5 active:opacity-80">
         <Text style={{ fontFamily: CHU.thanDam }} className="text-center text-nen">
-          Nhắn cho {thay.ten} qua Zalo
+          Đặt lịch với {thay.ten}
         </Text>
       </Pressable>
       <Text style={{ fontFamily: CHU.than }} className="mt-2.5 text-center text-xs text-chu-mo">
-        Lời nhắn đã được chép sẵn, bạn chỉ cần dán vào Zalo
+        Bạn chọn khung giờ và gửi câu hỏi, thầy nhận rồi sẽ hẹn bạn
       </Text>
     </Khoi>
   );

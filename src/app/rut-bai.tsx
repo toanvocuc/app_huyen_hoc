@@ -8,8 +8,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BauTroiDong } from '@/components/bau-troi-dong';
 import { MatSau } from '@/components/mat-sau';
 import { NenKhungVan, SAU_HOA_VAN } from '@/components/nen-anh';
+import { NutQuayLai } from '@/components/nut-quay-lai';
 import { DangTai, Nut, Trong } from '@/components/nen';
-import { CAO_THANH_TAB, CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
+import { CHU, KHOI_CHUYEN, MAU, NEN_CHUYEN } from '@/constants/giao-dien';
 import { useBoBai } from '@/lib/kho-noi-dung';
 import { SO_LUOT_MOI_NGAY, useLuotRut } from '@/lib/luot-rut';
 import type { KieuTrai } from '@/lib/tarot';
@@ -87,9 +88,14 @@ export default function ChonKieuTrai() {
             // và không đọc ra cái nào. Máy có tai thỏ thì lề trên đã đủ sâu
             // nên không cộng thêm nữa.
             paddingTop: Math.max(16, SAU_HOA_VAN.van + 8 - le.top),
-            paddingBottom: CAO_THANH_TAB + 16 + le.bottom,
+            paddingBottom: 24 + le.bottom,
           }}
           keyboardShouldPersistTaps="handled">
+          {/* Màn này từng là một thẻ tab nên không cần đường lui. Giờ nó nằm
+              trong chồng màn hình, thiếu nút này là khách kẹt lại. */}
+          <View className="mb-2 self-start">
+            <NutQuayLai />
+          </View>
           <Text
             style={{ fontFamily: CHU.hoaDam, fontSize: 40, lineHeight: 46, color: MAU.vang }}
             className="text-center">
