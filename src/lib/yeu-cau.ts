@@ -51,6 +51,13 @@ export function tachChuDe(chuyenSau: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Dữ liệu mẫu cho chế độ xem thử. Đủ bốn trạng thái và hai thầy, để màn Lịch của
+ * tôi bày ra được cả phần đang chờ, phần lịch sử lẫn mấy cách sắp xếp — chụp ảnh
+ * nộp chợ cũng dùng chính bộ này.
+ */
+const NGAY_TRUOC = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+
 const MAU_YEU_CAU: YeuCau[] = [
   {
     ma: 'xem-thu-1',
@@ -59,7 +66,34 @@ const MAU_YEU_CAU: YeuCau[] = [
     khung_gio: 'Tối, 19h tới 21h',
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
     trang_thai: 'da_nhan',
-    tao_luc: new Date().toISOString(),
+    tao_luc: NGAY_TRUOC(0),
+  },
+  {
+    ma: 'xem-thu-2',
+    chuyen_gia: 'thay-thu-2',
+    chu_de: 'Thần số học',
+    khung_gio: 'Sáng, 9h tới 11h',
+    cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
+    trang_thai: 'cho_nhan',
+    tao_luc: NGAY_TRUOC(1),
+  },
+  {
+    ma: 'xem-thu-3',
+    chuyen_gia: 'thay-thu-1',
+    chu_de: 'Tử vi',
+    khung_gio: 'Chiều, 14h tới 16h',
+    cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
+    trang_thai: 'da_xong',
+    tao_luc: NGAY_TRUOC(9),
+  },
+  {
+    ma: 'xem-thu-4',
+    chuyen_gia: 'thay-thu-2',
+    chu_de: 'Thần số học',
+    khung_gio: 'Giờ nào cũng được',
+    cau_hoi: 'Em đặt thử rồi lại bận mất, xin phép huỷ ạ.',
+    trang_thai: 'da_huy',
+    tao_luc: NGAY_TRUOC(14),
   },
 ];
 
