@@ -112,15 +112,21 @@ Deno.serve(async (req) => {
     yc = than?.record ?? null;
     if (!yc?.ma) return new Response('khong co dong nao', { status: 200 });
 
-    const { data: thay } = await quanTri
-      .from('chuyen_gia')
-      .select('ten, email')
-      .eq('ma', yc.chuyen_gia)
-      .maybeSingle();
+    // Tên lấy ở bảng hồ sơ, email lấy ở bảng liên hệ. Hai bảng vì bảng hồ sơ
+    // ai cũng đọc được — app cần nó để hiện danh sách thầy — nên để email ở đó
+    // là lộ địa chỉ cá nhân cho bất cứ ai cầm khoá công khai. Xem migration 0013.
+    const [{ data: thay }, { data: lienHe }] = await Promise.all([
+      quanTri.from('chuyen_gia').select('ten').eq('ma', yc.chuyen_gia).maybeSingle(),
+      quanTri
+        .from('lien_he_chuyen_gia')
+        .select('email')
+        .eq('chuyen_gia', yc.chuyen_gia)
+        .maybeSingle(),
+    ]);
 
     // Thầy chưa khai email thì vẫn gửi cho công ty — có người trực còn hơn
     // không ai biết. Thiếu cả hai thì mới chịu.
-    guiToi = [thay?.email, EMAIL_CONG_TY].filter(Boolean) as string[];
+    guiToi = [lienHe?.email, EMAIL_CONG_TY].filter(Boolean) as string[];
     if (guiToi.length === 0) throw new Error('Chua khai email cho thay lan cho cong ty');
     if (!KHOA_RESEND) throw new Error('Chua dat RESEND_API_KEY');
 

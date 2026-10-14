@@ -7,10 +7,16 @@ Năm bước dưới đây làm một lần. Sau đó không phải đụng vào
 
 ---
 
-## 1. Chạy migration 0012
+## 1. Chạy migration 0012 rồi 0013
 
-Supabase → SQL Editor → dán toàn bộ `supabase/migrations/0012_bao-don-moi.sql`
-rồi chạy. Nó thêm hai cột cho bảng thầy và một bảng nhật ký.
+Supabase → SQL Editor → chạy lần lượt:
+
+- `supabase/migrations/0012_bao-don-moi.sql` — thêm cột cho bảng thầy và bảng nhật ký
+- `supabase/migrations/0013_tach_lien_he_thay.sql` — chuyển email sang bảng riêng
+
+Phải chạy cả hai. 0012 để email trong bảng `chuyen_gia`, mà bảng đó ai cũng đọc
+được vì app cần hiện danh sách thầy cho cả khách chưa đăng nhập — tức là địa chỉ
+cá nhân của thầy lộ ra với bất cứ ai cầm khoá công khai. 0013 sửa chỗ đó.
 
 ## 2. Điền email của thầy
 
@@ -23,9 +29,13 @@ mấy kho dữ liệu đã sao chép.
 SQL Editor, chạy câu này, thay địa chỉ thật vào:
 
 ```sql
-update chuyen_gia set email = 'dia-chi-cua-thay@example.com'
- where ma = 'luna-chiem-tinh';
+insert into lien_he_chuyen_gia (chuyen_gia, email)
+values ('luna-chiem-tinh', 'dia-chi-cua-thay@example.com')
+on conflict (chuyen_gia) do update set email = excluded.email;
 ```
+
+Bảng `lien_he_chuyen_gia` bật khoá dòng mà không khai luật nào, nên khoá công
+khai đọc ra số không. Chỉ Edge Function cầm khoá quản trị mới xuyên qua được.
 
 ## 3. Dọn hai thầy giả
 
