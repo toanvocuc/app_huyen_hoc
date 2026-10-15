@@ -21,8 +21,12 @@ export type TinThay = { ma: string; ten: string };
 /**
  * Hồ sơ thầy mà tài khoản đang đăng nhập làm chủ. Null nếu không phải thầy.
  *
- * Hỏi bảng đã khoá kín, nên khách thường gọi hàm này sẽ luôn nhận về mảng rỗng
- * — đó là ý muốn, không phải lỗi.
+ * Bảng `lien_he_chuyen_gia` khoá kín, chỉ có đúng một luật cho đọc: dòng nào
+ * `tai_khoan` khớp người đang gọi. Nên khách thường gọi hàm này luôn nhận về
+ * mảng rỗng — đó là ý muốn, không phải lỗi.
+ *
+ * Luật đó ở migration 0017. Thiếu nó thì thầy đăng nhập đúng mật khẩu mà app
+ * vẫn báo "chưa được cấp quyền chuyên gia" — đã dính một lần rồi.
  */
 export async function hoSoThayCuaToi(): Promise<TinThay | null> {
   if (XEM_THU_THAY) return { ma: 'luna-chiem-tinh', ten: 'Luna Chiêm Tinh' };
