@@ -1,31 +1,32 @@
 /**
- * Báo cho thầy biết có đơn mới, bằng email.
+ * Báo cho thầy biết có đơn mới.
  *
  * Chạy trên Supabase Edge Function, tự kích hoạt bằng Database Webhook mỗi khi
  * có dòng mới trong `yeu_cau_tu_van`.
  *
- * VÌ SAO LÀ EMAIL CHỨ KHÔNG PHẢI ZALO
+ * HAI ĐƯỜNG BÁO, ĐƯỜNG NÀO CHẠY ĐƯỢC THÌ CHẠY
  *
- * Đơn ghi xuống cơ sở dữ liệu rồi nằm im ở đó, không ai biết. Thầy phải tự mở
- * trang quản trị Supabase ra xem — được với một thầy, không được với mười.
+ *   1. ĐẨY THÔNG BÁO về máy thầy — đường chính. Thầy đăng nhập tư cách chuyên
+ *      gia trong app, máy chủ biết mã thiết bị, đẩy thẳng. Nhanh, không rơi vào
+ *      hộp thư rác, và thầy bấm vào là mở app ra làm việc luôn.
  *
- * Chọn email vì thầy nào cũng có, không phải cài gì, không chờ ai duyệt, và
- * không hỏng khi Zalo đổi chính sách. Zalo OA là đường đúng gu Việt Nam hơn
- * nhưng cần tài khoản chính thức, có phí và phải chờ xét duyệt.
+ *   2. EMAIL — đường phụ, chỉ chạy khi đã khai RESEND_API_KEY. Chưa khai thì
+ *      hàm bỏ qua chứ không coi là hỏng.
+ *
+ * Hai đường độc lập: một đường hỏng không kéo đường kia theo. Mỗi đường ghi một
+ * dòng riêng vào `nhat_ky_bao_tin` để còn tra khi thầy bảo không nhận được gì.
  *
  * CHẠY HỎNG THÌ SAO
  *
- * Hàm này LUÔN trả về 200, kể cả khi gửi thư thất bại. Trả lỗi thì Supabase sẽ
- * thử lại, mà đơn thì đã ghi xong rồi — thử lại chỉ sinh ra thư trùng. Mọi lần
- * gửi, thành công hay không, đều ghi vào bảng `nhat_ky_bao_tin` để còn tra.
+ * Hàm LUÔN trả về 200. Trả lỗi thì Supabase gọi lại, mà đơn đã ghi xong rồi nên
+ * gọi lại chỉ sinh thông báo trùng chứ không cứu được gì.
  *
  * TRIỂN KHAI
  *
  *   supabase functions deploy bao-don-moi
- *   supabase secrets set RESEND_API_KEY=... EMAIL_GUI_TU=... EMAIL_CONG_TY=...
  *
- * Rồi tạo Database Webhook trong Supabase: bảng `yeu_cau_tu_van`, sự kiện
- * INSERT, trỏ tới hàm này. Xem HUONG-DAN.md.
+ * Phần đẩy thông báo KHÔNG cần đặt bí mật nào. Muốn thêm email thì mới cần
+ * RESEND_API_KEY và EMAIL_CONG_TY — xem HUONG-DAN.md.
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -33,7 +34,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const KHOA_RESEND = Deno.env.get('RESEND_API_KEY') ?? '';
 /** Địa chỉ đứng tên người gửi. Phải thuộc tên miền đã xác thực ở Resend. */
 const GUI_TU = Deno.env.get('EMAIL_GUI_TU') ?? 'Omora <onboarding@resend.dev>';
-/** Hộp thư của công ty, luôn nhận bản sao để có người trực theo dõi. */
+/** Hộp thư của công ty, nhận bản sao để luôn có người trực nhìn thấy. */
 const EMAIL_CONG_TY = Deno.env.get('EMAIL_CONG_TY') ?? '';
 
 const quanTri = createClient(
@@ -65,7 +66,77 @@ function gioVN(iso: string): string {
   return `${hai(d.getUTCHours())}:${hai(d.getUTCMinutes())} ngày ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 }
 
-function soanThu(yc: DongYeuCau, tenThay: string): { tieuDe: string; than: string } {
+/** Ghi lại một lần báo, trúng hay trượt. Đây là thứ duy nhất để tra về sau. */
+async function ghiNhatKy(yeuCau: string | null, guiToi: string, thanhCong: boolean, loi?: string) {
+  try {
+    await quanTri.from('nhat_ky_bao_tin').insert({
+      yeu_cau: yeuCau,
+      gui_toi: guiToi,
+      thanh_cong: thanhCong,
+      loi: loi ?? null,
+    });
+  } catch (e) {
+    console.error('[bao-don-moi] ghi nhat ky hong', e);
+  }
+}
+
+// ------------------------------------------------------------------ đẩy thông báo
+
+async function dayThongBao(yc: DongYeuCau, taiKhoan: string | null) {
+  if (!taiKhoan) {
+    await ghiNhatKy(yc.ma, 'day', false, 'Thay chua dang nhap tu cach chuyen gia');
+    return;
+  }
+
+  const { data: may } = await quanTri
+    .from('thiet_bi')
+    .select('ma_day')
+    .eq('nguoi_dung', taiKhoan);
+
+  const dsMa = (may ?? []).map((m) => m.ma_day as string).filter(Boolean);
+  if (dsMa.length === 0) {
+    await ghiNhatKy(yc.ma, 'day', false, 'Thay chua bat thong bao tren may nao');
+    return;
+  }
+
+  // Cắt câu hỏi cho vừa phần thân thông báo. Dài quá thì hệ điều hành tự cắt ở
+  // chỗ xấu; cắt chủ động rồi thêm dấu ba chấm thì đọc ra là còn nữa.
+  const trich = yc.cau_hoi.length > 140 ? yc.cau_hoi.slice(0, 140).trimEnd() + '…' : yc.cau_hoi;
+
+  const tin = dsMa.map((to) => ({
+    to,
+    title: `Đơn mới · ${yc.chu_de}`,
+    body: `${yc.khung_gio}\n${trich}`,
+    sound: 'default',
+    priority: 'high',
+    // Mở rộng ra khi khách kéo thông báo xuống, để đọc hết câu hỏi mà không
+    // phải mở app.
+    data: { man: '/thay', yeu_cau: yc.ma },
+  }));
+
+  try {
+    const tra = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(tin),
+    });
+    const kq = await tra.json();
+    // Expo trả 200 ngay cả khi từng tin hỏng, lỗi nằm trong từng phần tử. Không
+    // soi vào đó thì nhật ký báo thành công trong khi chẳng tin nào tới nơi.
+    const hong = (kq?.data ?? []).filter((d: { status?: string }) => d?.status !== 'ok');
+    if (!tra.ok || hong.length > 0) {
+      await ghiNhatKy(yc.ma, `day (${dsMa.length} may)`, false, JSON.stringify(kq).slice(0, 300));
+      return;
+    }
+    await ghiNhatKy(yc.ma, `day (${dsMa.length} may)`, true);
+  } catch (e) {
+    await ghiNhatKy(yc.ma, 'day', false, e instanceof Error ? e.message : String(e));
+  }
+}
+
+// ------------------------------------------------------------------ email
+
+function soanThu(yc: DongYeuCau, tenThay: string) {
   return {
     tieuDe: `Đơn tư vấn mới — ${yc.chu_de}, ${yc.khung_gio}`,
     than: `
@@ -83,79 +154,66 @@ function soanThu(yc: DongYeuCau, tenThay: string): { tieuDe: string; than: strin
   <div style="background:#f6f6f4;border-left:3px solid #d4a84b;padding:14px 16px;font-size:15px;line-height:1.65;white-space:pre-wrap">${anToan(yc.cau_hoi)}</div>
 
   <p style="font-size:14px;line-height:1.6;color:#555;margin:24px 0 0">
-    Khách đang chờ trong app. Sau khi liên hệ được, vào Supabase đổi trạng thái đơn
-    sang <b>da_nhan</b> để khách thấy là bạn đã nhận.
+    Mở Omora, đăng nhập tư cách chuyên gia để xem và nhận đơn.
   </p>
   <p style="font-size:12px;color:#999;margin:18px 0 0">Mã đơn ${yc.ma}</p>
 </div>`.trim(),
   };
 }
 
-async function guiThu(toi: string[], tieuDe: string, than: string) {
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${KHOA_RESEND}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: GUI_TU, to: toi, subject: tieuDe, html: than }),
-  });
-  if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
+async function guiThu(yc: DongYeuCau, tenThay: string, emailThay: string | null) {
+  if (!KHOA_RESEND) return; // Chưa khai thì bỏ qua, không phải lỗi.
+
+  const toi = [emailThay, EMAIL_CONG_TY].filter(Boolean) as string[];
+  if (toi.length === 0) {
+    await ghiNhatKy(yc.ma, 'email', false, 'Chua khai email cho thay lan cho cong ty');
+    return;
+  }
+
+  const thu = soanThu(yc, tenThay);
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KHOA_RESEND}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: GUI_TU, to: toi, subject: thu.tieuDe, html: thu.than }),
+    });
+    if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    await ghiNhatKy(yc.ma, toi.join(', '), true);
+  } catch (e) {
+    await ghiNhatKy(yc.ma, toi.join(', '), false, e instanceof Error ? e.message : String(e));
+  }
 }
 
-Deno.serve(async (req) => {
-  let yc: DongYeuCau | null = null;
-  let guiToi: string[] = [];
+// ------------------------------------------------------------------ cửa vào
 
+Deno.serve(async (req) => {
   try {
     const than = await req.json();
-    yc = than?.record ?? null;
+    const yc: DongYeuCau | null = than?.record ?? null;
     if (!yc?.ma) return new Response('khong co dong nao', { status: 200 });
 
-    // Tên lấy ở bảng hồ sơ, email lấy ở bảng liên hệ. Hai bảng vì bảng hồ sơ
-    // ai cũng đọc được — app cần nó để hiện danh sách thầy — nên để email ở đó
-    // là lộ địa chỉ cá nhân cho bất cứ ai cầm khoá công khai. Xem migration 0013.
+    // Tên lấy ở bảng hồ sơ, email và tài khoản lấy ở bảng liên hệ. Hai bảng vì
+    // bảng hồ sơ ai cũng đọc được — app cần nó để hiện danh sách thầy — nên để
+    // email hay mã tài khoản ở đó là lộ ra cho bất cứ ai cầm khoá công khai.
     const [{ data: thay }, { data: lienHe }] = await Promise.all([
       quanTri.from('chuyen_gia').select('ten').eq('ma', yc.chuyen_gia).maybeSingle(),
       quanTri
         .from('lien_he_chuyen_gia')
-        .select('email')
+        .select('email, tai_khoan')
         .eq('chuyen_gia', yc.chuyen_gia)
         .maybeSingle(),
     ]);
 
-    // Thầy chưa khai email thì vẫn gửi cho công ty — có người trực còn hơn
-    // không ai biết. Thiếu cả hai thì mới chịu.
-    guiToi = [lienHe?.email, EMAIL_CONG_TY].filter(Boolean) as string[];
-    if (guiToi.length === 0) throw new Error('Chua khai email cho thay lan cho cong ty');
-    if (!KHOA_RESEND) throw new Error('Chua dat RESEND_API_KEY');
+    // Hai đường chạy song song và độc lập: một đường hỏng không kéo đường kia theo.
+    await Promise.all([
+      dayThongBao(yc, (lienHe?.tai_khoan as string | null) ?? null),
+      guiThu(yc, thay?.ten ?? 'chuyên gia', (lienHe?.email as string | null) ?? null),
+    ]);
 
-    const thu = soanThu(yc, thay?.ten ?? 'chuyên gia');
-    await guiThu(guiToi, thu.tieuDe, thu.than);
-
-    await quanTri.from('nhat_ky_bao_tin').insert({
-      yeu_cau: yc.ma,
-      gui_toi: guiToi.join(', '),
-      thanh_cong: true,
-    });
-    return new Response('da gui', { status: 200 });
+    return new Response('da bao', { status: 200 });
   } catch (e) {
-    const loi = e instanceof Error ? e.message : String(e);
-    console.error('[bao-don-moi]', loi);
-    // Ghi nhật ký cả khi hỏng. Đây là thứ duy nhất để tra khi thầy bảo không
-    // nhận được thư nào.
-    try {
-      await quanTri.from('nhat_ky_bao_tin').insert({
-        yeu_cau: yc?.ma ?? null,
-        gui_toi: guiToi.join(', ') || '(chua xac dinh)',
-        thanh_cong: false,
-        loi,
-      });
-    } catch {
-      // Ghi nhật ký cũng hỏng nốt thì thôi, đừng để nó nuốt mất log bên trên.
-    }
-    // VẪN trả 200: trả lỗi thì Supabase gọi lại, mà đơn đã ghi xong rồi nên gọi
-    // lại chỉ sinh thư trùng chứ không cứu được gì.
+    console.error('[bao-don-moi]', e);
+    await ghiNhatKy(null, '(chua xac dinh)', false, e instanceof Error ? e.message : String(e));
     return new Response('hong, da ghi nhat ky', { status: 200 });
   }
 });

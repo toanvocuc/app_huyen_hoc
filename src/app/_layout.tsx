@@ -18,6 +18,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
+import { hoSoThayCuaToi } from '@/lib/thay';
 import { batHienKhiDangMo, doiLoiNhac } from '@/lib/thong-bao';
 import { supabase } from '@/lib/supabase';
 import { XEM_THU } from '@/lib/xem-thu';
@@ -32,6 +33,14 @@ export default function RootLayout() {
   const [xong, setXong] = useState(false);
   const [coHoSo, setCoHoSo] = useState(false);
   const [coPhien, setCoPhien] = useState(false);
+  /**
+   * Tài khoản đang đăng nhập có phải thầy không.
+   *
+   * Phải biết ngay lúc mở app. Thầy không có hồ sơ khách — không ngày sinh,
+   * không cung — nên nếu chỉ xét `coHoSo` thì mở app lên là thầy bị đá thẳng
+   * vào luồng nhập hồ sơ của khách và không thoát ra được.
+   */
+  const [laThay, setLaThay] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
   const doan = useSegments();
   const [phongXong] = useFonts({
@@ -58,7 +67,12 @@ export default function RootLayout() {
     )
       .then(async (co) => {
         setCoPhien(co);
-        return co ? docHoSo() : null;
+        if (!co) return null;
+        // Hỏi tư cách thầy TRƯỚC khi đọc hồ sơ khách. Thầy thì không có hồ sơ
+        // khách để mà đọc, hỏi cũng chỉ tốn một lượt gọi máy chủ.
+        const thay = await hoSoThayCuaToi().catch(() => null);
+        setLaThay(Boolean(thay));
+        return thay ? null : docHoSo();
       })
       .then((h) => {
         const co = Boolean(h?.ngay_sinh);
@@ -86,7 +100,18 @@ export default function RootLayout() {
   // xuất lẫn lúc phiên hết hạn.
   useEffect(() => {
     if (XEM_THU) return;
-    const { data } = supabase.auth.onAuthStateChange((_, phien) => setCoPhien(Boolean(phien)));
+    const { data } = supabase.auth.onAuthStateChange((_, phien) => {
+      setCoPhien(Boolean(phien));
+      if (!phien) {
+        setLaThay(false);
+        return;
+      }
+      // Đăng nhập xong phải hỏi lại tư cách. Thiếu chỗ này thì thầy vừa đăng
+      // nhập là bị đá vào luồng nhập hồ sơ cho tới lần mở app sau.
+      hoSoThayCuaToi()
+        .then((t) => setLaThay(Boolean(t)))
+        .catch(() => {});
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -99,7 +124,15 @@ export default function RootLayout() {
    * thẻ còn đang chạy, hiệu ứng này thấy chưa có phiên và đá ngược ra màn đăng
    * nhập. Đúng con bug "bị dịch chuyển" đã gặp một lần rồi.
    */
-  const DUOC_DUNG_KHI_CHUA_CO_PHIEN = ['dang-nhap', 'dang-nhap-xong'];
+  const DUOC_DUNG_KHI_CHUA_CO_PHIEN = ['dang-nhap', 'dang-nhap-xong', 'dang-nhap-thay'];
+
+  /**
+   * Hai màn của thầy. Để ngoài phép kiểm hồ sơ khách, và cũng là chỗ tránh một
+   * cuộc đua: ngay sau khi thầy đăng nhập, `laThay` còn đang hỏi máy chủ nên
+   * vẫn là false — không chừa hai màn này ra thì hiệu ứng điều hướng kịp đá
+   * thầy đi trước khi câu trả lời về.
+   */
+  const MAN_CUA_THAY = ['thay', 'dang-nhap-thay'];
 
   useEffect(() => {
     if (!xong || !phongXong || loi) return;
@@ -109,11 +142,16 @@ export default function RootLayout() {
       if (!DUOC_DUNG_KHI_CHUA_CO_PHIEN.includes(dau)) router.replace('/dang-nhap');
       return;
     }
-    if (!coHoSo && dau !== 'nhap-ho-so' && dau !== 'dang-nhap-xong') {
+    // Thầy đi đường riêng, không đụng tới hồ sơ khách.
+    if (laThay) {
+      if (!MAN_CUA_THAY.includes(dau)) router.replace('/thay');
+      return;
+    }
+    if (!coHoSo && dau !== 'nhap-ho-so' && dau !== 'dang-nhap-xong' && !MAN_CUA_THAY.includes(dau)) {
       router.replace('/nhap-ho-so');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [xong, phongXong, loi, coPhien, coHoSo, doan]);
+  }, [xong, phongXong, loi, coPhien, coHoSo, laThay, doan]);
 
   if (!xong || !phongXong) {
     return (

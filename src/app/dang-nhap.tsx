@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Platform, Text, View } from 'react-native';
+import { Dimensions, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from '@/components/logo';
@@ -144,6 +144,17 @@ export default function DangNhap() {
             tat={dangChay !== null && dangChay !== 'an-danh'}
             onPress={() => thu('an-danh')}
           />
+
+          {/* Đường của thầy, cố ý để nhẹ và nằm cuối. Khách không cần tới nó,
+              mà để nổi ngang mấy nút kia thì khách bấm nhầm rồi loay hoay với
+              một ô mật khẩu họ không có. */}
+          <Pressable
+            onPress={() => router.push('/dang-nhap-thay')}
+            className="mt-6 self-center px-4 py-2 active:opacity-60">
+            <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-mo underline">
+              Tôi là chuyên gia của Omora
+            </Text>
+          </Pressable>
 
           {loi ? (
             <Text
