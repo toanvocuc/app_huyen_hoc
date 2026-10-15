@@ -31,6 +31,17 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+/**
+ * Mật khẩu chung giữa webhook và hàm này.
+ *
+ * Hàm chạy sau một cửa mở: ai cầm khoá công khai — mà khoá đó nằm trong mọi bản
+ * app đã phát hành — đều gọi được. Không có lớp này thì người lạ dựng một thân
+ * yêu cầu giả là đẩy được thông báo bịa vào máy thầy, bao nhiêu lần cũng được.
+ *
+ * Để trống thì hàm vẫn chạy, chỉ là không có lớp chặn nào. Khai vào là chặn.
+ */
+const BI_MAT = Deno.env.get('BI_MAT_WEBHOOK') ?? '';
+
 const KHOA_RESEND = Deno.env.get('RESEND_API_KEY') ?? '';
 /** Địa chỉ đứng tên người gửi. Phải thuộc tên miền đã xác thực ở Resend. */
 const GUI_TU = Deno.env.get('EMAIL_GUI_TU') ?? 'Omora <onboarding@resend.dev>';
@@ -188,6 +199,13 @@ async function guiThu(yc: DongYeuCau, tenThay: string, emailThay: string | null)
 
 Deno.serve(async (req) => {
   try {
+    if (BI_MAT && req.headers.get('x-bi-mat') !== BI_MAT) {
+      // Trả 401 chứ không ghi nhật ký: kẻ dò sẽ gọi liên tục, ghi hết vào là
+      // nhật ký ngập rác và chính mình không tra được gì nữa.
+      console.warn('[bao-don-moi] goi khong dung bi mat');
+      return new Response('khong duoc phep', { status: 401 });
+    }
+
     const than = await req.json();
     const yc: DongYeuCau | null = than?.record ?? null;
     if (!yc?.ma) return new Response('khong co dong nao', { status: 200 });
