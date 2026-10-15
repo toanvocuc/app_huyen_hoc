@@ -24,7 +24,7 @@ const MUC = [
   },
   {
     ten: 'Xoá lúc nào cũng được',
-    noi: 'Vào mục Cá nhân, chọn xoá dữ liệu. Mọi thứ biến mất khỏi máy chủ ngay, không giữ lại bản sao.',
+    noi: 'Vào mục Cá nhân, chọn Xoá tài khoản. Tài khoản cùng toàn bộ hồ sơ, lịch sử rút bài và yêu cầu tư vấn biến mất khỏi máy chủ ngay, không giữ lại bản sao.',
   },
 ];
 

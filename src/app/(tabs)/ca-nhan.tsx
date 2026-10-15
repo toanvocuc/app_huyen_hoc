@@ -138,7 +138,7 @@ export default function CaNhan() {
               <Ke />
               <DongDan
                 bieu="trash-outline"
-                ten="Xoá toàn bộ dữ liệu"
+                ten="Xoá tài khoản"
                 onPress={() => router.push('/cai-dat/xoa-du-lieu')}
               />
             </Nhom>

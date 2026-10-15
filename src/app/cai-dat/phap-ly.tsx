@@ -36,7 +36,7 @@ export default function PhapLy() {
 
       <View className="mt-6">
         <Nut
-          nhan="Xoá toàn bộ dữ liệu"
+          nhan="Xoá tài khoản"
           kieu="vien"
           onPress={() => router.push('/cai-dat/xoa-du-lieu')}
         />

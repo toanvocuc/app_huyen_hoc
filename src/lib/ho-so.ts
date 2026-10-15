@@ -158,56 +158,45 @@ export async function luuHoSo(phan: Partial<HoSo>): Promise<HoSo> {
 }
 
 /**
- * Mọi bảng có cột `nguoi_dung`. Thiếu một bảng ở đây là dữ liệu của khách còn
- * nằm lại sau khi họ bấm xoá, mà màn xoá thì viết "không có bản sao nào được
- * giữ lại". Thêm bảng mới có cột đó thì phải khai vào đây.
+ * Xoá hẳn tài khoản, không chỉ xoá dữ liệu.
  *
- * Trước đây thiếu `danh_gia`: điểm sao khách chấm cho thầy sống sót qua lệnh
- * xoá, vẫn tính vào điểm trung bình của thầy.
+ * Apple điều 5.1.1(v) bắt app nào cho đăng ký tài khoản thì phải cho xoá tài
+ * khoản ngay trong app. Xoá dữ liệu mà giữ lại tài khoản là chưa đạt.
+ *
+ * Việc xoá chạy ở Edge Function `xoa-tai-khoan`, vì xoá một dòng trong
+ * auth.users cần khoá quản trị — thứ không bao giờ được nằm trong app.
+ *
+ * KHÔNG còn vòng lặp xoá từng bảng như trước. Mọi bảng mang dữ liệu khách đều
+ * khai `on delete cascade` tới auth.users, nên xoá dòng gốc là Postgres tự dọn
+ * hết. Danh sách bảng viết tay chính là chỗ đã sinh ra bug thiếu bảng danh_gia;
+ * bỏ được nó đi là bỏ luôn cả một loại lỗi.
  */
-const BANG_CO_NGUOI_DUNG = [
-  'su_kien',
-  'lan_rut',
-  'thiet_bi',
-  'danh_gia',
-  'yeu_cau_tu_van',
-  'ho_so',
-] as const;
-
-/**
- * Xoá sạch dữ liệu của người đang đăng nhập.
- *
- * Phải xoá đích danh từng bảng. Mấy bảng kia tham chiếu auth.users chứ không phải
- * ho_so, nên xoá mỗi dòng hồ sơ là chúng vẫn nằm lại. App không xoá được tài khoản
- * vì việc đó cần khoá quản trị, thứ không bao giờ để trong app.
- *
- * KHÔNG được âm thầm trả về khi không đọc ra người dùng. `getUser` gọi mạng, và
- * supabase nuốt lỗi mạng thành `user: null` chứ không ném ra. Trả về lặng lẽ thì
- * màn xoá tưởng là xong, đá khách về phần nhập hồ sơ, mà dưới máy chủ còn nguyên.
- */
-export async function xoaSachDuLieu() {
+export async function xoaTaiKhoan() {
   if (XEM_THU) return;
-  const { data: u, error: loiDoc } = await supabase.auth.getUser();
-  if (loiDoc) throw loiDoc;
-  if (!u.user) throw new Error('Chưa đọc được tài khoản. Kiểm tra mạng rồi thử lại.');
-  const toi = u.user.id;
 
-  for (const bang of BANG_CO_NGUOI_DUNG) {
-    const { error } = await supabase.from(bang).delete().eq('nguoi_dung', toi);
-    if (error) throw error;
-  }
+  // Lấy thẻ đăng nhập để gửi kèm. Hàm bên kia dựa vào thẻ này để biết xoá ai,
+  // chứ không nhận mã người dùng từ thân yêu cầu — nhận là ai cũng xoá được
+  // tài khoản của người khác.
+  const { data: phien, error: loiPhien } = await supabase.auth.getSession();
+  if (loiPhien) throw loiPhien;
+  const the = phien.session?.access_token;
+  if (!the) throw new Error('Chưa đọc được phiên đăng nhập. Kiểm tra mạng rồi thử lại.');
+
+  const { error } = await supabase.functions.invoke('xoa-tai-khoan', {
+    headers: { Authorization: `Bearer ${the}` },
+  });
+  if (error) throw error;
 
   // Huỷ lời nhắc đã hẹn trên máy. Lịch này nằm ở hệ điều hành chứ không nằm
-  // dưới máy chủ, nên xoá bảng bao nhiêu cũng không đụng tới nó — thiếu dòng
+  // dưới máy chủ, nên xoá bao nhiêu dưới đó cũng không đụng tới nó — thiếu dòng
   // này thì khách xoá sạch xong vẫn bị đánh thức mỗi sáng.
   await huyLichLaBai();
 
   datCoHoSo(false);
   datHoSoChung(null);
+  // Tài khoản không còn nên thẻ đang cầm cũng thành vô nghĩa. Dọn sạch phía máy
+  // để lần mở sau app hỏi lại từ đầu chứ không cầm thẻ của một người đã biến mất.
   await supabase.auth.signOut();
-  // Tạo ngay phiên mới. App chạy trên giả định lúc nào cũng có một người dùng
-  // ẩn danh: ghi sự kiện, lá bài hôm nay và lưu hồ sơ đều cần tới nó.
-  await dangNhapAnDanh();
 }
 
 export function useHoSo() {
