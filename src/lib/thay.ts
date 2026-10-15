@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
-import { XEM_THU } from '@/lib/xem-thu';
+import { XEM_THU, XEM_THU_THAY } from '@/lib/xem-thu';
 
 export type TinThay = { ma: string; ten: string };
 
@@ -25,6 +25,7 @@ export type TinThay = { ma: string; ten: string };
  * — đó là ý muốn, không phải lỗi.
  */
 export async function hoSoThayCuaToi(): Promise<TinThay | null> {
+  if (XEM_THU_THAY) return { ma: 'luna-chiem-tinh', ten: 'Luna Chiêm Tinh' };
   if (XEM_THU) return null;
 
   const { data, error } = await supabase

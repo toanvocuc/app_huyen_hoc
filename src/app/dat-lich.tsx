@@ -16,6 +16,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
+import { useHoSo } from '@/lib/ho-so';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
 import { moZalo } from '@/lib/nhan-zalo';
 import { guiYeuCau, KHUNG_GIO, tachChuDe } from '@/lib/yeu-cau';
@@ -26,6 +27,7 @@ const TOI_THIEU = 15;
 export default function DatLich() {
   const { thay: maThay } = useLocalSearchParams<{ thay: string }>();
   const { dong } = useChuyenGia();
+  const { hoSo } = useHoSo();
   const thay = useMemo(() => dong?.find((t) => t.ma === maThay) ?? null, [dong, maThay]);
 
   const chuDe = tachChuDe(thay?.chuyen_sau);
@@ -49,6 +51,10 @@ export default function DatLich() {
         chuDe: chuDeThat,
         khungGio: chonGio,
         cauHoi,
+        // Chép tên sang đơn để thầy biết xưng hô với ai. Thầy không đọc được
+        // bảng hồ sơ của khách — luật khoá dòng chặn — nên không chép là thầy
+        // chỉ thấy một dãy ký tự.
+        tenKhach: hoSo?.ho_ten,
       });
       // Sang thẳng mục Lịch của tôi để khách thấy ngay yêu cầu vừa gửi, rồi mới
       // mở Zalo. Thấy nó nằm trong app trước thì mới tin là đã gửi thật.

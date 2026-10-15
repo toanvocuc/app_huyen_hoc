@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { maNguoiDung, supabase } from '@/lib/supabase';
-import { XEM_THU } from '@/lib/xem-thu';
+import { XEM_THU, XEM_THU_THAY } from '@/lib/xem-thu';
 
 export type TrangThai = 'cho_nhan' | 'da_nhan' | 'da_xong' | 'da_huy';
 
@@ -25,6 +25,8 @@ export type YeuCau = {
   cau_hoi: string;
   trang_thai: TrangThai;
   tao_luc: string;
+  /** Ảnh chụp tên khách lúc đặt. Null với mấy đơn đặt trước khi có cột này. */
+  ten_khach: string | null;
 };
 
 /** Khung giờ cho sẵn. Cố ý không cho chọn ngày giờ chính xác, xem migration 0011. */
@@ -67,6 +69,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
     trang_thai: 'da_nhan',
     tao_luc: NGAY_TRUOC(0),
+    ten_khach: 'Nguyễn Thị Ánh Đào',
   },
   {
     ma: 'xem-thu-2',
@@ -76,6 +79,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
     trang_thai: 'cho_nhan',
     tao_luc: NGAY_TRUOC(1),
+    ten_khach: 'Trần Minh Quân',
   },
   {
     ma: 'xem-thu-3',
@@ -85,6 +89,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
     trang_thai: 'da_xong',
     tao_luc: NGAY_TRUOC(9),
+    ten_khach: 'Lê Hoàng Vũ',
   },
   {
     ma: 'xem-thu-4',
@@ -94,6 +99,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     cau_hoi: 'Em đặt thử rồi lại bận mất, xin phép huỷ ạ.',
     trang_thai: 'da_huy',
     tao_luc: NGAY_TRUOC(14),
+    ten_khach: 'Phạm Thu Hằng',
   },
 ];
 
@@ -103,6 +109,8 @@ export async function guiYeuCau(phan: {
   chuDe: string;
   khungGio: string;
   cauHoi: string;
+  /** Tên khách, chép sang đơn để thầy biết xưng hô với ai. */
+  tenKhach?: string | null;
 }): Promise<YeuCau> {
   if (XEM_THU) return { ...MAU_YEU_CAU[0], ...{ trang_thai: 'cho_nhan' as const } };
 
@@ -117,6 +125,7 @@ export async function guiYeuCau(phan: {
       chu_de: phan.chuDe,
       khung_gio: phan.khungGio,
       cau_hoi: phan.cauHoi.trim(),
+      ten_khach: phan.tenKhach?.trim() || null,
     })
     .select()
     .single();
@@ -176,4 +185,61 @@ export function useYeuCauCuaToi() {
   }, [taiLai]);
 
   return { dong, loi, dangTai: dong === null && loi === null, lamMoi };
+}
+
+// ------------------------------------------------------------------ phía thầy
+
+/**
+ * Mọi đơn gửi cho thầy đang đăng nhập.
+ *
+ * Luật khoá dòng lo phần "của ai": thầy chỉ đọc được đơn trỏ về hồ sơ mình làm
+ * chủ. Nên câu truy vấn ở đây không cần lọc gì thêm, và cũng không được phép
+ * tin vào việc lọc ở máy khách.
+ */
+export function useDonChoThay() {
+  // Chế độ xem thử nạp sẵn ngay lúc dựng chứ không đặt trong hiệu ứng: đặt
+  // trạng thái ngay trong thân hiệu ứng là kéo thêm một vòng vẽ thừa, eslint bắt.
+  const [dong, datDong] = useState<YeuCau[] | null>(XEM_THU_THAY ? MAU_YEU_CAU : null);
+  const [loi, datLoi] = useState<string | null>(null);
+
+  const taiLai = useCallback(() => {
+    if (XEM_THU_THAY) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('yeu_cau_tu_van')
+          .select('*')
+          .order('tao_luc', { ascending: false });
+        if (error) datLoi(error.message);
+        else datDong(data as YeuCau[]);
+      } catch (e) {
+        datLoi(e instanceof Error ? e.message : String(e));
+      }
+    })();
+  }, []);
+
+  useEffect(taiLai, [taiLai]);
+
+  const lamMoi = useCallback(() => {
+    if (XEM_THU_THAY) return;
+    datDong(null);
+    datLoi(null);
+    taiLai();
+  }, [taiLai]);
+
+  return { dong, loi, dangTai: dong === null && loi === null, lamMoi };
+}
+
+/**
+ * Thầy đổi trạng thái một đơn.
+ *
+ * Luật khoá dòng chặn thầy lùi về 'cho_nhan' và chặn sửa câu hỏi hay khung giờ —
+ * mấy thứ đó là lời của khách. Ở đây chỉ nhận ba trạng thái hợp lệ cho đúng.
+ */
+export async function thayDoiTrangThai(ma: string, trangThai: 'da_nhan' | 'da_xong' | 'da_huy') {
+  const { error } = await supabase
+    .from('yeu_cau_tu_van')
+    .update({ trang_thai: trangThai })
+    .eq('ma', ma);
+  if (error) throw error;
 }

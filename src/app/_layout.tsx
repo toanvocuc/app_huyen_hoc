@@ -20,6 +20,7 @@ import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
 import { hoSoThayCuaToi } from '@/lib/thay';
 import { batHienKhiDangMo, doiLoiNhac } from '@/lib/thong-bao';
+import { useTraLoiThongBao } from '@/lib/tra-loi-thong-bao';
 import { supabase } from '@/lib/supabase';
 import { XEM_THU } from '@/lib/xem-thu';
 
@@ -91,6 +92,29 @@ export default function RootLayout() {
   }, []);
 
   useEffect(khoiDong, [khoiDong]);
+
+  /**
+   * Bấm vào thông báo thì mở đúng màn nó nói tới.
+   *
+   * Trước đây app KHÔNG đọc gì từ thông báo. Lời nhắc sáng vẫn gắn sẵn
+   * `data: { man: '/' }` từ lâu mà không ai dùng tới, nên bấm vào chỉ mở app ra
+   * chỗ cũ. Với thầy thì chuyện này không chấp nhận được: báo có đơn mới mà bấm
+   * vào không ra đơn thì thông báo chỉ còn là tiếng chuông.
+   *
+   * `useLastNotificationResponse` bắt được CẢ hai đường: bấm lúc app đang mở, và
+   * bấm lúc app đã tắt hẳn — trường hợp sau là thường gặp nhất, mà một bộ lắng
+   * nghe thường thì bỏ lỡ vì nó gắn vào sau khi app đã dựng xong.
+   */
+  const traLoiThongBao = useTraLoiThongBao();
+  useEffect(() => {
+    if (!xong || !phongXong) return;
+    const man = traLoiThongBao?.notification?.request?.content?.data?.man;
+    if (typeof man !== 'string' || !man.startsWith('/')) return;
+    // Chờ một nhịp cho chồng màn hình dựng xong. Đẩy ngay trong lúc nó đang
+    // dựng thì lệnh trôi mất — đúng con bug đã gặp ở màn hứng đăng nhập.
+    const hen = setTimeout(() => router.push(man as never), 80);
+    return () => clearTimeout(hen);
+  }, [traLoiThongBao, xong, phongXong]);
 
   // Nhập hồ sơ xong thì ho-so.ts báo lại, nhờ vậy không bị đá ngược về phần nhập.
   useEffect(() => ngheCoHoSo(setCoHoSo), []);
