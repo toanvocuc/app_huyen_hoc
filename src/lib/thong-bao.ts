@@ -322,7 +322,15 @@ export async function dangKyMaDay(): Promise<string | null> {
       },
       { onConflict: 'ma_day' }
     );
-    if (error) console.warn('[thong-bao] luu ma thiet bi that bai:', error.message);
+    if (error) {
+      // Trả null khi GHI hỏng, không trả mã.
+      //
+      // Trước đây vẫn trả mã dù lệnh ghi hỏng, nên chỗ gọi tưởng đã xong. Với
+      // thầy thì đó là hỏng im lặng tệ nhất: màn hình sạch trơn, không cảnh báo
+      // gì, mà máy chủ không biết đẩy tin về đâu.
+      console.warn('[thong-bao] luu ma thiet bi that bai:', error.message);
+      return null;
+    }
     return ma;
   } catch (e) {
     console.warn('[thong-bao] lay ma thiet bi that bai:', e);

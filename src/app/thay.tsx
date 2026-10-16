@@ -66,6 +66,14 @@ export default function ManThay() {
   const { thay, xong } = useLaThay();
   const { dong, loi, dangTai, lamMoi } = useDonChoThay();
   const [coQuyen, datCoQuyen] = useState<boolean | null>(null);
+  /**
+   * Máy chủ đã biết máy này chưa.
+   *
+   * Khác với `coQuyen`: cấp quyền rồi mà lệnh ghi mã máy hỏng thì vẫn không
+   * nhận được tin nào. Phải tách hai thứ, không thì hỏng ở bước hai mà màn hình
+   * báo mọi thứ bình thường.
+   */
+  const [daSanSang, datDaSanSang] = useState<boolean | null>(null);
   const [dangXin, datDangXin] = useState(false);
   const [xep, datXep] = useState<Xep>('moi');
   const [tim, datTim] = useState('');
@@ -85,7 +93,13 @@ export default function ManThay() {
           // không bao giờ nhận được tin nào.
           //
           // Ghi đè theo mã máy nên gọi lại nhiều lần không sinh dòng thừa.
-          if (co) dangKyMaDay().catch(() => {});
+          if (co) {
+            dangKyMaDay()
+              .then((ma) => datDaSanSang(Boolean(ma)))
+              .catch(() => datDaSanSang(false));
+          } else {
+            datDaSanSang(false);
+          }
         })
         .catch(() => datCoQuyen(false));
       lamMoi();
@@ -126,7 +140,7 @@ export default function ManThay() {
     try {
       const duoc = await xinQuyen();
       datCoQuyen(duoc);
-      if (duoc) await dangKyMaDay();
+      if (duoc) datDaSanSang(Boolean(await dangKyMaDay()));
       else
         Alert.alert(
           'Máy đang chặn thông báo',
@@ -222,9 +236,12 @@ export default function ManThay() {
       phu={`Đang làm việc với tư cách ${thay.ten}`}
       onLamMoi={lamMoi}
       dangLamMoi={dangTai && coDon}>
+      {/* Ba trạng thái, không phải hai. Cấp quyền rồi mà máy chủ chưa biết máy
+          này thì vẫn không nhận được tin — trước đây chỗ đó hiện màn sạch trơn,
+          thầy tưởng xong. */}
       {coQuyen === false ? (
         <View className="mb-6">
-          <Khoi vien>
+          <Khoi vang>
             <View className="mb-2 flex-row items-center gap-2.5">
               <Ionicons name="notifications-off-outline" size={18} color={MAU.canh} />
               <Text
@@ -240,6 +257,33 @@ export default function ManThay() {
               <Nut nhan="Bật thông báo" dangChay={dangXin} onPress={bat} />
             </View>
           </Khoi>
+        </View>
+      ) : daSanSang === false ? (
+        <View className="mb-6">
+          <Khoi vang>
+            <View className="mb-2 flex-row items-center gap-2.5">
+              <Ionicons name="warning-outline" size={18} color={MAU.canh} />
+              <Text
+                style={{ fontFamily: CHU.thanDam, letterSpacing: 1.4, color: MAU.canh }}
+                className="text-[11px] uppercase">
+                Chưa nối được với máy chủ
+              </Text>
+            </View>
+            <ChuThan>
+              Máy bạn đã cho phép thông báo, nhưng máy chủ chưa ghi nhận được máy này nên
+              chưa đẩy tin về đây. Thường là do mạng. Kéo màn xuống để thử lại.
+            </ChuThan>
+            <View className="mt-5">
+              <Nut nhan="Thử nối lại" kieu="vien" dangChay={dangXin} onPress={bat} />
+            </View>
+          </Khoi>
+        </View>
+      ) : daSanSang === true ? (
+        <View className="mb-6 flex-row items-center justify-center gap-2">
+          <Ionicons name="checkmark-circle" size={15} color={MAU.tot} />
+          <Text style={{ fontFamily: CHU.than, color: MAU.tot }} className="text-xs">
+            Thông báo đang bật, máy sẽ báo khi có đơn mới
+          </Text>
         </View>
       ) : null}
 
