@@ -8,6 +8,14 @@ export const MAU = {
   nenNhat: '#141E33',
   nenNhatHon: '#1B2740',
 
+  /**
+   * Nền đen cho mấy khung viền vàng.
+   *
+   * Không dùng đen tuyệt đối: trên nền trời sao, một mảng #000 trông như lỗ
+   * thủng chứ không như một tấm thẻ. Lệch xanh một chút thì nó ăn vào nền.
+   */
+  nenDen: '#06080D',
+
   vang: '#D4A84B',
   vangSang: '#E8C673',
   vangMo: 'rgba(212,168,75,0.30)',

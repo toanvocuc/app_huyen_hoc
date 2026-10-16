@@ -87,7 +87,7 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
   }
 
   return (
-    <Khoi vien>
+    <Khoi vang anhNen={require('@/assets/nen/khoi-thay.jpg')}>
       <View className="items-center">
         {thay.anh ? (
           <Image

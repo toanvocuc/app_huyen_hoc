@@ -46,6 +46,25 @@ export function NenTinhVan({ mo = 0.44 }: { mo?: number }) {
 }
 
 /**
+ * Bầu trời có các chòm sao, phủ cả màn Chuyên gia.
+ *
+ * Ảnh này tối sẵn — đo ra độ sáng trung bình 13 trên 255 — nên lớp phủ nhẹ tay
+ * hơn hẳn mấy nền khác. Phủ dày thì mất luôn mấy đường nối chòm sao, mà đó
+ * đúng là thứ đáng nhìn trong ảnh.
+ */
+export function NenChomSao({ mo = 0.3 }: { mo?: number }) {
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+      <Image source={require('@/assets/nen/chom-sao.jpg')} style={{ flex: 1 }} contentFit="cover" />
+      <LinearGradient
+        colors={[`rgba(6,8,13,${mo})`, `rgba(6,8,13,${Math.min(1, mo + 0.3)})`]}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+    </View>
+  );
+}
+
+/**
  * Dải hoa văn mép trên của mỗi khung ăn sâu xuống bao nhiêu dp, đo ở khoảng
  * GIỮA màn hình (110–302dp) — chỗ tiêu đề nằm. Hai bên mép thì hoa văn chạy
  * dọc suốt màn nên không có số nào để tránh.

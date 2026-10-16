@@ -162,9 +162,9 @@ export function Chuong() {
                 width: CO,
                 height: CO,
                 borderRadius: CO / 2,
-                backgroundColor: MAU.nenNhatHon,
+                backgroundColor: MAU.nenDen,
                 borderWidth: 1,
-                borderColor: MAU.vangMo,
+                borderColor: MAU.vang,
                 alignItems: 'center',
                 justifyContent: 'center',
                 // Bóng đổ để nó tách khỏi nền, nhìn ra là lớp nổi bên trên.
@@ -196,10 +196,10 @@ export function Chuong() {
         <Pressable onPress={dongHop} className="flex-1 bg-black/60" />
 
         <View
-          style={{ borderColor: MAU.vien, top: le.top + 56 }}
-          className="absolute inset-x-3 max-h-[64%] overflow-hidden rounded-2xl border bg-nen-nhat">
+          style={{ borderColor: MAU.vang, backgroundColor: MAU.nenDen, top: le.top + 56 }}
+          className="absolute inset-x-3 max-h-[64%] overflow-hidden rounded-2xl border">
           <View
-            style={{ borderBottomColor: MAU.vien }}
+            style={{ borderBottomColor: MAU.vangMo }}
             className="flex-row items-center justify-between border-b px-4 py-3">
             <Text style={{ fontFamily: CHU.thanDam }} className="text-base text-chu-chinh">
               Thông báo{chuaDoc > 0 ? ` (${chuaDoc} mới)` : ''}
@@ -231,7 +231,7 @@ export function Chuong() {
               </ScrollView>
 
               <View
-                style={{ borderTopColor: MAU.vien }}
+                style={{ borderTopColor: MAU.vangMo }}
                 className="flex-row items-center justify-between border-t px-4 py-3">
                 <Pressable
                   onPress={() => datDaChon(chonHet ? [] : dong.map((t) => t.ma))}
@@ -285,7 +285,7 @@ function Dong({
     <Pressable
       onPress={onBam}
       onLongPress={onGiu}
-      style={{ borderBottomColor: MAU.vien }}
+      style={{ borderBottomColor: MAU.vangRatMo }}
       className="flex-row items-start gap-3 border-b px-4 py-3.5 active:opacity-70">
       {dangChonNhieu ? (
         <View className="pt-0.5">

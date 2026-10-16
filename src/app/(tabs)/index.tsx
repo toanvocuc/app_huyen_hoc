@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { DangTai, ManHinh, Trong } from '@/components/nen';
+import { NenChomSao } from '@/components/nen-anh';
 import { SaoKemSo } from '@/components/sao';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
@@ -30,7 +31,8 @@ export default function DanhSachChuyenGia() {
   return (
     <ManHinh
       tieuDe="Chuyên gia của Omora"
-      phu="Chọn người bạn muốn hỏi, rồi đặt một buổi tư vấn.">
+      phu="Chọn người bạn muốn hỏi, rồi đặt một buổi tư vấn."
+      nenPhu={<NenChomSao />}>
       {dangTai ? (
         <DangTai />
       ) : loi ? (

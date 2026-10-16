@@ -1,10 +1,19 @@
 /** Khung màn hình và mấy mảnh giao diện dùng lại khắp app. */
 
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChumSaoToa } from '@/components/hieu-ung-sao';
@@ -83,13 +92,51 @@ export function ManHinh({
   );
 }
 
-export function Khoi({ children, vien }: { children: React.ReactNode; vien?: boolean }) {
+export function Khoi({
+  children,
+  vien,
+  vang,
+  anhNen,
+}: {
+  children: React.ReactNode;
+  /** Viền vàng mờ, dùng để nhấn một khối giữa nhiều khối giống nhau. */
+  vien?: boolean;
+  /**
+   * Viền vàng đậm trên nền đen.
+   *
+   * Dùng cho mấy khối mang việc còn sống — đơn đang chờ, thông báo chưa đọc.
+   * Tương phản mạnh hơn hẳn nền chuyển sắc xanh, nên mắt bắt được ngay cả khi
+   * phía sau là ảnh trời sao.
+   */
+  vang?: boolean;
+  /** Ảnh lót bên trong khối. Chạy dưới một lớp phủ tối để chữ vẫn đọc được. */
+  anhNen?: ImageSourcePropType;
+}) {
+  const vienMau = vang ? MAU.vang : vien ? MAU.vangMo : MAU.vien;
+  const khung = { borderRadius: 18, borderWidth: 1, borderColor: vienMau, overflow: 'hidden' as const };
+
+  if (anhNen) {
+    return (
+      <View style={[khung, { backgroundColor: MAU.nenDen }]}>
+        <Image source={anhNen} style={{ position: 'absolute', inset: 0 }} contentFit="cover" />
+        {/* Lớp phủ tối: ảnh nào cũng có chỗ sáng, mà chữ trắng đặt lên chỗ sáng
+            là mất hút. Phủ rồi thì ảnh thành vân nền chứ không tranh với chữ. */}
+        <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(6,8,13,0.62)' }} />
+        <View className="p-5">{children}</View>
+      </View>
+    );
+  }
+
+  if (vang) {
+    return (
+      <View style={[khung, { backgroundColor: MAU.nenDen }]}>
+        <View className="p-5">{children}</View>
+      </View>
+    );
+  }
+
   return (
-    <LinearGradient
-      colors={KHOI_CHUYEN}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ borderRadius: 18, borderWidth: 1, borderColor: vien ? MAU.vangMo : MAU.vien }}>
+    <LinearGradient colors={KHOI_CHUYEN} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={khung}>
       <View className="p-5">{children}</View>
     </LinearGradient>
   );

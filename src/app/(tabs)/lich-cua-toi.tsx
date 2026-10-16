@@ -200,7 +200,7 @@ function The({
 
   return (
     <View style={{ opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1 }}>
-      <Khoi vien={yc.trang_thai === 'cho_nhan'}>
+      <Khoi vang>
         <View className="mb-2 flex-row items-center justify-between">
           <Text
             style={{ fontFamily: CHU.hoaDam, fontSize: 22 }}
