@@ -24,8 +24,12 @@ export type YeuCau = {
   nguoi_dung: string;
   chu_de: string;
   khung_gio: string;
+  /** Ngày khách muốn gặp, dạng yyyy-mm-dd. Null với đơn đặt trước khi có mục này. */
+  ngay_hen: string | null;
   cau_hoi: string;
   trang_thai: TrangThai;
+  /** Lý do thầy từ chối, thầy tự viết. Chỉ có khi trạng thái là da_huy. */
+  ly_do: string | null;
   tao_luc: string;
   /** Ảnh chụp tên khách lúc đặt. Null với mấy đơn đặt trước khi có cột này. */
   ten_khach: string | null;
@@ -69,8 +73,10 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tarot',
     khung_gio: 'Tối, 19h tới 21h',
+    ngay_hen: null,
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
     trang_thai: 'da_nhan',
+    ly_do: null,
     tao_luc: NGAY_TRUOC(0),
     ten_khach: 'Nguyễn Thị Ánh Đào',
   },
@@ -80,8 +86,10 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Sáng, 9h tới 11h',
+    ngay_hen: null,
     cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
     trang_thai: 'cho_nhan',
+    ly_do: null,
     tao_luc: NGAY_TRUOC(1),
     ten_khach: 'Trần Minh Quân',
   },
@@ -91,8 +99,10 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tử vi',
     khung_gio: 'Chiều, 14h tới 16h',
+    ngay_hen: null,
     cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
     trang_thai: 'da_xong',
+    ly_do: null,
     tao_luc: NGAY_TRUOC(9),
     ten_khach: 'Lê Hoàng Vũ',
   },
@@ -102,8 +112,10 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Giờ nào cũng được',
+    ngay_hen: null,
     cau_hoi: 'Em đặt thử rồi lại bận mất, xin phép huỷ ạ.',
     trang_thai: 'da_huy',
+    ly_do: null,
     tao_luc: NGAY_TRUOC(14),
     ten_khach: 'Phạm Thu Hằng',
   },
@@ -114,6 +126,7 @@ export async function guiYeuCau(phan: {
   chuyenGia: string;
   chuDe: string;
   khungGio: string;
+  ngayHen: string;
   cauHoi: string;
   /** Tên khách, chép sang đơn để thầy biết xưng hô với ai. */
   tenKhach?: string | null;
@@ -130,6 +143,7 @@ export async function guiYeuCau(phan: {
       nguoi_dung: toi,
       chu_de: phan.chuDe,
       khung_gio: phan.khungGio,
+      ngay_hen: phan.ngayHen,
       cau_hoi: phan.cauHoi.trim(),
       ten_khach: phan.tenKhach?.trim() || null,
     })
@@ -242,10 +256,14 @@ export function useDonChoThay() {
  * Luật khoá dòng chặn thầy lùi về 'cho_nhan' và chặn sửa câu hỏi hay khung giờ —
  * mấy thứ đó là lời của khách. Ở đây chỉ nhận ba trạng thái hợp lệ cho đúng.
  */
-export async function thayDoiTrangThai(ma: string, trangThai: 'da_nhan' | 'da_xong' | 'da_huy') {
+export async function thayDoiTrangThai(
+  ma: string,
+  trangThai: 'da_nhan' | 'da_xong' | 'da_huy',
+  lyDo?: string
+) {
   const { error } = await supabase
     .from('yeu_cau_tu_van')
-    .update({ trang_thai: trangThai })
+    .update({ trang_thai: trangThai, ...(lyDo ? { ly_do: lyDo.trim() } : {}) })
     .eq('ma', ma);
   if (error) throw error;
 }

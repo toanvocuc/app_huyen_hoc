@@ -12,7 +12,7 @@
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -32,6 +32,33 @@ const TOI_THIEU = 15;
  */
 const TOI_THIEU_LIEN_HE = 9;
 
+/**
+ * Chọn được trong bao nhiêu ngày tới.
+ *
+ * 30 ngày: xa hơn thì thầy không giữ lịch nổi, mà khách cũng không biết tháng
+ * sau mình bận gì. Ngày sớm nhất là hôm nay.
+ */
+const SO_NGAY_CHON = 30;
+
+const THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+/** Dãy ngày từ hôm nay, kèm nhãn ngắn để vẽ. Tính theo giờ máy, không theo UTC. */
+function dayNgay() {
+  const hom = new Date();
+  hom.setHours(0, 0, 0, 0);
+  return Array.from({ length: SO_NGAY_CHON }, (_, i) => {
+    const d = new Date(hom.getTime() + i * 86400000);
+    const hai = (n: number) => String(n).padStart(2, '0');
+    return {
+      // yyyy-mm-dd theo giờ máy. Dùng toISOString là lệch một ngày với mọi múi
+      // giờ phía đông, mà Việt Nam thì lệch bảy tiếng.
+      gia: `${d.getFullYear()}-${hai(d.getMonth() + 1)}-${hai(d.getDate())}`,
+      thu: i === 0 ? 'Hôm nay' : i === 1 ? 'Mai' : THU[d.getDay()],
+      ngay: `${d.getDate()}/${d.getMonth() + 1}`,
+    };
+  });
+}
+
 export default function DatLich() {
   const { thay: maThay } = useLocalSearchParams<{ thay: string }>();
   const { dong } = useChuyenGia();
@@ -41,6 +68,8 @@ export default function DatLich() {
   const chuDe = tachChuDe(thay?.chuyen_sau);
   const [chonChuDe, datChonChuDe] = useState<string | null>(null);
   const [chonGio, datChonGio] = useState<string | null>(null);
+  const cacNgay = useMemo(() => dayNgay(), []);
+  const [chonNgay, datChonNgay] = useState<string>(() => dayNgay()[0].gia);
   const [cauHoi, datCauHoi] = useState('');
   // Điền sẵn từ hồ sơ. Khách đặt lần hai không phải gõ lại số của mình.
   const [lienHe, datLienHe] = useState('');
@@ -58,7 +87,11 @@ export default function DatLich() {
   // Thầy chỉ khai một mảng thì không có gì để chọn, tự lấy luôn.
   const chuDeThat = chonChuDe ?? (chuDe.length === 1 ? chuDe[0] : null);
   const duDieuKien = Boolean(
-    chuDeThat && chonGio && cauHoi.trim().length >= TOI_THIEU && lienHe.trim().length >= TOI_THIEU_LIEN_HE
+    chuDeThat &&
+      chonGio &&
+      chonNgay &&
+      cauHoi.trim().length >= TOI_THIEU &&
+      lienHe.trim().length >= TOI_THIEU_LIEN_HE
   );
 
   async function gui() {
@@ -76,6 +109,7 @@ export default function DatLich() {
         chuyenGia: thay.ma,
         chuDe: chuDeThat,
         khungGio: chonGio,
+        ngayHen: chonNgay,
         cauHoi,
         // Chép tên sang đơn để thầy biết xưng hô với ai. Thầy không đọc được
         // bảng hồ sơ của khách — luật khoá dòng chặn — nên không chép là thầy
@@ -117,7 +151,43 @@ export default function DatLich() {
       ) : null}
 
       <View className="mb-7">
-        <Nhan>Bạn rảnh khi nào</Nhan>
+        <Nhan>Bạn muốn gặp ngày nào</Nhan>
+        {/* Dải ngang chứ không phải bánh xe ba cột như lúc nhập ngày sinh: ở đây
+            chỉ chọn trong 30 ngày tới, lướt ngang nhanh hơn quay ba con lăn. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mt-2 -mx-5"
+          contentContainerClassName="px-5 gap-2">
+          {cacNgay.map((n) => {
+            const chon = chonNgay === n.gia;
+            return (
+              <Pressable
+                key={n.gia}
+                onPress={() => datChonNgay(n.gia)}
+                style={{
+                  borderColor: chon ? MAU.vang : MAU.vien,
+                  backgroundColor: chon ? MAU.vangRatMo : 'transparent',
+                }}
+                className="min-w-[66px] items-center rounded-xl border px-3 py-2.5 active:opacity-70">
+                <Text
+                  style={{ fontFamily: CHU.than }}
+                  className={`text-[11px] ${chon ? 'text-vang' : 'text-chu-mo'}`}>
+                  {n.thu}
+                </Text>
+                <Text
+                  style={{ fontFamily: chon ? CHU.thanDam : CHU.than }}
+                  className={`mt-0.5 text-sm ${chon ? 'text-vang' : 'text-chu-chinh'}`}>
+                  {n.ngay}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View className="mb-7">
+        <Nhan>Trong ngày đó bạn rảnh lúc nào</Nhan>
         <View className="mt-2 flex-row flex-wrap gap-2">
           {KHUNG_GIO.map((g) => (
             <O key={g} nhan={g} chon={chonGio === g} onPress={() => datChonGio(g)} />

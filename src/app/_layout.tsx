@@ -16,6 +16,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import { Chuong } from '@/components/chuong';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
 import { hoSoThayCuaToi } from '@/lib/thay';
@@ -211,7 +214,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -224,6 +227,12 @@ export default function RootLayout() {
           animationDuration: 220,
         }}
       />
-    </>
+
+      {/* Bong bóng thông báo, nổi trên mọi màn.
+          Chỉ hiện khi đã có phiên và đã qua phần nhập hồ sơ — người đang đăng
+          nhập hay đang khai ngày sinh thì chưa có thông báo nào để xem, mà một
+          bong bóng lạ nổi lên lúc đó chỉ làm họ phân tâm. */}
+      {coPhien && (coHoSo || laThay) ? <Chuong /> : null}
+    </GestureHandlerRootView>
   );
 }

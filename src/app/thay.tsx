@@ -15,7 +15,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Modal,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
@@ -30,6 +39,9 @@ import { TEN_TRANG_THAI, thayDoiTrangThai, useDonChoThay, type YeuCau } from '@/
 
 const MAU_TRANG_THAI = { cho: MAU.vang, xong: MAU.tot, huy: MAU.chuMo } as const;
 
+/** Lý do từ chối ngắn nhất chấp nhận được. Dưới mức này thì chưa nói được gì. */
+const TOI_THIEU_LY_DO = 5;
+
 type Xep = 'moi' | 'cu' | 'ten';
 const TEN_XEP: Record<Xep, string> = {
   moi: 'Mới nhất',
@@ -43,6 +55,13 @@ function ngayGon(iso: string): string {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
+/** '2026-10-20' thành '20/10'. Tách chuỗi chứ không qua Date: Date đọc chuỗi
+ *  kiểu này là hiểu theo UTC, nên ở Việt Nam ra lùi một ngày. */
+function ngayHenGon(ngay: string): string {
+  const [, t, g] = ngay.split('-');
+  return `${Number(g)}/${Number(t)}`;
+}
+
 export default function ManThay() {
   const { thay, xong } = useLaThay();
   const { dong, loi, dangTai, lamMoi } = useDonChoThay();
@@ -50,6 +69,8 @@ export default function ManThay() {
   const [dangXin, datDangXin] = useState(false);
   const [xep, datXep] = useState<Xep>('moi');
   const [tim, datTim] = useState('');
+  const [dangTuChoi, datDangTuChoi] = useState<YeuCau | null>(null);
+  const [lyDo, datLyDo] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -127,6 +148,30 @@ export default function ManThay() {
             .catch(() => Alert.alert('Chưa đổi được', 'Kiểm tra mạng rồi thử lại giúp tôi.')),
       },
     ]);
+  }
+
+  /**
+   * Từ chối thì PHẢI viết lý do.
+   *
+   * Khách chỉ thấy chữ "đã huỷ" mà không biết vì sao là họ tự đoán, mà đoán thì
+   * thường đoán xấu. Một câu của thầy giữ được quan hệ, và khách còn biết nên
+   * đặt lại hay thôi.
+   *
+   * Dựng hộp nhập riêng chứ KHÔNG dùng Alert.prompt: hàm đó chỉ có trên iOS,
+   * gọi trên Android là không hiện gì và nút từ chối thành nút chết.
+   */
+  function tuChoi(yc: YeuCau) {
+    datLyDo('');
+    datDangTuChoi(yc);
+  }
+
+  function guiTuChoi() {
+    const yc = dangTuChoi;
+    if (!yc || lyDo.trim().length < TOI_THIEU_LY_DO) return;
+    datDangTuChoi(null);
+    thayDoiTrangThai(yc.ma, 'da_huy', lyDo)
+      .then(lamMoi)
+      .catch(() => Alert.alert('Chưa gửi được', 'Kiểm tra mạng rồi thử lại giúp tôi.'));
   }
 
   function thoat() {
@@ -245,7 +290,7 @@ export default function ManThay() {
           ) : (
             <View className="gap-4">
               {ds.map((yc) => (
-                <The key={yc.ma} yc={yc} onDoi={doi} />
+                <The key={yc.ma} yc={yc} onDoi={doi} onTuChoi={tuChoi} />
               ))}
             </View>
           )}
@@ -255,6 +300,50 @@ export default function ManThay() {
       <View className="mt-10">
         <Nut nhan="Đăng xuất" kieu="nhe" onPress={thoat} />
       </View>
+
+      <Modal
+        visible={dangTuChoi !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => datDangTuChoi(null)}>
+        <Pressable onPress={() => datDangTuChoi(null)} className="flex-1 bg-black/60" />
+        <View
+          style={{ borderColor: MAU.vien }}
+          className="absolute inset-x-4 top-[22%] rounded-2xl border bg-nen-nhat p-5">
+          <Text style={{ fontFamily: CHU.hoaDam, fontSize: 21 }} className="text-chu-chinh">
+            Vì sao chưa nhận đơn này?
+          </Text>
+          <Text style={{ fontFamily: CHU.than }} className="mt-1.5 text-xs leading-5 text-chu-mo">
+            Khách sẽ đọc đúng câu bạn viết. Vài chữ cũng được, nhưng đừng để trống.
+          </Text>
+
+          <TextInput
+            value={lyDo}
+            onChangeText={datLyDo}
+            multiline
+            textAlignVertical="top"
+            autoFocus
+            placeholder="Ví dụ: khung giờ đó mình đã kín lịch, bạn đặt lại giúp mình buổi tối nhé."
+            placeholderTextColor={MAU.chuMo}
+            style={{
+              fontFamily: CHU.than,
+              color: MAU.chuChinh,
+              borderColor: MAU.vien,
+              minHeight: 96,
+            }}
+            className="mt-4 rounded-xl border bg-nen p-3.5 text-base leading-6"
+          />
+
+          <View className="mt-5 gap-2.5">
+            <Nut
+              nhan="Gửi cho khách"
+              tat={lyDo.trim().length < TOI_THIEU_LY_DO}
+              onPress={guiTuChoi}
+            />
+            <Nut nhan="Thôi, để sau" kieu="nhe" onPress={() => datDangTuChoi(null)} />
+          </View>
+        </View>
+      </Modal>
     </ManHinh>
   );
 }
@@ -262,9 +351,11 @@ export default function ManThay() {
 function The({
   yc,
   onDoi,
+  onTuChoi,
 }: {
   yc: YeuCau;
   onDoi: (yc: YeuCau, sang: 'da_nhan' | 'da_xong' | 'da_huy', hoi: string) => void;
+  onTuChoi: (yc: YeuCau) => void;
 }) {
   const tt = TEN_TRANG_THAI[yc.trang_thai];
   // Chỉ hỏi máy chủ khi thầy bấm mở. Mười đơn là mười lượt gọi cho thứ thầy có
@@ -288,7 +379,8 @@ function The({
         </View>
 
         <Text style={{ fontFamily: CHU.than }} className="mb-3 text-sm text-chu-phu">
-          {yc.chu_de} · {yc.khung_gio} · ngày {ngayGon(yc.tao_luc)}
+          {yc.chu_de} · {yc.khung_gio}
+          {yc.ngay_hen ? ` · hẹn ${ngayHenGon(yc.ngay_hen)}` : ''}
         </Text>
 
         <Nhan>Câu hỏi</Nhan>
@@ -313,7 +405,7 @@ function The({
           <View className="mt-5 gap-2.5">
             <Nut nhan="Nhận đơn này" onPress={() => onDoi(yc, 'da_nhan', 'Nhận đơn này?')} />
             <Pressable
-              onPress={() => onDoi(yc, 'da_huy', 'Từ chối đơn này?')}
+              onPress={() => onTuChoi(yc)}
               className="self-center px-4 py-2 active:opacity-60">
               <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-mo underline">
                 Từ chối
