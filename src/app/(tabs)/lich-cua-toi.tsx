@@ -25,7 +25,13 @@ import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/co
 import { CHU, MAU } from '@/constants/giao-dien';
 import { NoiLienHe } from '@/components/noi-lien-he';
 import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
-import { huyYeuCau, TEN_TRANG_THAI, useYeuCauCuaToi, type YeuCau } from '@/lib/yeu-cau';
+import {
+  huyYeuCau,
+  ngayHenGon,
+  TEN_TRANG_THAI,
+  useYeuCauCuaToi,
+  type YeuCau,
+} from '@/lib/yeu-cau';
 
 const MAU_TRANG_THAI = {
   cho: MAU.vang,
@@ -214,12 +220,39 @@ function The({
           </Text>
         </View>
 
+        {/* Ngày HỌN lên trước, to hơn, và màu vàng: đó là thứ khách cần nhìn khi mở
+            màn này ra. Trước đây thế này chỉ hiện khung giờ và ngày ĐẶT đơn, nên
+            khách chọn ngày hẽn xong thì không có chỗ nào xem lại mình đã chọn ngày
+            nào — chính cái họ vừa chọn. Bên thầy thì vẫn thấy bình thường. */}
+        {yc.ngay_hen ? (
+          <Text
+            style={{ fontFamily: CHU.thanDam, color: MAU.vang }}
+            className="mb-1 text-sm">
+            Hẽn ngày {ngayHenGon(yc.ngay_hen)} · {yc.khung_gio}
+          </Text>
+        ) : null}
+
         <Text style={{ fontFamily: CHU.than }} className="mb-3 text-sm text-chu-phu">
-          {yc.chu_de} · {yc.khung_gio} · đặt ngày {ngay.getDate()}/{ngay.getMonth() + 1}
+          {yc.chu_de}
+          {yc.ngay_hen ? '' : ` · ${yc.khung_gio}`} · đặt ngày {ngay.getDate()}/
+          {ngay.getMonth() + 1}
         </Text>
 
         <Nhan>Câu hỏi của bạn</Nhan>
         <ChuThan>{yc.cau_hoi}</ChuThan>
+
+        {/* Lý do thầy từ chối, bày ngay trong đơn.
+
+            Trước đây câu này chỉ đi theo một dòng thông báo — mà thông báo thì
+            khách xoá được, và họ xoá thật. Xoá xong thì đơn chỉ còn chữ "Đã huỵ"
+            trơ trọi, trong khi lý do vẫn nằm nguyên trong đơn dưới máy chủ. Bắt
+            thầy viết tay một câu rồi để câu đó bay mất là bỏ công vô ích. */}
+        {yc.trang_thai === 'da_huy' && yc.ly_do ? (
+          <View className="mt-4">
+            <Nhan>Thầy nhắn lại</Nhan>
+            <ChuThan>{yc.ly_do}</ChuThan>
+          </View>
+        ) : null}
 
         {/* Nơi liên hệ của thầy, bày ngay trong đơn. Khách vừa đặt xong là có
             sẵn đường nhắn, không phải quay ra tìm lại hồ sơ thầy. */}

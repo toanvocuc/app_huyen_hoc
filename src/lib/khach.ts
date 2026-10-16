@@ -67,7 +67,17 @@ export function useHoSoKhach(maNguoiDung: string | null) {
   }, [maNguoiDung]);
 
   useEffect(doc, [doc]);
-  return { khach, xong };
+
+  // `xong` suỹ ra chứ không gán: không có mã khách thì không có gì để chờ, nên
+  // coi như đã xong luôn.
+  //
+  // Trước đây hàm đọc thoát sớm với mã null mà không đặt `xong`, nên chỗ nào
+  // gọi với null sẽ thấy vòng xoay quay mãi. Màn đơn hiện tại luôn truyền mã
+  // thật nên chưa ai thấy, nhưng kiểu của tham số cho phép null — bẫy nằm sẵn đó.
+  //
+  // Suỹ ra chứ không đặt trong hiệu ứng, vì đặt trạng thái ngay trong thân hiệu
+  // ứng là kéo thêm một vòng vẽ — eslint bắt, và bắt đúng.
+  return { khach, xong: xong || !maNguoiDung };
 }
 
 /** '1995-09-16' thành '16/9/1995'. Trả null nếu chuỗi không đúng khuôn. */

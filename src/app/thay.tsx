@@ -35,7 +35,13 @@ import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { supabase } from '@/lib/supabase';
 import { useLaThay } from '@/lib/thay';
 import { daCoQuyen, dangKyMaDay, goMaDay, xinQuyen } from '@/lib/thong-bao';
-import { TEN_TRANG_THAI, thayDoiTrangThai, useDonChoThay, type YeuCau } from '@/lib/yeu-cau';
+import {
+  ngayHenGon,
+  TEN_TRANG_THAI,
+  thayDoiTrangThai,
+  useDonChoThay,
+  type YeuCau,
+} from '@/lib/yeu-cau';
 
 const MAU_TRANG_THAI = { cho: MAU.vang, xong: MAU.tot, huy: MAU.chuMo } as const;
 
@@ -53,13 +59,6 @@ const TEN_XEP: Record<Xep, string> = {
 function ngayGon(iso: string): string {
   const d = new Date(iso);
   return `${d.getDate()}/${d.getMonth() + 1}`;
-}
-
-/** '2026-10-20' thành '20/10'. Tách chuỗi chứ không qua Date: Date đọc chuỗi
- *  kiểu này là hiểu theo UTC, nên ở Việt Nam ra lùi một ngày. */
-function ngayHenGon(ngay: string): string {
-  const [, t, g] = ngay.split('-');
-  return `${Number(g)}/${Number(t)}`;
 }
 
 export default function ManThay() {
@@ -118,6 +117,10 @@ export default function ManThay() {
         (y) =>
           (y.ten_khach ?? '').toLowerCase().includes(chu) ||
           ngayGon(y.tao_luc).includes(chu) ||
+          // Cả ngày HỌN, không chỉ ngày đặt. Thầy gõ '20/10' là đang tìm buổi hẹn
+          // hôm đó, chứ không phải tìm đơn nào đặt hôm đó — hai thứ này thường
+          // lệch nhau cả tuần.
+          (ngayHenGon(y.ngay_hen) ?? '').includes(chu) ||
           y.chu_de.toLowerCase().includes(chu)
       );
     }
@@ -307,7 +310,7 @@ export default function ManThay() {
           <TextInput
             value={tim}
             onChangeText={datTim}
-            placeholder="Tìm theo tên khách, ngày, hoặc chủ đề"
+            placeholder="Tên khách, ngày hẹn, hoặc chủ đề"
             placeholderTextColor={MAU.chuMo}
             autoCapitalize="none"
             autoCorrect={false}

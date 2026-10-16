@@ -62,12 +62,20 @@ export function useHopThongBao() {
     try {
       const toi = await maNguoiDung();
       if (!toi) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('thong_bao')
         .select('*')
         .eq('nguoi_nhan', toi)
         .order('tao_luc', { ascending: false })
         .limit(50);
+      // PHẢI xét `error` trước.
+      //
+      // postgrest không ném lỗi: mất mạng hay trượt luật khoá dòng thì nó trả về
+      // `{ data: null, error }` một cách bình thản. Nên khối `catch` dưới đây không
+      // bao giờ chạy tới, và dòng cũ ở đây đọc `data` là null rồi gán mảng rỗng —
+      // tức là làm đúng cái việc mà chú thích nói là tránh: xoá trắng chuông chỉ
+      // vì mạng chập một nhịp.
+      if (error) return;
       datDong((data as ThongBao[]) ?? []);
     } catch {
       // Hỏng thì giữ nguyên danh sách cũ. Chuông trống vì mạng chập còn tệ hơn

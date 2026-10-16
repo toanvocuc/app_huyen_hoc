@@ -15,7 +15,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import {
+  AppState,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -32,6 +40,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CHU, MAU } from '@/constants/giao-dien';
 import { luc, useHopThongBao, type ThongBao } from '@/lib/hop-thong-bao';
+import { ngheThongBaoToi } from '@/lib/tra-loi-thong-bao';
 
 const CO = 52;
 /** Không ai động vào bao lâu thì bong bóng chìm xuống. */
@@ -109,6 +118,28 @@ export function Chuong() {
   }, []);
 
   useEffect(danhThuc, [danhThuc]);
+
+  /**
+   * Đọc lại hộp khi có tin tới, và khi app quay lại từ nền.
+   *
+   * Đây là chỗ nối hai thứ mà `lib/hop-thong-bao.ts` nói là phải luôn khớp nhau:
+   * tiếng rung của hệ điều hành, và danh sách trong chuông. Trước đây hộp chỉ
+   * được đọc đúng một lần lúc dựng, và thêm một lần nữa khi có người bấm vào
+   * bong bóng. Nghĩa là tin về tới, máy rung, băng thông báo hiện ngay trên
+   * đỉnh màn hình — còn cái chuông ngay dưới đó vẫn không có chấm đỏ nào.
+   *
+   * Hai đường chứ không phải một: tin tới lúc app đang mở thì bộ lắng nghe bắt
+   * được, nhưng tin tới lúc app đang nằm trong nền thì không — trường hợp sau
+   * mới là thường gặp, và `AppState` lo nó.
+   */
+  useEffect(() => ngheThongBaoToi(taiLai), [taiLai]);
+
+  useEffect(() => {
+    const o = AppState.addEventListener('change', (t) => {
+      if (t === 'active') taiLai();
+    });
+    return () => o.remove();
+  }, [taiLai]);
 
   /**
    * Lắc đúng MỘT lần mỗi khi số tin chưa đọc tăng, rồi nổi hẳn lên.

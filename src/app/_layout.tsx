@@ -23,7 +23,7 @@ import { CHU, MAU } from '@/constants/giao-dien';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
 import { hoSoThayCuaToi } from '@/lib/thay';
 import { batHienKhiDangMo, doiLoiNhac } from '@/lib/thong-bao';
-import { useTraLoiThongBao } from '@/lib/tra-loi-thong-bao';
+import { useTraLoiThongBao, xoaTraLoiThongBao } from '@/lib/tra-loi-thong-bao';
 import { supabase } from '@/lib/supabase';
 import { XEM_THU } from '@/lib/xem-thu';
 
@@ -115,7 +115,12 @@ export default function RootLayout() {
     if (typeof man !== 'string' || !man.startsWith('/')) return;
     // Chờ một nhịp cho chồng màn hình dựng xong. Đẩy ngay trong lúc nó đang
     // dựng thì lệnh trôi mất — đúng con bug đã gặp ở màn hứng đăng nhập.
-    const hen = setTimeout(() => router.push(man as never), 80);
+    const hen = setTimeout(() => {
+      router.push(man as never);
+      // Xửa xong lần bấm này đi, không thì nó còn nằm đó mãi: mọi lần mở app sau
+      // này đều đọc lại đúng lần bấm cũ rồi nhảy vào đúng màn ấy.
+      xoaTraLoiThongBao();
+    }, 80);
     return () => clearTimeout(hen);
   }, [traLoiThongBao, xong, phongXong]);
 

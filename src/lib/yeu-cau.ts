@@ -60,11 +60,32 @@ export function tachChuDe(chuyenSau: string | null | undefined): string[] {
 }
 
 /**
+ * '2026-10-20' thành '20/10'.
+ *
+ * Tách chuỗi chứ KHÔNG qua `new Date`: `new Date('2026-10-20')` được hiểu theo
+ * UTC, nên ở Việt Nam in ra lùi một ngày. Hai màn cùng dùng hàm này — để mỗi
+ * màn tự viết một bản thì sớm muộn có một bản dùng Date và lệch ngày.
+ */
+export function ngayHenGon(ngay: string | null | undefined): string | null {
+  if (!ngay) return null;
+  const [, t, g] = ngay.split('-');
+  if (!t || !g) return null;
+  return `${Number(g)}/${Number(t)}`;
+}
+
+/**
  * Dữ liệu mẫu cho chế độ xem thử. Đủ bốn trạng thái và hai thầy, để màn Lịch của
  * tôi bày ra được cả phần đang chờ, phần lịch sử lẫn mấy cách sắp xếp — chụp ảnh
  * nộp chợ cũng dùng chính bộ này.
  */
 const NGAY_TRUOC = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+
+/** yyyy-mm-dd cách hôm nay n ngày, theo giờ máy. */
+const NGAY_HEN = (n: number) => {
+  const d = new Date(Date.now() + n * 86400000);
+  const hai = (x: number) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${hai(d.getMonth() + 1)}-${hai(d.getDate())}`;
+};
 
 const MAU_YEU_CAU: YeuCau[] = [
   {
@@ -73,7 +94,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tarot',
     khung_gio: 'Tối, 19h tới 21h',
-    ngay_hen: null,
+    ngay_hen: NGAY_HEN(2),
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
     trang_thai: 'da_nhan',
     ly_do: null,
@@ -86,7 +107,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Sáng, 9h tới 11h',
-    ngay_hen: null,
+    ngay_hen: NGAY_HEN(5),
     cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
     trang_thai: 'cho_nhan',
     ly_do: null,
@@ -99,7 +120,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tử vi',
     khung_gio: 'Chiều, 14h tới 16h',
-    ngay_hen: null,
+    ngay_hen: NGAY_HEN(-7),
     cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
     trang_thai: 'da_xong',
     ly_do: null,
@@ -112,10 +133,13 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Giờ nào cũng được',
-    ngay_hen: null,
-    cau_hoi: 'Em đặt thử rồi lại bận mất, xin phép huỷ ạ.',
+    ngay_hen: NGAY_HEN(-12),
+    cau_hoi: 'Em muốn xem bản đồ sao của hai vợ chồng em xem có hợp nhau không.',
     trang_thai: 'da_huy',
-    ly_do: null,
+    // Đơn này cố ý là đơn THẦY TỪ CHỐI, kèm lý do thầy viết tay. Thiếu nó
+    // thì cả bộ mẫu không có dòng nào đi qua đường `ly_do`, mà đó là đường
+    // duy nhất cho khách biết vì sao đơn của mình không được nhận.
+    ly_do: 'Tuần này mình đi xa nên chưa nhận thêm đơn nào được. Bạn đặt lại giúp mình tuần sau nhé, mình ưu tiên xếp sớm cho bạn.',
     tao_luc: NGAY_TRUOC(14),
     ten_khach: 'Phạm Thu Hằng',
   },
@@ -253,8 +277,16 @@ export function useDonChoThay() {
 /**
  * Thầy đổi trạng thái một đơn.
  *
- * Luật khoá dòng chặn thầy lùi về 'cho_nhan' và chặn sửa câu hỏi hay khung giờ —
- * mấy thứ đó là lời của khách. Ở đây chỉ nhận ba trạng thái hợp lệ cho đúng.
+ * Luật khoá dòng chỉ chặn được hai việc: thầy lạ không đụng được đơn người
+ * khác, và trạng thái mới phải nằm trong ba giá trị cho phép. Nó KHÔNG chặn
+ * được việc sửa câu hỏi hay khung giờ, vì `with check` của Postgres không đọc
+ * được giá trị cũ để mà so. Chỗ lo việc đó là trigger `giu_loi_cua_khach`
+ * ở migration 0022 — chạy trước mọi lệnh sửa và gán lại mọi ô của khách bằng
+ * giá trị cũ.
+ *
+ * Trước migration đó thì thật sự có lỗ hỏng, và chú thích cũ ở đây lại nói là
+ * đã được chặn: đơn đang 'cho_nhan' thì mọi lệnh sửa đều trượt, nhưng trượt
+ * nhờ may — và thầy nhận đơn xong là sửa được hết.
  */
 export async function thayDoiTrangThai(
   ma: string,
@@ -263,7 +295,9 @@ export async function thayDoiTrangThai(
 ) {
   const { error } = await supabase
     .from('yeu_cau_tu_van')
-    .update({ trang_thai: trangThai, ...(lyDo ? { ly_do: lyDo.trim() } : {}) })
+    // Xét sau khi cắt trắng chứ không xét chuỗi thô: mấy dấu cách cũng là giá trị
+    // đúng, nên dòng cũ ghi xuống máy chủ một ô lý do rỗng thay vì bỏ trống nó.
+    .update({ trang_thai: trangThai, ...(lyDo?.trim() ? { ly_do: lyDo.trim() } : {}) })
     .eq('ma', ma);
   if (error) throw error;
 }

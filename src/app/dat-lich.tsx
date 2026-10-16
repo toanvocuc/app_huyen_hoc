@@ -11,8 +11,8 @@
  */
 
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { AppState, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -42,16 +42,28 @@ const SO_NGAY_CHON = 30;
 
 const THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-/** Dãy ngày từ hôm nay, kèm nhãn ngắn để vẽ. Tính theo giờ máy, không theo UTC. */
-function dayNgay() {
-  const hom = new Date();
-  hom.setHours(0, 0, 0, 0);
+const hai = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * Hôm nay dạng yyyy-mm-dd, theo giờ MÁY.
+ *
+ * Không dùng `toISOString().slice(0, 10)`: hàm đó đổi sang UTC trước khi cắt, nên
+ * ở Việt Nam mọi lúc trước 7 giờ sáng đều ra ngày hôm trước.
+ */
+function homNay(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${hai(d.getMonth() + 1)}-${hai(d.getDate())}`;
+}
+
+/** Dãy ngày tính từ một mốc cho trước, kèm nhãn ngắn để vẽ. */
+function dayNgay(moc: string) {
+  const [n, t, g] = moc.split('-').map(Number);
+  // Dựng bằng ba con số chứ không truyền chuỗi vào `new Date`: truyền chuỗi
+  // 'yyyy-mm-dd' thì Date hiểu theo UTC và cả dãy lệch một ngày.
+  const hom = new Date(n, t - 1, g);
   return Array.from({ length: SO_NGAY_CHON }, (_, i) => {
     const d = new Date(hom.getTime() + i * 86400000);
-    const hai = (n: number) => String(n).padStart(2, '0');
     return {
-      // yyyy-mm-dd theo giờ máy. Dùng toISOString là lệch một ngày với mọi múi
-      // giờ phía đông, mà Việt Nam thì lệch bảy tiếng.
       gia: `${d.getFullYear()}-${hai(d.getMonth() + 1)}-${hai(d.getDate())}`,
       thu: i === 0 ? 'Hôm nay' : i === 1 ? 'Mai' : THU[d.getDay()],
       ngay: `${d.getDate()}/${d.getMonth() + 1}`,
@@ -65,11 +77,38 @@ export default function DatLich() {
   const { hoSo } = useHoSo();
   const thay = useMemo(() => dong?.find((t) => t.ma === maThay) ?? null, [dong, maThay]);
 
+  // Thầy không khai ô `chuyen_sau` thì vẫn phải đặt được lịch.
+  //
+  // Trước đây chỗ này thành ngõ cụt kín: danh sách chủ đề rỗng nên phần chọn
+  // bị ẩn đi (chỉ hiện khi có từ hai chủ đề), mà `chuDeThat` cũng không bao giờ
+  // có giá trị nên nút GỬi nằm tắt vĩnh viễn — khách không có cách nào biết
+  // thiếu gì, và cũng không phải lỗi của họ.
   const chuDe = tachChuDe(thay?.chuyen_sau);
+  const chuDeChon = chuDe.length > 0 ? chuDe : ['Tư vấn chung'];
   const [chonChuDe, datChonChuDe] = useState<string | null>(null);
   const [chonGio, datChonGio] = useState<string | null>(null);
-  const cacNgay = useMemo(() => dayNgay(), []);
-  const [chonNgay, datChonNgay] = useState<string>(() => dayNgay()[0].gia);
+
+  /**
+   * Mốc "hôm nay", đọc lại mỗi khi app quay lại từ nền.
+   *
+   * Để app mở qua nửa đêm thì dãy ngày cũ bắt đầu từ HÔM QUA, ô đầu tiên vẫn
+   * đề chợ "Hôm nay", và bấm Gửi là ghi xuống máy chủ một buổi hẹn đã trôi qua.
+   * Không ai báo gì cả, vì về mặt dữ liệu thì đó vẫn là một ngày hợp lệ.
+   */
+  const [moc, datMoc] = useState(homNay);
+  useEffect(() => {
+    const o = AppState.addEventListener('change', (t) => {
+      if (t === 'active') datMoc(homNay());
+    });
+    return () => o.remove();
+  }, []);
+
+  const cacNgay = useMemo(() => dayNgay(moc), [moc]);
+  const [chonNgay, datChonNgay] = useState<string>(moc);
+  // Chọn hôm qua rồi để sang ngày mới thì ó đã rớt khỏi dãy. Suy ra ở đây chứ
+  // không đặt lại trạng thái trong hiệu ứng: đặt trong hiệu ứng là thêm một vòng
+  // vẽ, mà eslint cũng bắt.
+  const ngayThat = cacNgay.some((n) => n.gia === chonNgay) ? chonNgay : cacNgay[0].gia;
   const [cauHoi, datCauHoi] = useState('');
   // Điền sẵn từ hồ sơ. Khách đặt lần hai không phải gõ lại số của mình.
   const [lienHe, datLienHe] = useState('');
@@ -85,14 +124,21 @@ export default function DatLich() {
   }
 
   // Thầy chỉ khai một mảng thì không có gì để chọn, tự lấy luôn.
-  const chuDeThat = chonChuDe ?? (chuDe.length === 1 ? chuDe[0] : null);
-  const duDieuKien = Boolean(
-    chuDeThat &&
-      chonGio &&
-      chonNgay &&
-      cauHoi.trim().length >= TOI_THIEU &&
-      lienHe.trim().length >= TOI_THIEU_LIEN_HE
-  );
+  const chuDeThat = chonChuDe ?? (chuDeChon.length === 1 ? chuDeChon[0] : null);
+
+  /**
+   * Còn thiếu gì, nói thành chứ.
+   *
+   * Trước đây chỉ có đúng một câu gợi ý, và câu đó chỉ nói về độ dài câu
+   * hỏi. Bỏ trống ô liên lạc thì nút cứ nằm tắt, mà khách đã gõ câu hỏi xong
+   * rồi nên họ tưởng app đang hỏng.
+   */
+  const thieu: string[] = [];
+  if (!chuDeThat) thieu.push('chọn chủ đề');
+  if (!chonGio) thieu.push('chọn khung giờ');
+  if (lienHe.trim().length < TOI_THIEU_LIEN_HE) thieu.push('điền số điện thoại hoặc Zalo');
+  if (cauHoi.trim().length < TOI_THIEU) thieu.push('viết câu hỏi dài thêm một chút');
+  const duDieuKien = thieu.length === 0;
 
   async function gui() {
     if (!thay || !chuDeThat || !chonGio) return;
@@ -109,7 +155,7 @@ export default function DatLich() {
         chuyenGia: thay.ma,
         chuDe: chuDeThat,
         khungGio: chonGio,
-        ngayHen: chonNgay,
+        ngayHen: ngayThat,
         cauHoi,
         // Chép tên sang đơn để thầy biết xưng hô với ai. Thầy không đọc được
         // bảng hồ sơ của khách — luật khoá dòng chặn — nên không chép là thầy
@@ -139,11 +185,11 @@ export default function DatLich() {
 
   return (
     <ManHinh quayLai tieuDe="Đặt lịch tư vấn" phu={`Với ${thay.ten}`}>
-      {chuDe.length > 1 ? (
+      {chuDeChon.length > 1 ? (
         <View className="mb-7">
           <Nhan>Bạn muốn hỏi về</Nhan>
           <View className="mt-2 flex-row flex-wrap gap-2">
-            {chuDe.map((c) => (
+            {chuDeChon.map((c) => (
               <O key={c} nhan={c} chon={chuDeThat === c} onPress={() => datChonChuDe(c)} />
             ))}
           </View>
@@ -160,7 +206,7 @@ export default function DatLich() {
           className="mt-2 -mx-5"
           contentContainerClassName="px-5 gap-2">
           {cacNgay.map((n) => {
-            const chon = chonNgay === n.gia;
+            const chon = ngayThat === n.gia;
             return (
               <Pressable
                 key={n.gia}
@@ -254,9 +300,11 @@ export default function DatLich() {
       <VanNgan />
 
       <Nut nhan="Gửi yêu cầu" tat={!duDieuKien} dangChay={dangGui} onPress={gui} />
-      {!duDieuKien && cauHoi.trim().length > 0 && cauHoi.trim().length < TOI_THIEU ? (
-        <Text style={{ fontFamily: CHU.than }} className="mt-3 text-center text-xs text-chu-mo">
-          Viết thêm vài chữ nữa giúp tôi.
+      {!duDieuKien ? (
+        <Text
+          style={{ fontFamily: CHU.than }}
+          className="mt-3 text-center text-xs leading-5 text-chu-mo">
+          Còn thiếu: {thieu.join(', ')}.
         </Text>
       ) : null}
     </ManHinh>
