@@ -23,7 +23,8 @@ import { Alert, Pressable, Text, View } from 'react-native';
 
 import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
-import { useChuyenGia } from '@/lib/kho-noi-dung';
+import { NoiLienHe } from '@/components/noi-lien-he';
+import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
 import { huyYeuCau, TEN_TRANG_THAI, useYeuCauCuaToi, type YeuCau } from '@/lib/yeu-cau';
 
 const MAU_TRANG_THAI = {
@@ -139,7 +140,13 @@ export default function LichCuaToi() {
           {dangCho.length > 0 ? (
             <View className="gap-4">
               {dangCho.map((yc) => (
-                <The key={yc.ma} yc={yc} tenThay={tenThay(yc.chuyen_gia)} onHuy={() => hoiHuy(yc)} />
+                <The
+                  key={yc.ma}
+                  yc={yc}
+                  tenThay={tenThay(yc.chuyen_gia)}
+                  thay={cacThay?.find((t) => t.ma === yc.chuyen_gia) ?? null}
+                  onHuy={() => hoiHuy(yc)}
+                />
               ))}
             </View>
           ) : (
@@ -177,7 +184,17 @@ export default function LichCuaToi() {
   );
 }
 
-function The({ yc, tenThay, onHuy }: { yc: YeuCau; tenThay: string; onHuy?: () => void }) {
+function The({
+  yc,
+  tenThay,
+  thay,
+  onHuy,
+}: {
+  yc: YeuCau;
+  tenThay: string;
+  thay?: DongChuyenGia | null;
+  onHuy?: () => void;
+}) {
   const tt = TEN_TRANG_THAI[yc.trang_thai];
   const ngay = new Date(yc.tao_luc);
 
@@ -203,6 +220,17 @@ function The({ yc, tenThay, onHuy }: { yc: YeuCau; tenThay: string; onHuy?: () =
 
         <Nhan>Câu hỏi của bạn</Nhan>
         <ChuThan>{yc.cau_hoi}</ChuThan>
+
+        {/* Nơi liên hệ của thầy, bày ngay trong đơn. Khách vừa đặt xong là có
+            sẵn đường nhắn, không phải quay ra tìm lại hồ sơ thầy. */}
+        {thay ? (
+          <View className="mt-5">
+            <Nhan>Nhắn cho {tenThay}</Nhan>
+            <View className="mt-2">
+              <NoiLienHe thay={thay} gon />
+            </View>
+          </View>
+        ) : null}
 
         {onHuy && yc.trang_thai === 'cho_nhan' ? (
           <Pressable onPress={onHuy} className="mt-4 self-start active:opacity-60">

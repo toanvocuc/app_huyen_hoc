@@ -18,7 +18,6 @@ import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/
 import { CHU, MAU } from '@/constants/giao-dien';
 import { luuHoSo, useHoSo } from '@/lib/ho-so';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
-import { moZalo } from '@/lib/nhan-zalo';
 import { guiYeuCau, KHUNG_GIO, tachChuDe } from '@/lib/yeu-cau';
 
 /** Dài tối thiểu cho câu hỏi. Ngắn hơn thì thầy không có gì để bắt đầu. */
@@ -83,10 +82,13 @@ export default function DatLich() {
         // chỉ thấy một dãy ký tự.
         tenKhach: hoSo?.ho_ten,
       });
-      // Sang thẳng mục Lịch của tôi để khách thấy ngay yêu cầu vừa gửi, rồi mới
-      // mở Zalo. Thấy nó nằm trong app trước thì mới tin là đã gửi thật.
+      // Sang thẳng mục Lịch của tôi, KHÔNG tự mở Zalo nữa.
+      //
+      // Tự mở là chọn hộ khách một kênh — khách không dùng Zalo thì bị đẩy sang
+      // một ứng dụng họ không có — và nó hất khách ra khỏi app đúng lúc vừa đặt
+      // xong, chưa kịp nhìn thấy đơn của mình nằm đâu. Bên Lịch của tôi có đủ
+      // mấy nơi liên hệ của thầy để khách tự chọn.
       router.replace('/lich-cua-toi');
-      await moZalo(thay.zalo, 'dat-lich');
     } catch (e) {
       datLoi(e instanceof Error ? e.message : 'Chưa gửi được, thử lại giúp tôi.');
       datDangGui(false);
@@ -167,9 +169,9 @@ export default function DatLich() {
       <Khoi>
         <Nhan>Sau khi gửi</Nhan>
         <ChuThan>
-          Yêu cầu nằm trong mục Lịch của tôi, bạn theo dõi được thầy đã nhận chưa. Omora mở
-          Zalo để bạn nói chuyện trực tiếp với thầy. Tiền trả thẳng cho thầy, Omora không
-          thu hộ.
+          Yêu cầu nằm trong mục Lịch của tôi, bạn theo dõi được thầy đã nhận chưa. Ở đó cũng
+          có sẵn mấy nơi liên hệ của thầy để bạn nhắn trực tiếp. Tiền trả thẳng cho thầy,
+          Omora không thu hộ.
         </ChuThan>
       </Khoi>
 

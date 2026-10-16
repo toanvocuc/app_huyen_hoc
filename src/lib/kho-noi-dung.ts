@@ -153,9 +153,14 @@ export type DongChuyenGia = {
   gom_gi: string | null;
   thoi_gian_tra_loi: string | null;
   gio_lam_viec: string | null;
+  /** Số Zalo, chỉ số. Mấy cột dưới là đường dẫn đầy đủ. */
   zalo: string | null;
-  /** Trang công khai của thầy, ví dụ TikTok. Để khách tự kiểm chứng người thật. */
-  trang_ca_nhan: string | null;
+  /**
+   * Mấy nơi công khai của thầy. Vừa để khách tự kiểm chứng người thật, vừa là
+   * chỗ khách chọn cách liên hệ sau khi đặt lịch.
+   */
+  tiktok: string | null;
+  facebook: string | null;
   dang_nhan: boolean;
   thu_tu: number;
   /** Máy chủ tự tính lại mỗi khi có đánh giá mới. Null khi chưa ai chấm. */
