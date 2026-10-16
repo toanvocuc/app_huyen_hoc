@@ -16,13 +16,22 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
-import { useHoSo } from '@/lib/ho-so';
+import { luuHoSo, useHoSo } from '@/lib/ho-so';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
 import { moZalo } from '@/lib/nhan-zalo';
 import { guiYeuCau, KHUNG_GIO, tachChuDe } from '@/lib/yeu-cau';
 
 /** Dài tối thiểu cho câu hỏi. Ngắn hơn thì thầy không có gì để bắt đầu. */
 const TOI_THIEU = 15;
+
+/**
+ * Dài tối thiểu cho ô liên lạc.
+ *
+ * Số điện thoại Việt Nam ngắn nhất cũng chín chữ số. Không kiểm chặt hơn: khách
+ * có thể dán đường dẫn Zalo, số có dấu chấm, hay số nước ngoài — bắt đúng khuôn
+ * thì chặn nhầm người thật, mà người gõ bừa thì vẫn gõ bừa được.
+ */
+const TOI_THIEU_LIEN_HE = 9;
 
 export default function DatLich() {
   const { thay: maThay } = useLocalSearchParams<{ thay: string }>();
@@ -34,18 +43,36 @@ export default function DatLich() {
   const [chonChuDe, datChonChuDe] = useState<string | null>(null);
   const [chonGio, datChonGio] = useState<string | null>(null);
   const [cauHoi, datCauHoi] = useState('');
+  // Điền sẵn từ hồ sơ. Khách đặt lần hai không phải gõ lại số của mình.
+  const [lienHe, datLienHe] = useState('');
+  const [daNapLienHe, datDaNapLienHe] = useState(false);
   const [dangGui, datDangGui] = useState(false);
   const [loi, datLoi] = useState<string | null>(null);
 
+  // Hồ sơ về sau lúc nào cũng được, nên nạp một lần khi nó tới chứ không đọc
+  // thẳng trong giá trị khởi tạo — lúc dựng màn nó thường còn null.
+  if (!daNapLienHe && hoSo) {
+    if (hoSo.lien_he) datLienHe(hoSo.lien_he);
+    datDaNapLienHe(true);
+  }
+
   // Thầy chỉ khai một mảng thì không có gì để chọn, tự lấy luôn.
   const chuDeThat = chonChuDe ?? (chuDe.length === 1 ? chuDe[0] : null);
-  const duDieuKien = Boolean(chuDeThat && chonGio && cauHoi.trim().length >= TOI_THIEU);
+  const duDieuKien = Boolean(
+    chuDeThat && chonGio && cauHoi.trim().length >= TOI_THIEU && lienHe.trim().length >= TOI_THIEU_LIEN_HE
+  );
 
   async function gui() {
     if (!thay || !chuDeThat || !chonGio) return;
     datLoi(null);
     datDangGui(true);
     try {
+      // Lưu đường liên lạc vào hồ sơ TRƯỚC khi gửi đơn. Thầy đọc nó từ hồ sơ
+      // chứ không từ đơn, nên chưa lưu kịp là thầy mở đơn ra thấy trống.
+      if (lienHe.trim() && lienHe.trim() !== hoSo?.lien_he) {
+        await luuHoSo({ lien_he: lienHe.trim() });
+      }
+
       await guiYeuCau({
         chuyenGia: thay.ma,
         chuDe: chuDeThat,
@@ -94,6 +121,24 @@ export default function DatLich() {
             <O key={g} nhan={g} chon={chonGio === g} onPress={() => datChonGio(g)} />
           ))}
         </View>
+      </View>
+
+      <View className="mb-7">
+        <Nhan>Thầy liên lạc với bạn bằng gì</Nhan>
+        <Text style={{ fontFamily: CHU.than }} className="mb-2 mt-1 text-xs leading-5 text-chu-mo">
+          Số điện thoại hoặc đường dẫn Zalo. Chỉ thầy bạn chọn mới thấy được.
+        </Text>
+        <TextInput
+          value={lienHe}
+          onChangeText={datLienHe}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="default"
+          placeholder="0912345678 hoặc zalo.me/..."
+          placeholderTextColor={MAU.chuMo}
+          style={{ fontFamily: CHU.than, color: MAU.chuChinh, borderColor: MAU.vien }}
+          className="rounded-2xl border bg-nen-nhat px-4 py-3.5 text-base"
+        />
       </View>
 
       <View className="mb-7">

@@ -15,10 +15,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, Text, TextInput, View } from 'react-native';
 
 import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
+import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { CHU, MAU } from '@/constants/giao-dien';
+import { tachNgay } from '@/lib/ho-so';
+import { duongLienHe, ngayDoc, useHoSoKhach } from '@/lib/khach';
+import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { supabase } from '@/lib/supabase';
 import { useLaThay } from '@/lib/thay';
 import { daCoQuyen, dangKyMaDay, goMaDay, xinQuyen } from '@/lib/thong-bao';
@@ -263,6 +267,9 @@ function The({
   onDoi: (yc: YeuCau, sang: 'da_nhan' | 'da_xong' | 'da_huy', hoi: string) => void;
 }) {
   const tt = TEN_TRANG_THAI[yc.trang_thai];
+  // Chỉ hỏi máy chủ khi thầy bấm mở. Mười đơn là mười lượt gọi cho thứ thầy có
+  // thể không xem tới.
+  const [moKhach, datMoKhach] = useState(false);
 
   return (
     <View style={{ opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1 }}>
@@ -287,6 +294,21 @@ function The({
         <Nhan>Câu hỏi</Nhan>
         <ChuThan>{yc.cau_hoi}</ChuThan>
 
+        <Pressable
+          onPress={() => datMoKhach((m) => !m)}
+          className="mt-4 flex-row items-center gap-1.5 self-start active:opacity-60">
+          <Ionicons
+            name={moKhach ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={MAU.vang}
+          />
+          <Text style={{ fontFamily: CHU.than }} className="text-sm text-vang">
+            {moKhach ? 'Thu thông tin khách' : 'Xem thông tin khách'}
+          </Text>
+        </Pressable>
+
+        {moKhach ? <ThongTinKhach maNguoiDung={yc.nguoi_dung} /> : null}
+
         {yc.trang_thai === 'cho_nhan' ? (
           <View className="mt-5 gap-2.5">
             <Nut nhan="Nhận đơn này" onPress={() => onDoi(yc, 'da_nhan', 'Nhận đơn này?')} />
@@ -310,6 +332,104 @@ function The({
           </View>
         ) : null}
       </Khoi>
+    </View>
+  );
+}
+
+/**
+ * Khối thông tin khách, mở ra từ trong một đơn.
+ *
+ * Ảnh đại diện là KÝ HIỆU CUNG HOÀNG ĐẠO suy từ ngày sinh, không phải ảnh thật —
+ * app chưa có phần cho khách tải ảnh lên. Màn Cá nhân của khách cũng dùng đúng
+ * cái này, nên thầy và khách nhìn thấy một thứ giống nhau.
+ */
+function ThongTinKhach({ maNguoiDung }: { maNguoiDung: string }) {
+  const { khach, xong } = useHoSoKhach(maNguoiDung);
+
+  if (!xong) {
+    return (
+      <View className="mt-4">
+        <ActivityIndicator color={MAU.vang} />
+      </View>
+    );
+  }
+
+  if (!khach) {
+    return (
+      <Text style={{ fontFamily: CHU.than }} className="mt-4 text-sm leading-6 text-chu-mo">
+        Khách này chưa điền hồ sơ, hoặc đã xoá tài khoản.
+      </Text>
+    );
+  }
+
+  const ns = tachNgay(khach.ngay_sinh);
+  const ma = ns ? cungTheoNgay(ns.ngay, ns.thang) : null;
+  const cung = ma ? timCung(ma) : null;
+  const duong = duongLienHe(khach.lien_he);
+
+  const dong: [string, string | null][] = [
+    ['Ngày sinh', ngayDoc(khach.ngay_sinh)],
+    ['Giờ sinh', khach.gio_sinh ? khach.gio_sinh.slice(0, 5) : null],
+    ['Nơi sinh', khach.noi_sinh],
+  ];
+
+  return (
+    <View style={{ borderColor: MAU.vien }} className="mt-4 rounded-xl border bg-nen p-4">
+      <View className="flex-row items-center gap-3.5">
+        <View
+          style={{ borderColor: MAU.vangMo }}
+          className="h-14 w-14 items-center justify-center rounded-full border bg-nen-nhat">
+          {ma ? (
+            <BieuTuongCung ma={ma} co={26} />
+          ) : (
+            <Ionicons name="person-outline" size={22} color={MAU.chuMo} />
+          )}
+        </View>
+        <View className="flex-1">
+          <Text style={{ fontFamily: CHU.thanDam }} className="text-base text-chu-chinh">
+            {khach.ho_ten ?? 'Chưa đặt tên'}
+          </Text>
+          {cung ? (
+            <Text style={{ fontFamily: CHU.than }} className="mt-0.5 text-sm text-chu-phu">
+              {cung.ten}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+
+      <View className="mt-4 gap-2">
+        {dong
+          .filter(([, gia]) => Boolean(gia))
+          .map(([nhan, gia]) => (
+            <View key={nhan} className="flex-row gap-3">
+              <Text
+                style={{ fontFamily: CHU.than }}
+                className="w-[84px] text-xs leading-5 text-chu-mo">
+                {nhan}
+              </Text>
+              <Text style={{ fontFamily: CHU.than }} className="flex-1 text-sm text-chu-chinh">
+                {gia}
+              </Text>
+            </View>
+          ))}
+      </View>
+
+      {khach.lien_he ? (
+        <Pressable
+          onPress={() => (duong ? Linking.openURL(duong).catch(() => {}) : undefined)}
+          disabled={!duong}
+          style={{ borderColor: MAU.vang }}
+          className="mt-4 flex-row items-center justify-center gap-2.5 rounded-xl border px-4 py-3 active:opacity-70">
+          <Ionicons name={duong?.startsWith('tel:') ? 'call-outline' : 'open-outline'} size={16} color={MAU.vang} />
+          <Text style={{ fontFamily: CHU.thanDam }} className="text-sm text-vang">
+            {khach.lien_he}
+          </Text>
+        </Pressable>
+      ) : (
+        <Text style={{ fontFamily: CHU.than }} className="mt-4 text-sm leading-6 text-canh">
+          Khách chưa để lại đường liên lạc. Đơn này đặt trước khi app hỏi mục đó.
+        </Text>
+      )}
     </View>
   );
 }

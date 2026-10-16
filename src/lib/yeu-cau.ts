@@ -20,6 +20,8 @@ export type TrangThai = 'cho_nhan' | 'da_nhan' | 'da_xong' | 'da_huy';
 export type YeuCau = {
   ma: string;
   chuyen_gia: string;
+  /** Mã khách. Phía thầy dùng nó để mở hồ sơ khách; phía khách không cần tới. */
+  nguoi_dung: string;
   chu_de: string;
   khung_gio: string;
   cau_hoi: string;
@@ -64,6 +66,7 @@ const MAU_YEU_CAU: YeuCau[] = [
   {
     ma: 'xem-thu-1',
     chuyen_gia: 'luna-chiem-tinh',
+    nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tarot',
     khung_gio: 'Tối, 19h tới 21h',
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
@@ -74,6 +77,7 @@ const MAU_YEU_CAU: YeuCau[] = [
   {
     ma: 'xem-thu-2',
     chuyen_gia: 'luna-chiem-tinh',
+    nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Sáng, 9h tới 11h',
     cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
@@ -84,6 +88,7 @@ const MAU_YEU_CAU: YeuCau[] = [
   {
     ma: 'xem-thu-3',
     chuyen_gia: 'luna-chiem-tinh',
+    nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tử vi',
     khung_gio: 'Chiều, 14h tới 16h',
     cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
@@ -94,6 +99,7 @@ const MAU_YEU_CAU: YeuCau[] = [
   {
     ma: 'xem-thu-4',
     chuyen_gia: 'luna-chiem-tinh',
+    nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Giờ nào cũng được',
     cau_hoi: 'Em đặt thử rồi lại bận mất, xin phép huỷ ạ.',

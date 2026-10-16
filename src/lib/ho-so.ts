@@ -39,6 +39,13 @@ export type HoSo = {
   gio_sinh: string | null; // HH:mm
   noi_sinh: string | null;
   gioi_tinh: GioiTinh | null;
+  /**
+   * Số điện thoại hoặc đường dẫn Zalo.
+   *
+   * CHỈ hỏi khi khách đặt lịch lần đầu, không hỏi lúc nhập hồ sơ. Người chỉ
+   * xem lá bài mỗi sáng thì không có lý do gì phải khai số của mình.
+   */
+  lien_he: string | null;
   gio_nhac: string | null;
   nhac_la_bai: boolean | null;
   nhac_tin_tuc: boolean | null;

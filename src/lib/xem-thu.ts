@@ -28,6 +28,7 @@ export const HO_SO_MAU: HoSo = {
   gio_sinh: '07:30',
   noi_sinh: 'Hà Nội',
   gioi_tinh: 'nu',
+  lien_he: '0912345678',
   gio_nhac: '07:00',
   nhac_la_bai: true,
   nhac_tin_tuc: false,
