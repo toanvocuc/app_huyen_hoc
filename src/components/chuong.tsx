@@ -14,7 +14,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -23,6 +23,7 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -33,6 +34,16 @@ import { CHU, MAU } from '@/constants/giao-dien';
 import { luc, useHopThongBao, type ThongBao } from '@/lib/hop-thong-bao';
 
 const CO = 52;
+/** Không ai động vào bao lâu thì bong bóng chìm xuống. */
+const CHO_MO_DI = 5000;
+/**
+ * Mờ tới mức nào khi chìm.
+ *
+ * 0,22 chứ không phải 0: biến mất hẳn thì khách tưởng mất tính năng và đi tìm.
+ * Ở mức này nó vẫn thấy được nếu nhìn thẳng vào, nhưng không còn cướp mắt khi
+ * đang đọc chữ phía dưới.
+ */
+const MO_KHI_CHIM = 0.22;
 /** Cách mép màn hình khi đã hít vào cạnh. */
 const LE = 12;
 
@@ -73,19 +84,53 @@ export function Chuong() {
   const y = useSharedValue(cho.y >= 0 ? cho.y : cao * 0.62);
   const nghieng = useSharedValue(0);
   const dangKeo = useSharedValue(0);
+  const doMo = useSharedValue(1);
 
-  // Lắc đúng MỘT lần mỗi khi số tin chưa đọc tăng. Lắc lặp vô tận thì làm người
-  // ta khó chịu chứ không làm họ bấm vào.
+  /**
+   * Đánh thức bong bóng rồi hẹn giờ chìm lại.
+   *
+   * Gọi mỗi khi có gì đó xảy ra với nó: chạm, kéo, đóng hộp, hoặc có tin mới.
+   * Không đếm việc khách cuộn trang — bong bóng không biết chuyện đó, mà cuộn
+   * tới đâu thì nó vẫn nằm yên một chỗ nên cũng không cần đánh thức.
+   *
+   * Hẹn giờ bằng `withDelay` của reanimated chứ không bằng setTimeout: gán lại
+   * là chuỗi cũ tự huỷ, nên không phải giữ ref, không phải dọn khi rời màn, và
+   * không sinh hẹn giờ mồ côi mỗi lần đổi màn.
+   */
+  const danhThuc = useCallback(() => {
+    doMo.value = withSequence(
+      withTiming(1, { duration: 140 }),
+      withDelay(CHO_MO_DI, withTiming(MO_KHI_CHIM, { duration: 900 }))
+    );
+    // doMo CỐ Ý không nằm trong danh sách phụ thuộc: nó là ô nhớ dùng chung của
+    // reanimated, không bao giờ đổi danh tính. Khai vào thì trình biên dịch
+    // React coi nó là chỉ-đọc và chặn luôn phép gán ngay dòng trên.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(danhThuc, [danhThuc]);
+
+  /**
+   * Lắc đúng MỘT lần mỗi khi số tin chưa đọc tăng, rồi nổi hẳn lên.
+   *
+   * Lắc lặp vô tận làm người ta khó chịu chứ không làm họ bấm vào. Và phải gọi
+   * `danhThuc` kèm theo: lắc trong lúc đang chìm mờ thì chẳng ai thấy.
+   *
+   * Khách bật mục giảm chuyển động trong cài đặt máy thì không lắc, chỉ nổi lên.
+   */
   useEffect(() => {
-    if (chuaDoc === 0 || giamChuyenDong) return;
+    if (chuaDoc === 0) return;
+    danhThuc();
+    if (giamChuyenDong) return;
     const b = (g: number, t: number) =>
       withTiming(g, { duration: t, easing: Easing.inOut(Easing.quad) });
     nghieng.value = withSequence(b(-14, 70), b(14, 110), b(-9, 90), b(9, 80), b(0, 70));
-  }, [chuaDoc, giamChuyenDong, nghieng]);
+  }, [chuaDoc, giamChuyenDong, nghieng, danhThuc]);
 
   const keo = Gesture.Pan()
     .onStart(() => {
       dangKeo.value = 1;
+      runOnJS(danhThuc)();
     })
     .onChange((e) => {
       x.value += e.changeX;
@@ -103,11 +148,13 @@ export function Chuong() {
         stiffness: 180,
       });
       runOnJS(nhoCho)(dich, Math.min(duoiNhat, Math.max(trenNhat, y.value)));
+      runOnJS(danhThuc)();
     });
 
   const cham = Gesture.Tap()
     .maxDistance(8)
     .onEnd(() => {
+      runOnJS(danhThuc)();
       runOnJS(taiLai)();
       runOnJS(datMo)(true);
     });
@@ -122,7 +169,8 @@ export function Chuong() {
       { translateY: y.value },
       { scale: withTiming(dangKeo.value ? 1.12 : 1, { duration: 120 }) },
     ],
-    opacity: withTiming(dangKeo.value ? 1 : 0.94, { duration: 120 }),
+    // Kéo thì luôn rõ hẳn, buông ra mới để nó chìm dần theo hẹn giờ.
+    opacity: dangKeo.value ? withTiming(1, { duration: 120 }) : doMo.value,
   }));
 
   const kieuChuong = useAnimatedStyle(() => ({
@@ -132,6 +180,7 @@ export function Chuong() {
   function dongHop() {
     datMo(false);
     datDaChon([]);
+    danhThuc();
   }
 
   function bamVao(t: ThongBao) {
