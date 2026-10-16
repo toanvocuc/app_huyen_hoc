@@ -4,17 +4,16 @@
  * Chạy trên Supabase Edge Function, tự kích hoạt bằng Database Webhook mỗi khi
  * có dòng mới trong `yeu_cau_tu_van`.
  *
- * HAI ĐƯỜNG BÁO, ĐƯỜNG NÀO CHẠY ĐƯỢC THÌ CHẠY
+ * CHỈ CÒN LO EMAIL
  *
- *   1. ĐẨY THÔNG BÁO về máy thầy — đường chính. Thầy đăng nhập tư cách chuyên
- *      gia trong app, máy chủ biết mã thiết bị, đẩy thẳng. Nhanh, không rơi vào
- *      hộp thư rác, và thầy bấm vào là mở app ra làm việc luôn.
+ * Phần đẩy thông báo về máy thầy đã chuyển sang `day-thong-bao`, hàm dùng chung
+ * cho mọi loại thông báo. Lý do: để hai chỗ cùng đẩy thì thầy nhận hai lần rung
+ * cho một đơn, và hai đoạn mã làm cùng một việc chắc chắn sẽ lệch nhau theo
+ * thời gian.
  *
- *   2. EMAIL — đường phụ, chỉ chạy khi đã khai RESEND_API_KEY. Chưa khai thì
- *      hàm bỏ qua chứ không coi là hỏng.
- *
- * Hai đường độc lập: một đường hỏng không kéo đường kia theo. Mỗi đường ghi một
- * dòng riêng vào `nhat_ky_bao_tin` để còn tra khi thầy bảo không nhận được gì.
+ * Giờ đường đi là: có đơn mới → trigger ghi một dòng vào `thong_bao` cho thầy →
+ * trigger của bảng đó gọi `day-thong-bao` → máy thầy rung. Hàm này chạy song
+ * song, chỉ lo gửi email, và chỉ chạy khi đã khai RESEND_API_KEY.
  *
  * CHẠY HỎNG THÌ SAO
  *
@@ -88,60 +87,6 @@ async function ghiNhatKy(yeuCau: string | null, guiToi: string, thanhCong: boole
     });
   } catch (e) {
     console.error('[bao-don-moi] ghi nhat ky hong', e);
-  }
-}
-
-// ------------------------------------------------------------------ đẩy thông báo
-
-async function dayThongBao(yc: DongYeuCau, taiKhoan: string | null) {
-  if (!taiKhoan) {
-    await ghiNhatKy(yc.ma, 'day', false, 'Thay chua dang nhap tu cach chuyen gia');
-    return;
-  }
-
-  const { data: may } = await quanTri
-    .from('thiet_bi')
-    .select('ma_day')
-    .eq('nguoi_dung', taiKhoan);
-
-  const dsMa = (may ?? []).map((m) => m.ma_day as string).filter(Boolean);
-  if (dsMa.length === 0) {
-    await ghiNhatKy(yc.ma, 'day', false, 'Thay chua bat thong bao tren may nao');
-    return;
-  }
-
-  // Cắt câu hỏi cho vừa phần thân thông báo. Dài quá thì hệ điều hành tự cắt ở
-  // chỗ xấu; cắt chủ động rồi thêm dấu ba chấm thì đọc ra là còn nữa.
-  const trich = yc.cau_hoi.length > 140 ? yc.cau_hoi.slice(0, 140).trimEnd() + '…' : yc.cau_hoi;
-
-  const tin = dsMa.map((to) => ({
-    to,
-    title: `Đơn mới · ${yc.chu_de}`,
-    body: `${yc.khung_gio}\n${trich}`,
-    sound: 'default',
-    priority: 'high',
-    // Mở rộng ra khi khách kéo thông báo xuống, để đọc hết câu hỏi mà không
-    // phải mở app.
-    data: { man: '/thay', yeu_cau: yc.ma },
-  }));
-
-  try {
-    const tra = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(tin),
-    });
-    const kq = await tra.json();
-    // Expo trả 200 ngay cả khi từng tin hỏng, lỗi nằm trong từng phần tử. Không
-    // soi vào đó thì nhật ký báo thành công trong khi chẳng tin nào tới nơi.
-    const hong = (kq?.data ?? []).filter((d: { status?: string }) => d?.status !== 'ok');
-    if (!tra.ok || hong.length > 0) {
-      await ghiNhatKy(yc.ma, `day (${dsMa.length} may)`, false, JSON.stringify(kq).slice(0, 300));
-      return;
-    }
-    await ghiNhatKy(yc.ma, `day (${dsMa.length} may)`, true);
-  } catch (e) {
-    await ghiNhatKy(yc.ma, 'day', false, e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -222,11 +167,7 @@ Deno.serve(async (req) => {
         .maybeSingle(),
     ]);
 
-    // Hai đường chạy song song và độc lập: một đường hỏng không kéo đường kia theo.
-    await Promise.all([
-      dayThongBao(yc, (lienHe?.tai_khoan as string | null) ?? null),
-      guiThu(yc, thay?.ten ?? 'chuyên gia', (lienHe?.email as string | null) ?? null),
-    ]);
+    await guiThu(yc, thay?.ten ?? 'chuyên gia', (lienHe?.email as string | null) ?? null);
 
     return new Response('da bao', { status: 200 });
   } catch (e) {
