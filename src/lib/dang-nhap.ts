@@ -20,6 +20,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 
 import { supabase } from '@/lib/supabase';
+import { goMaDay } from '@/lib/thong-bao';
 
 export type NhaCungCap = 'google' | 'apple';
 
@@ -219,6 +220,10 @@ export function loiDeHieu(e: unknown): string {
  * đây không phải điều hướng gì.
  */
 export async function dangXuat(): Promise<void> {
+  // Gỡ máy khỏi danh sách nhận tin TRƯỚC khi đăng xuất: xoá dòng của mình cần
+  // thẻ đăng nhập còn hiệu lực. Thiếu bước này thì khách đăng xuất rồi vẫn nhận
+  // tin gửi theo đợt, vì mã máy còn trỏ về tài khoản cũ.
+  await goMaDay();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

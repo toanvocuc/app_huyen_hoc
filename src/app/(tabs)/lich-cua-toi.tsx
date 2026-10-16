@@ -97,7 +97,11 @@ export default function LichCuaToi() {
   const coGi = (dong?.length ?? 0) > 0;
 
   return (
-    <ManHinh tieuDe="Lịch của tôi" phu="Những buổi tư vấn bạn đã đặt.">
+    <ManHinh
+      tieuDe="Lịch của tôi"
+      phu="Những buổi tư vấn bạn đã đặt."
+      onLamMoi={lamMoi}
+      dangLamMoi={dangTai && coGi}>
       {dangTai ? <DangTai /> : null}
 
       {loi ? (

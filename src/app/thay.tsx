@@ -21,7 +21,7 @@ import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/co
 import { CHU, MAU } from '@/constants/giao-dien';
 import { supabase } from '@/lib/supabase';
 import { useLaThay } from '@/lib/thay';
-import { daCoQuyen, dangKyMaDay, xinQuyen } from '@/lib/thong-bao';
+import { daCoQuyen, dangKyMaDay, goMaDay, xinQuyen } from '@/lib/thong-bao';
 import { TEN_TRANG_THAI, thayDoiTrangThai, useDonChoThay, type YeuCau } from '@/lib/yeu-cau';
 
 const MAU_TRANG_THAI = { cho: MAU.vang, xong: MAU.tot, huy: MAU.chuMo } as const;
@@ -50,7 +50,18 @@ export default function ManThay() {
   useFocusEffect(
     useCallback(() => {
       daCoQuyen()
-        .then(datCoQuyen)
+        .then((co) => {
+          datCoQuyen(co);
+          // Ghi lại mã máy MỖI LẦN mở màn, không chỉ lúc đăng nhập.
+          //
+          // Lúc đăng nhập mà mạng chập là lệnh ghi hỏng, và trước đây không có
+          // đường nào thử lại: nút "Bật thông báo" chỉ hiện khi CHƯA có quyền,
+          // mà quyền thì đã cấp rồi. Thầy thấy mọi thứ bình thường, chỉ là
+          // không bao giờ nhận được tin nào.
+          //
+          // Ghi đè theo mã máy nên gọi lại nhiều lần không sinh dòng thừa.
+          if (co) dangKyMaDay().catch(() => {});
+        })
         .catch(() => datCoQuyen(false));
       lamMoi();
     }, [lamMoi])
@@ -121,8 +132,10 @@ export default function ManThay() {
         text: 'Đăng xuất',
         style: 'destructive',
         onPress: () =>
-          supabase.auth
-            .signOut()
+          // Gỡ máy TRƯỚC khi đăng xuất: xoá dòng của mình cần thẻ còn hiệu lực.
+          // Thiếu bước này thì đăng xuất xong máy vẫn rung mỗi khi có đơn mới.
+          goMaDay()
+            .then(() => supabase.auth.signOut())
             .then(() => router.replace('/dang-nhap'))
             .catch(() => Alert.alert('Chưa đăng xuất được', 'Kiểm tra mạng rồi thử lại.')),
       },
@@ -155,7 +168,11 @@ export default function ManThay() {
   const coDon = (dong?.length ?? 0) > 0;
 
   return (
-    <ManHinh tieuDe="Đơn của bạn" phu={`Đang làm việc với tư cách ${thay.ten}`}>
+    <ManHinh
+      tieuDe="Đơn của bạn"
+      phu={`Đang làm việc với tư cách ${thay.ten}`}
+      onLamMoi={lamMoi}
+      dangLamMoi={dangTai && coDon}>
       {coQuyen === false ? (
         <View className="mb-6">
           <Khoi vien>

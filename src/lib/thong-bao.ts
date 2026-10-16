@@ -278,6 +278,29 @@ function maDuAn(): string | null {
  * Nuốt mọi lỗi: không lấy được mã thì khách vẫn dùng app bình thường, chỉ là
  * không nhận được tin gửi theo đợt.
  */
+/**
+ * Gỡ máy này khỏi danh sách nhận tin, trước khi đăng xuất.
+ *
+ * Thiếu bước này thì thầy đăng xuất xong MÁY VẪN NHẬN thông báo đơn mới, vì
+ * dòng trong bảng `thiet_bi` còn trỏ mã máy về tài khoản cũ. Nó chỉ im khi có
+ * người khác đăng nhập trên đúng máy đó và ghi đè lên.
+ *
+ * Phải gọi TRƯỚC `signOut`: xoá dòng của mình cần thẻ đăng nhập còn hiệu lực,
+ * đăng xuất rồi thì luật khoá dòng chặn lại.
+ *
+ * Nuốt mọi lỗi: gỡ không được cũng đừng cản khách đăng xuất.
+ */
+export async function goMaDay() {
+  if (XEM_THU) return;
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    await supabase.from('thiet_bi').delete().eq('nguoi_dung', u.user.id);
+  } catch (e) {
+    console.warn('[thong-bao] go ma thiet bi that bai:', e);
+  }
+}
+
 export async function dangKyMaDay(): Promise<string | null> {
   if (vuongMacMaDay()) return null;
   if (!(await daCoQuyen())) return null;

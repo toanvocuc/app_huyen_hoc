@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChumSaoToa } from '@/components/hieu-ung-sao';
@@ -17,6 +17,8 @@ export function ManHinh({
   phu,
   quayLai,
   nenPhu,
+  onLamMoi,
+  dangLamMoi,
   children,
 }: {
   tieuDe?: string;
@@ -24,6 +26,15 @@ export function ManHinh({
   quayLai?: boolean;
   /** Lớp ảnh nền đặt dưới nội dung, ví dụ trời sao hay khung hoa văn. */
   nenPhu?: React.ReactNode;
+  /**
+   * Khai vào là màn kéo xuống được để tải lại.
+   *
+   * Cần cho mấy màn có dữ liệu đổi ở phía người khác: thầy đang nhìn danh sách
+   * đơn thì khách đặt thêm, mà màn chỉ tải lại lúc vừa hiện lên — không có chỗ
+   * kéo thì thầy phải thoát ra vào lại mới thấy.
+   */
+  onLamMoi?: () => void;
+  dangLamMoi?: boolean;
   children: React.ReactNode;
 }) {
   // Chừa chỗ cho thanh tab và thanh điều hướng của máy, không thì dòng cuối
@@ -38,7 +49,18 @@ export function ManHinh({
         <ScrollView
           contentContainerClassName="px-5 pt-3"
           contentContainerStyle={{ paddingBottom: CAO_THANH_TAB + 16 + le.bottom }}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            onLamMoi ? (
+              <RefreshControl
+                refreshing={Boolean(dangLamMoi)}
+                onRefresh={onLamMoi}
+                tintColor={MAU.vang}
+                colors={[MAU.vang]}
+                progressBackgroundColor={MAU.nenNhat}
+              />
+            ) : undefined
+          }>
           {quayLai ? (
             <View className="mb-4">
               <NutQuayLai />
