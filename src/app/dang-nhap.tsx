@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -16,19 +15,6 @@ import { datCoHoSo, docHoSo } from '@/lib/ho-so';
 import { dangNhapAnDanh } from '@/lib/supabase';
 
 const { width: RONG, height: CAO } = Dimensions.get('window');
-
-/**
- * Ba điều đăng nhập đổi được cho khách.
- *
- * Chỉ hứa đúng thứ app làm được thật. Cả ba đều đúng vì hồ sơ và lịch sử rút
- * bài nằm trên máy chủ, khoá theo tài khoản: đăng nhập lại ở máy nào cũng đọc
- * đúng dữ liệu đó. Đừng thêm dòng nào về sao lưu hay mua bán khi chưa có.
- */
-const LOI_ICH = [
-  'Đổi máy vẫn giữ nguyên hồ sơ',
-  'Xem lại mọi lần rút bài cũ',
-  'Một hồ sơ, dùng trên nhiều máy',
-];
 
 export default function DangNhap() {
   const [dangChay, setDangChay] = useState<'google' | 'apple' | 'an-danh' | null>(null);
@@ -85,26 +71,6 @@ export default function DangNhap() {
             Giữ lại{'\n'}
             <Text style={{ color: MAU.vang }}>hồ sơ của bạn</Text>
           </Text>
-
-          {/* Trước đây mỗi dòng có một biểu tượng sao ở lề trái. Ba ngôi xếp
-              dọc trông vụn, và dòng nào dài quá thì xuống hàng làm lệch nhịp
-              cả cột. Giờ căn giữa, một dấu sao duy nhất làm mốc cho cả khối. */}
-          <View className="mt-5 items-center">
-            <Ionicons name="sparkles" size={14} color={MAU.vang} />
-            <View className="mt-3 gap-1.5">
-              {LOI_ICH.map((d) => (
-                <Text
-                  key={d}
-                  // KHÔNG khoá một dòng. Đo ra: máy nhỏ 320dp để cỡ chữ lớn thì
-                  // hai dòng tràn khung, mà khoá lại là cắt cụt chữ. Căn giữa
-                  // nên xuống hàng vẫn cân, cắt cụt thì không chữa được.
-                  style={{ fontFamily: CHU.than, fontSize: 14.5, lineHeight: 24 }}
-                  className="text-center text-chu-phu">
-                  {d}
-                </Text>
-              ))}
-            </View>
-          </View>
         </View>
 
         <View className="px-8 pb-6 pt-9">
@@ -163,13 +129,6 @@ export default function DangNhap() {
               {loi}
             </Text>
           ) : null}
-
-          <Text
-            style={{ fontFamily: CHU.than }}
-            className="mt-4 text-center text-[11px] leading-5 text-chu-mo">
-            Dùng ngay thì hồ sơ chỉ nằm trên máy này. Đăng nhập sau trong mục Cá nhân cũng
-            được, dữ liệu vẫn giữ nguyên.
-          </Text>
         </View>
       </SafeAreaView>
     </View>
