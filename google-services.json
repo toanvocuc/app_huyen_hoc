@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "739229091827",
+    "project_id": "omora-af3cb",
+    "storage_bucket": "omora-af3cb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739229091827:android:aa49a5da539d1fa08ff486",
+        "android_client_info": {
+          "package_name": "com.nexusgroup.omora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6qggM_uobfGCaIqau8bKK1ykO9nROVEg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
