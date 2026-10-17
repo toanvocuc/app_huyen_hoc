@@ -55,4 +55,6 @@ example
 
 # Ban web xuat tam de chup anh nop cho
 dist-web/
-dist-web-*/
+# Mọi thư mục xuất bản web để chụp ảnh hay kiểm thử. Có lần lỡ commit 26MB
+# vì chỉ chặn đúng tiền tố 'dist-web-'.
+dist-*/
