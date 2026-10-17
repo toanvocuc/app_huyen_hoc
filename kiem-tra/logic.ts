@@ -23,7 +23,7 @@ import {
 import { CUNG, cungTheoNgay, diemHop } from '../src/lib/zodiac.ts';
 import { khoangNamSinh, ngayHopLe, soNgayTrongThang } from '../src/lib/ngay-thang.ts';
 // Doi ten `moc` vi file nay da co mot bien moc khac, la moc 32 bit.
-import { gioBatDau, moc as mocGio, mocNhac } from '../src/lib/nhac-hen-gio.ts';
+import { gioBatDau, gioDoc, moc as mocGio, mocNhac, tachGioHen } from '../src/lib/nhac-hen-gio.ts';
 // Doi ten `layMa` cho khoi lan voi bien khac trong file.
 import { docLoi, laKhachTuChoi, laTrungDanhTinh, layMa as layMaTraVe } from '../src/lib/duong-tra-ve.ts';
 
@@ -333,6 +333,8 @@ kiem('Tối 19h', gioBatDau('Tối, 19h tới 21h'), 19);
 // Không có số nào thì về 9h, không được trả NaN rồi hẹn vào hư không.
 kiem('giờ nào cũng được -> 9h', gioBatDau('Giờ nào cũng được'), 9);
 kiem('chuỗi lạ -> 9h', gioBatDau('bất kỳ'), 9);
+// Khách chọn giờ chính xác thì ô khung_gio nhận luôn chuỗi 'HH:mm'.
+kiem("hiểu cả dạng 13:45", gioBatDau('13:45'), 13);
 
 console.log('\n--- dựng mốc theo giờ MÁY, không qua UTC ---');
 // Chỗ sập nếu lỡ dùng new Date('2026-10-22'): ở Việt Nam sẽ ra 21/10.
@@ -362,6 +364,36 @@ kiem('9h: nhắc gần vẫn cùng ngày', h3 ? h3.truocMotTieng.getDate() : nul
 // Hẹn 1/1 thì lùi sang năm trước.
 const h4 = mocNhac('2027-01-01', 'Tối, 19h tới 21h');
 kiem('1/1: nhắc trước là 31/12/2026', h4 ? `${h4.homTruoc.getDate()}/${h4.homTruoc.getMonth() + 1}/${h4.homTruoc.getFullYear()}` : null, '31/12/2026');
+
+
+console.log('\n--- giờ hẹn chính xác ---');
+kiem('13:00 tách được', tachGioHen('13:00'), { gio: 13, phut: 0 });
+kiem('09:45 tách được', tachGioHen('09:45'), { gio: 9, phut: 45 });
+kiem('rỗng -> null', tachGioHen(''), null);
+kiem('null -> null', tachGioHen(null), null);
+kiem('24:00 bị chặn', tachGioHen('24:00'), null);
+kiem('12:60 bị chặn', tachGioHen('12:60'), null);
+kiem('chuỗi lạ bị chặn', tachGioHen('chiều'), null);
+kiem('hiện ra 13:00', gioDoc('13:00'), '13:00');
+kiem('không có giờ thì null', gioDoc(null), null);
+
+// Có giờ chính xác thì lời nhắc phải bám theo nó, KHÔNG theo khung giờ.
+const g1 = mocNhac('2026-10-22', 'Chiều, 14h tới 16h', '13:00');
+kiem('nhắc gần = 12h, không phải 13h theo khung', g1 ? g1.truocMotTieng.getHours() : null, 12);
+kiem('nhắc gần đúng ngày 22', g1 ? g1.truocMotTieng.getDate() : null, 22);
+kiem('nhắc hôm trước vẫn 20h ngày 21', g1 ? `${g1.homTruoc.getDate()} ${g1.homTruoc.getHours()}` : null, '21 20');
+
+// Giờ chính xác có phút lẻ.
+const g2 = mocNhac('2026-10-22', 'Tối, 19h tới 21h', '19:30');
+kiem('19:30 -> nhắc lúc 18:30', g2 ? `${g2.truocMotTieng.getHours()}:${g2.truocMotTieng.getMinutes()}` : null, '18:30');
+
+// Giờ chính xác sai khuôn thì lùi về khung giờ, không được vỡ.
+const g3 = mocNhac('2026-10-22', 'Tối, 19h tới 21h', 'bậy');
+kiem('giờ sai khuôn thì dùng khung', g3 ? g3.truocMotTieng.getHours() : null, 18);
+
+// Giờ chính xác sớm, 00:30, thì nhắc lùi sang hôm trước.
+const g4 = mocNhac('2026-10-22', 'Sáng, 9h tới 11h', '00:30');
+kiem('00:30 -> nhắc 23:30 hôm trước', g4 ? `${g4.truocMotTieng.getDate()} ${g4.truocMotTieng.getHours()}:${g4.truocMotTieng.getMinutes()}` : null, '21 23:30');
 
 
 // ---------------------------------------------------------------- địa chỉ OAuth trả về

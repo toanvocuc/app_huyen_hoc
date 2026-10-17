@@ -27,7 +27,7 @@ import { getAllScheduledNotificationsAsync } from 'expo-notifications/build/getA
 import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 
-import { mocNhac } from '@/lib/nhac-hen-gio';
+import { gioDoc, mocNhac } from '@/lib/nhac-hen-gio';
 import { daCoQuyen } from '@/lib/thong-bao';
 import { XEM_THU } from '@/lib/xem-thu';
 import type { YeuCau } from '@/lib/yeu-cau';
@@ -56,7 +56,7 @@ type Hen = { ma: string; khi: Date; tieuDe: string; than: string };
  */
 function cacHen(yc: YeuCau, tenDoiPhuong: string, laThay: boolean): Hen[] {
   if (!yc.ngay_hen) return [];
-  const m = mocNhac(yc.ngay_hen, yc.khung_gio);
+  const m = mocNhac(yc.ngay_hen, yc.khung_gio, yc.gio_hen);
   if (!m) return [];
   const { homTruoc, truocMotTieng } = m;
   const ai = laThay ? tenDoiPhuong : `${tenDoiPhuong}`;
@@ -67,13 +67,15 @@ function cacHen(yc: YeuCau, tenDoiPhuong: string, laThay: boolean): Hen[] {
       ma: `${DAU}${yc.ma}-truoc`,
       khi: homTruoc,
       tieuDe: `Mai có hẹn: ${viec.toLowerCase()}`,
-      than: `${yc.khung_gio}. ${laThay ? 'Mở app xem lại câu hỏi của khách.' : 'Chuẩn bị sẵn điều bạn muốn hỏi nhé.'}`,
+      than: `${gioDoc(yc.gio_hen) ?? yc.khung_gio}. ${laThay ? 'Mở app xem lại câu hỏi của khách.' : 'Chuẩn bị sẵn điều bạn muốn hỏi nhé.'}`,
     },
     {
       ma: `${DAU}${yc.ma}-gan`,
       khi: truocMotTieng,
       tieuDe: `Sắp tới giờ: ${viec.toLowerCase()}`,
-      than: `Khoảng một tiếng nữa, ${yc.khung_gio.toLowerCase()}.`,
+      than: gioDoc(yc.gio_hen)
+      ? `Một tiếng nữa, đúng ${gioDoc(yc.gio_hen)}.`
+      : `Khoảng một tiếng nữa, ${yc.khung_gio.toLowerCase()}.`,
     },
   ];
 }

@@ -32,6 +32,7 @@ import { CHU, MAU } from '@/constants/giao-dien';
 import { tachNgay } from '@/lib/ho-so';
 import { dongGoi } from '@/lib/goi';
 import { donBoNhacHen, goHetNhacHen } from '@/lib/nhac-hen';
+import { gioDoc } from '@/lib/nhac-hen-gio';
 import { duongLienHe, ngayDoc, useHoSoKhach } from '@/lib/khach';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { supabase, xoaDauTaiKhoanThat } from '@/lib/supabase';
@@ -451,7 +452,7 @@ function The({
         ) : null}
 
         <Text style={{ fontFamily: CHU.than }} className="mb-3 text-sm text-chu-phu">
-          {yc.chu_de} · {yc.khung_gio}
+          {yc.chu_de} · {gioDoc(yc.gio_hen) ?? yc.khung_gio}
           {yc.ngay_hen ? ` · hẹn ${ngayHenGon(yc.ngay_hen)}` : ''}
         </Text>
 

@@ -23,6 +23,7 @@ import {
   KhachHuy,
   loiDeHieu,
 } from '@/lib/dang-nhap';
+import { xoaTaiKhoan } from '@/lib/ho-so';
 import { tinTaiKhoan, type TinTaiKhoan } from '@/lib/supabase';
 
 const LOI_ICH = ['Đổi máy vẫn giữ nguyên hồ sơ', 'Xem lại mọi lần rút bài cũ'];
@@ -98,42 +99,49 @@ export function KhoiTaiKhoan({ xongThi }: { xongThi: () => void }) {
    * gộp được — gộp tự động là chắc chắn mất một bên mà không ai biết bên nào —
    * nên đưa ra cho khách chọn, và nói thẳng cái giá của mỗi đường.
    */
+  /**
+   * Tài khoản vừa chọn đã thuộc về một hồ sơ Omora khác.
+   *
+   * Hai hồ sơ không gộp lại được — gộp tự động là chắc chắn mất một bên mà
+   * không ai biết bên nào. Nên đưa ra cho khách chọn, và nói thẳng cái giá.
+   */
   function hoiChonHoSo(hang: 'google' | 'apple') {
+    const ten = TEN_NHA[hang] ?? hang;
     Alert.alert(
       'Tài khoản này đã có hồ sơ riêng',
-      'Bạn từng đăng nhập Omora bằng tài khoản này, nên nó đã có một hồ sơ riêng. ' +
-        'Hai hồ sơ không gộp lại được, phải chọn giữ một.',
+      `Bạn từng đăng nhập Omora bằng tài khoản ${ten} này nên nó đã có một hồ sơ ` +
+        'riêng. Chuyển qua hồ sơ đó thì hồ sơ ẩn danh đang mở trên máy này sẽ bị xoá đi.',
       [
         {
-          // Chọn lại nhà cung cấp, lần này bảng chọn tài khoản sẽ hiện ra nhờ
-          // tham số prompt=select_account, nên khách đổi được sang tài khoản khác.
-          text: 'Chọn tài khoản khác',
-          onPress: () => gan(hang),
-        },
-        {
-          // Đăng xuất là hồ sơ ẩn danh đang mở MẤT ĐƯỜNG VỀ: nó không gắn với
-          // tài khoản nào nên không đăng nhập lại được. Phải nói thẳng.
-          text: 'Bỏ hồ sơ này, dùng hồ sơ cũ',
+          text: `Chuyển qua tài khoản ${ten}`,
           style: 'destructive',
-          onPress: () =>
-            Alert.alert(
-              'Bỏ hồ sơ đang mở?',
-              'Hồ sơ trên máy này chưa gắn tài khoản nào, nên bỏ rồi là không ' +
-                'lấy lại được. Sau đó bạn đăng nhập lại bằng tài khoản vừa chọn ' +
-                'để về hồ sơ cũ.',
-              [
-                { text: 'Thôi', style: 'cancel' },
-                {
-                  text: 'Bỏ và đăng nhập',
-                  style: 'destructive',
-                  onPress: () => dangXuat().catch((e) => setLoi(loiDeHieu(e))),
-                },
-              ]
-            ),
+          onPress: () => {
+            void chuyenSangHoSoCu();
+          },
         },
         { text: 'Để sau', style: 'cancel' },
       ]
     );
+  }
+
+  /**
+   * Bỏ hồ sơ ẩn danh để quay về hồ sơ cũ.
+   *
+   * XOÁ HẴN chứ không chỉ đăng xuất. Hồ sơ ẩn danh không gắn tài khoản nào, nên
+   * đăng xuất là nó thành mồ côi: khách không bao giờ vào lại được, mà dữ liệu
+   * vẫn nằm lại trên máy chủ. Đó đúng là cách đã sinh ra hàng chục tài khoản rác
+   * phải dọn tay một lần. Nói xoá thì xoá thật.
+   *
+   * `xoaTaiKhoan` dọn luôn lịch nhắc, mã máy nhận tin và dấu tài khoản thật, rồi
+   * đăng xuất. Màn gốc nghe được việc đăng xuất nên tự đưa về màn chọn cách vào.
+   */
+  async function chuyenSangHoSoCu() {
+    setLoi(null);
+    try {
+      await xoaTaiKhoan();
+    } catch (e) {
+      setLoi(loiDeHieu(e));
+    }
   }
 
   function hoiRoiThoat() {

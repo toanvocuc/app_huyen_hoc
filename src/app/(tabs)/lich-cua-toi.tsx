@@ -27,6 +27,7 @@ import { NoiLienHe } from '@/components/noi-lien-he';
 import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
 import { dongGoi } from '@/lib/goi';
 import { donBoNhacHen } from '@/lib/nhac-hen';
+import { gioDoc } from '@/lib/nhac-hen-gio';
 import {
   huyYeuCau,
   ngayHenGon,
@@ -241,7 +242,7 @@ function The({
           <Text
             style={{ fontFamily: CHU.thanDam, color: MAU.vang }}
             className="mb-1 text-sm">
-            Hẽn ngày {ngayHenGon(yc.ngay_hen)} · {yc.khung_gio}
+            Hẹn ngày {ngayHenGon(yc.ngay_hen)} · {gioDoc(yc.gio_hen) ?? yc.khung_gio}
           </Text>
         ) : null}
 

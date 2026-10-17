@@ -10,8 +10,28 @@
  * lời nhắc "mai có hẹn" sẽ kêu sớm trước một ngày.
  */
 
+/**
+ * Tách 'HH:mm' thành giờ và phút. Null nếu trống hoặc sai khuôn.
+ *
+ * Khách chọn giờ chính xác thì ô này có giá trị; chọn khung giờ chung chung thì
+ * trống, và mọi chỗ đọc đều lùi về `khung_gio` như cũ.
+ */
+export function tachGioHen(gioHen: string | null | undefined): { gio: number; phut: number } | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec((gioHen ?? '').trim());
+  if (!m) return null;
+  const gio = Number(m[1]);
+  const phut = Number(m[2]);
+  if (gio < 0 || gio > 23 || phut < 0 || phut > 59) return null;
+  return { gio, phut };
+}
+
 /** Giờ bắt đầu khung, suy từ chính chuỗi khách đã chọn. */
 export function gioBatDau(khungGio: string): number {
+  // Hiểu cả dạng 'HH:mm'. Khách chọn giờ chính xác thì ô `khung_gio` nhận luôn
+  // chuỗi đó (cột bắt buộc có), nên không hiểu là rơi về 9h một cách vô lý.
+  const cx = tachGioHen(khungGio);
+  if (cx) return cx.gio;
+
   const m = /(\d{1,2})\s*h/.exec(khungGio);
   if (m) {
     const g = Number(m[1]);
@@ -31,6 +51,13 @@ export function moc(ngay: string, gio: number, phut = 0): Date | null {
   return d;
 }
 
+/** 'HH:mm' để hiện ra màn hình. Trả null nếu không có giờ chính xác. */
+export function gioDoc(gioHen: string | null | undefined): string | null {
+  const t = tachGioHen(gioHen);
+  if (!t) return null;
+  return `${String(t.gio).padStart(2, '0')}:${String(t.phut).padStart(2, '0')}`;
+}
+
 /**
  * Hai mốc nhắc cho một buổi hẹn: tối hôm trước lúc 20h, và trước giờ hẹn một
  * tiếng.
@@ -40,9 +67,13 @@ export function moc(ngay: string, gio: number, phut = 0): Date | null {
  */
 export function mocNhac(
   ngayHen: string,
-  khungGio: string
+  khungGio: string,
+  gioHen?: string | null
 ): { homTruoc: Date; truocMotTieng: Date } | null {
-  const batDau = moc(ngayHen, gioBatDau(khungGio));
+  const cx = tachGioHen(gioHen);
+  const batDau = cx
+    ? moc(ngayHen, cx.gio, cx.phut)
+    : moc(ngayHen, gioBatDau(khungGio));
   const homTruoc = moc(ngayHen, 20);
   if (!batDau || !homTruoc) return null;
   homTruoc.setDate(homTruoc.getDate() - 1);

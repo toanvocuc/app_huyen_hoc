@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { AppState, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import { BanhXeGioSinh } from '@/components/banh-xe';
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { luuHoSo, useHoSo } from '@/lib/ho-so';
@@ -94,6 +95,18 @@ export default function DatLich() {
   const chuDeChon = chuDe.length > 0 ? chuDe : ['Tư vấn chung'];
   const [chonChuDe, datChonChuDe] = useState<string | null>(null);
   const [chonGio, datChonGio] = useState<string | null>(null);
+  /**
+   * Giờ chính xác, khi khách muốn hẹn đúng một giờ chứ không phải một khoảng.
+   *
+   * Khoảng hai tiếng thì cả hai bên đều không giữ được giờ giấc, mà lời nhắc
+   * trước buổi hẹn cũng chỉ đoán được giờ bắt đầu khung.
+   */
+  const [tuChonGio, datTuChonGio] = useState(false);
+  const [gio, datGio] = useState(19);
+  const [phut, datPhut] = useState(0);
+  const gioHen = tuChonGio
+    ? `${String(gio).padStart(2, '0')}:${String(phut).padStart(2, '0')}`
+    : null;
 
   /**
    * Mốc "hôm nay", đọc lại mỗi khi app quay lại từ nền.
@@ -143,13 +156,14 @@ export default function DatLich() {
   const thieu: string[] = [];
   if (cacGoi.length > 0 && !goi) thieu.push('chọn gói');
   if (!chuDeThat) thieu.push('chọn chủ đề');
-  if (!chonGio) thieu.push('chọn khung giờ');
+  if (!tuChonGio && !chonGio) thieu.push('chọn giờ');
   if (lienHe.trim().length < TOI_THIEU_LIEN_HE) thieu.push('điền số điện thoại hoặc Zalo');
   if (cauHoi.trim().length < TOI_THIEU) thieu.push('viết câu hỏi dài thêm một chút');
   const duDieuKien = thieu.length === 0;
 
   async function gui() {
-    if (!thay || !chuDeThat || !chonGio) return;
+    if (!thay || !chuDeThat) return;
+    if (!tuChonGio && !chonGio) return;
     if (cacGoi.length > 0 && !goi) return;
     datLoi(null);
     datDangGui(true);
@@ -163,7 +177,10 @@ export default function DatLich() {
       await guiYeuCau({
         chuyenGia: thay.ma,
         chuDe: chuDeThat,
-        khungGio: chonGio,
+        // `khung_gio` là cột bắt buộc có, nên khách chọn giờ chính xác thì ghi
+        // luôn giờ đó vào đây để mấy chỗ cũ chỉ đọc `khung_gio` vẫn hiện đúng.
+        khungGio: gioHen ?? chonGio!,
+        gioHen,
         ngayHen: ngayThat,
         cauHoi,
         // Chép tên sang đơn để thầy biết xưng hô với ai. Thầy không đọc được
@@ -291,9 +308,46 @@ export default function DatLich() {
         <Nhan>Trong ngày đó bạn rảnh lúc nào</Nhan>
         <View className="mt-2 flex-row flex-wrap gap-2">
           {KHUNG_GIO.map((g) => (
-            <O key={g} nhan={g} chon={chonGio === g} onPress={() => datChonGio(g)} />
+            <O
+              key={g}
+              nhan={g}
+              chon={!tuChonGio && chonGio === g}
+              onPress={() => {
+                datTuChonGio(false);
+                datChonGio(g);
+              }}
+            />
           ))}
+          {/* Lựa chọn thứ năm: hẹn đúng một giờ thay vì một khoảng hai tiếng.
+              Khoảng thì cả hai bên đều khó giữ giờ giấc, mà lời nhắc trước buổi
+              hẹn cũng chỉ đoán được giờ bắt đầu khung. */}
+          <O
+            nhan={tuChonGio ? `Đúng ${gioHen}` : 'Chọn giờ chính xác'}
+            chon={tuChonGio}
+            onPress={() => {
+              datTuChonGio(true);
+              datChonGio(null);
+            }}
+          />
         </View>
+
+        {tuChonGio ? (
+          <View className="mt-4">
+            <BanhXeGioSinh
+              gio={gio}
+              phut={phut}
+              dat={(p) => {
+                if (p.gio !== undefined) datGio(p.gio);
+                if (p.phut !== undefined) datPhut(p.phut);
+              }}
+            />
+            <Text
+              style={{ fontFamily: CHU.than }}
+              className="mt-2 text-xs leading-5 text-chu-mo">
+              Thầy sẽ thấy đúng giờ này trong đơn, và máy bạn nhắc trước một tiếng.
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <View className="mb-7">

@@ -24,6 +24,13 @@ export type YeuCau = {
   nguoi_dung: string;
   chu_de: string;
   khung_gio: string;
+  /**
+   * Giờ hẹn chính xác dạng 'HH:mm'.
+   *
+   * Null nghĩa là khách chọn khung giờ chung chung, hoặc đơn đặt từ trước khi có
+   * mục này. Mọi chỗ đọc đều phải có đường lùi về `khung_gio`.
+   */
+  gio_hen: string | null;
   /** Ngày khách muốn gặp, dạng yyyy-mm-dd. Null với đơn đặt trước khi có mục này. */
   ngay_hen: string | null;
   cau_hoi: string;
@@ -102,6 +109,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tarot',
     khung_gio: 'Tối, 19h tới 21h',
+    gio_hen: '19:30',
     ngay_hen: NGAY_HEN(2),
     cau_hoi: 'Em đang phân vân giữa hai lời mời làm việc, không biết chọn bên nào.',
     trang_thai: 'da_nhan',
@@ -117,6 +125,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Sáng, 9h tới 11h',
+    gio_hen: null,
     ngay_hen: NGAY_HEN(5),
     cau_hoi: 'Em muốn hiểu rõ hơn về số chủ đạo của mình và nó nói gì về công việc.',
     trang_thai: 'cho_nhan',
@@ -132,6 +141,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Tử vi',
     khung_gio: 'Chiều, 14h tới 16h',
+    gio_hen: '14:00',
     ngay_hen: NGAY_HEN(-7),
     cau_hoi: 'Năm nay nhà em tính chuyển chỗ ở, em muốn hỏi xem nên đi hay nên ở lại.',
     trang_thai: 'da_xong',
@@ -147,6 +157,7 @@ const MAU_YEU_CAU: YeuCau[] = [
     nguoi_dung: 'xem-thu-khach',
     chu_de: 'Chiêm tinh',
     khung_gio: 'Giờ nào cũng được',
+    gio_hen: null,
     ngay_hen: NGAY_HEN(-12),
     cau_hoi: 'Em muốn xem bản đồ sao của hai vợ chồng em xem có hợp nhau không.',
     trang_thai: 'da_huy',
@@ -166,6 +177,8 @@ export async function guiYeuCau(phan: {
   chuyenGia: string;
   chuDe: string;
   khungGio: string;
+  /** Giờ chính xác 'HH:mm'. Bỏ trống khi khách chọn khung giờ. */
+  gioHen?: string | null;
   ngayHen: string;
   cauHoi: string;
   /** Tên khách, chép sang đơn để thầy biết xưng hô với ai. */
@@ -186,6 +199,7 @@ export async function guiYeuCau(phan: {
       nguoi_dung: toi,
       chu_de: phan.chuDe,
       khung_gio: phan.khungGio,
+      gio_hen: phan.gioHen?.trim() || null,
       ngay_hen: phan.ngayHen,
       cau_hoi: phan.cauHoi.trim(),
       ten_khach: phan.tenKhach?.trim() || null,
