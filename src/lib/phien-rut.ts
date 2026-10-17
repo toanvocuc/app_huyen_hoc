@@ -1,9 +1,15 @@
 /** Giữ tạm lần rút vừa xong để màn kết quả đọc. Không lưu lâu dài. */
 import { MAU_LA_BAI } from '@/data/noi-dung-mau';
+import { khiDoiTaiKhoan } from '@/lib/doi-tai-khoan';
 import { VI_TRI, type LaDaRut } from '@/lib/tarot';
 import { XEM_THU } from '@/lib/xem-thu';
 
 let phien: { cacLa: LaDaRut[]; daGhi: boolean } | null = null;
+
+// Máy đổi sang người khác thì lần rút của người cũ không còn là của ai cả.
+khiDoiTaiKhoan(() => {
+  phien = null;
+});
 
 export function datPhien(cacLa: LaDaRut[]) {
   phien = { cacLa, daGhi: false };

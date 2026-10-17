@@ -13,16 +13,18 @@ import { useFonts } from 'expo-font';
 import { Stack, router, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Chuong } from '@/components/chuong';
 import { CHU, MAU } from '@/constants/giao-dien';
+import { khiDoiTaiKhoan } from '@/lib/doi-tai-khoan';
 import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
+import { goHetNhacHen } from '@/lib/nhac-hen';
 import { hoSoThayCuaToi } from '@/lib/thay';
-import { batHienKhiDangMo, doiLoiNhac } from '@/lib/thong-bao';
+import { batHienKhiDangMo, doiLoiNhac, dongBoNhacLaBai } from '@/lib/thong-bao';
 import { useTraLoiThongBao, xoaTraLoiThongBao } from '@/lib/tra-loi-thong-bao';
 import { supabase } from '@/lib/supabase';
 import { XEM_THU } from '@/lib/xem-thu';
@@ -46,6 +48,13 @@ export default function RootLayout() {
    */
   const [laThay, setLaThay] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
+  /**
+   * Lượt dựng này là do máy vừa đổi sang người khác, không phải do mở app.
+   *
+   * Dùng ref chứ không dùng trạng thái: nó chỉ đổi cách `khoiDong` chạy, không
+   * có gì để vẽ ra, mà đặt trạng thái ở đây là kéo thêm một vòng vẽ thừa.
+   */
+  const doiNguoi = useRef(false);
   const doan = useSegments();
   const [phongXong] = useFonts({
     BeVietnamPro_400Regular,
@@ -82,10 +91,17 @@ export default function RootLayout() {
         const co = Boolean(h?.ngay_sinh);
         setCoHoSo(co);
         datCoHoSo(co);
-        // Hẹn lại lời nhắc sáng bằng một câu khác. Lịch lặp hằng ngày giữ nguyên
-        // chữ đã hẹn, nên không làm ở đây thì khách đọc đúng một câu suốt đời.
-        // Hàm tự bỏ qua khi không có lịch nào đang treo.
-        doiLoiNhac(h?.gio_nhac ?? null);
+        if (doiNguoi.current) {
+          doiNguoi.current = false;
+          // Đổi người thì phải hẹn LẠI theo hồ sơ người mới, không chỉ đổi câu
+          // chữ: lịch nhắc nằm ở hệ điều hành nên nó sống qua cả lần đăng xuất.
+          void dongBoNhacLaBai(h);
+        } else {
+          // Hẹn lại lời nhắc sáng bằng một câu khác. Lịch lặp hằng ngày giữ nguyên
+          // chữ đã hẹn, nên không làm ở đây thì khách đọc đúng một câu suốt đời.
+          // Hàm tự bỏ qua khi không có lịch nào đang treo.
+          doiLoiNhac(h?.gio_nhac ?? null);
+        }
       })
       .catch((e) => setLoi(e instanceof Error ? e.message : String(e)))
       .finally(() => {
@@ -95,6 +111,29 @@ export default function RootLayout() {
   }, []);
 
   useEffect(khoiDong, [khoiDong]);
+
+  /**
+   * Máy đổi sang người khác thì dựng lại từ đầu, y như vừa mở app.
+   *
+   * Trước đây chỗ này không có gì. Đăng xuất rồi đăng nhập bằng tài khoản khác
+   * thì `coHoSo` vẫn mang giá trị của người cũ, nên người mới được thả thẳng
+   * vào mấy thẻ tab — trong khi mọi màn ở đó đang đọc hồ sơ của người cũ.
+   *
+   * `khoiDong` đặt `xong` về false, nên màn hình quay về vòng xoay cho tới khi
+   * đọc xong người mới là ai. Nhờ vậy không có nhịp nào lọt ra ngoài với dữ
+   * liệu nửa cũ nửa mới, và cũng không có cảnh nháy qua màn nhập hồ sơ.
+   */
+  useEffect(
+    () =>
+      khiDoiTaiKhoan(() => {
+        doiNguoi.current = true;
+        // Lời nhắc trước buổi hẹn mang theo tên khách và tên thầy. Gỡ hết ngay,
+        // đừng để máy của người mới réo tên người cũ.
+        void goHetNhacHen();
+        khoiDong();
+      }),
+    [khoiDong]
+  );
 
   /**
    * Bấm vào thông báo thì mở đúng màn nó nói tới.

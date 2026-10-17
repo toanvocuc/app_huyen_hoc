@@ -2,6 +2,7 @@
  * Giữ tạm những gì khách nhập trong năm bước, chỉ ghi lên máy chủ ở bước cuối.
  * Bỏ ngang giữa chừng thì không để lại hồ sơ dở dang.
  */
+import { khiDoiTaiKhoan } from '@/lib/doi-tai-khoan';
 import type { GioiTinh, HoSo } from '@/lib/ho-so';
 import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
 
@@ -73,5 +74,16 @@ export function napTuHoSo(h: HoSo | null) {
 }
 
 export const xoaBanNhap = () => {
-  ban = { ...TRONG };
+  ban = banDau();
 };
+
+/**
+ * Máy đổi sang người khác thì bản nháp phải về trắng.
+ *
+ * Đây là chỗ nguy nhất trong cả đám nhớ tạm. Bản nháp giữ tên và ngày sinh, mà
+ * bước cuối của luồng nhập hồ sơ ghi THẲNG bản nháp xuống máy chủ. Không dọn
+ * thì người mới mở phần nhập hồ sơ ra đã thấy điền sẵn tên người cũ, bấm Tiếp
+ * vài cái là danh tính người cũ nằm trong tài khoản mình — đã dựng lại được
+ * đúng cảnh này trên bản thật.
+ */
+khiDoiTaiKhoan(xoaBanNhap);

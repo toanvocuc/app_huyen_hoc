@@ -228,6 +228,31 @@ export async function doiLoiNhac(gioNhac: string | null) {
   }
 }
 
+/**
+ * Máy vừa đổi sang người khác: hẹn lại lời nhắc sáng theo hồ sơ của NGƯỜI MỚI.
+ *
+ * Khác `doiLoiNhac` ở chỗ đây là lệnh đồng bộ, không phải lệnh đổi câu chữ.
+ * Lịch nhắc nằm ở hệ điều hành chứ không nằm dưới máy chủ, nên đăng xuất bao
+ * nhiêu lần nó vẫn treo đó — người mới cầm máy vẫn bị đánh thức theo giờ người
+ * cũ đặt, và `doiLoiNhac` thì cố ý không đụng tới vì nó chỉ đổi câu cho lịch
+ * đang có.
+ *
+ * Cột `nhac_la_bai` dưới máy chủ mặc định là bật, nên chỉ tắt khi nó ghi rõ
+ * false — giống hệt cách màn cài đặt đang hiểu cột này.
+ */
+export async function dongBoNhacLaBai(h: { nhac_la_bai?: boolean | null; gio_nhac?: string | null } | null) {
+  if (XEM_THU) return;
+  try {
+    if (!h || h.nhac_la_bai === false || !(await daCoQuyen())) {
+      await huyLichLaBai();
+      return;
+    }
+    await datLichLaBai(h.gio_nhac ?? '07:00');
+  } catch (e) {
+    console.warn('[thong-bao] dong bo nhac la bai that bai:', e);
+  }
+}
+
 export async function huyLichLaBai() {
   if (XEM_THU) return;
   try {

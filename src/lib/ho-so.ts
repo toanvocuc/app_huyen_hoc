@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { khiDoiTaiKhoan } from '@/lib/doi-tai-khoan';
 import { dangNhapAnDanh, supabase, xoaDauTaiKhoanThat } from '@/lib/supabase';
 import { goHetNhacHen } from '@/lib/nhac-hen';
 import { huyLichLaBai } from '@/lib/thong-bao';
@@ -212,6 +213,30 @@ export async function xoaTaiKhoan() {
   // để lần mở sau app hỏi lại từ đầu chứ không cầm thẻ của một người đã biến mất.
   await supabase.auth.signOut();
 }
+
+/**
+ * Máy đổi sang người khác thì bản dùng chung phải quên ngay.
+ *
+ * Ghi danh ở cấp module, không trong hiệu ứng của màn hình: mấy ô nhớ phía trên
+ * cũng sống ở cấp module nên việc dọn phải sống cùng tuổi với chúng. Xem
+ * `lib/doi-tai-khoan.ts` để biết vì sao chọn cách này thay vì đi gọi tay ở từng
+ * chỗ đăng xuất.
+ *
+ * Báo `null` ra TRƯỚC rồi mới đọc lại, chứ không giữ bản cũ trong lúc chờ: giữ
+ * lại là người mới còn nhìn thấy tên người cũ thêm một nhịp nữa, mà đó đúng là
+ * thứ đang phải chữa.
+ */
+khiDoiTaiKhoan((ma) => {
+  hoSoChung = null;
+  daDoc = false;
+  dangDoc = null;
+  daCoHoSo = false;
+  ngheHoSo.forEach((f) => f(null));
+  dangNghe.forEach((f) => f(false));
+  // Còn người đang dùng máy thì nạp hồ sơ của họ về luôn, cho mấy màn đang mở
+  // tự đổi theo mà không phải chờ ai đó dựng lại.
+  if (ma) void docVeChung(true);
+});
 
 export function useHoSo() {
   const [hoSo, datTaiCho] = useState<HoSo | null>(hoSoChung);
