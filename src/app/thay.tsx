@@ -34,7 +34,7 @@ import { dongGoi } from '@/lib/goi';
 import { donBoNhacHen, goHetNhacHen } from '@/lib/nhac-hen';
 import { duongLienHe, ngayDoc, useHoSoKhach } from '@/lib/khach';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
-import { supabase } from '@/lib/supabase';
+import { supabase, xoaDauTaiKhoanThat } from '@/lib/supabase';
 import { useLaThay } from '@/lib/thay';
 import { daCoQuyen, dangKyMaDay, goMaDay, xinQuyen } from '@/lib/thong-bao';
 import {
@@ -213,6 +213,9 @@ export default function ManThay() {
             // buổi tư vấn cho chị A" thì vừa khó hiểu vừa lộ tên khách.
             .then(goHetNhacHen)
             .then(() => supabase.auth.signOut())
+            // Xóa dấu "máy này có tài khoản thật": đây là lần rời đi có chủ ý, nên
+            // người dùng máy này sau đó phải bấm "Dùng ngay" được bình thường.
+            .then(xoaDauTaiKhoanThat)
             .then(() => router.replace('/dang-nhap'))
             .catch(() => Alert.alert('Chưa đăng xuất được', 'Kiểm tra mạng rồi thử lại.')),
       },

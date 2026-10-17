@@ -26,7 +26,9 @@ export default function DangNhap() {
     try {
       if (cach === 'google') await dangNhapGoogle();
       else if (cach === 'apple') await dangNhapApple();
-      else await dangNhapAnDanh();
+      // true: chính khách bấm "Dùng ngay", nên tạo hồ sơ ẩn danh mới là đúng ý họ
+      // kể cả khi máy này từng đăng nhập thật.
+      else await dangNhapAnDanh(true);
 
       // Khách cũ đăng nhập lại ở máy mới thì hồ sơ đã nằm sẵn trên máy chủ.
       // Không đọc lại ở đây là bắt họ nhập lại năm bước và ghi đè lên hồ sơ cũ.

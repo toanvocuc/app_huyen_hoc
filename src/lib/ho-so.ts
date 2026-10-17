@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { dangNhapAnDanh, supabase } from '@/lib/supabase';
+import { dangNhapAnDanh, supabase, xoaDauTaiKhoanThat } from '@/lib/supabase';
 import { goHetNhacHen } from '@/lib/nhac-hen';
 import { huyLichLaBai } from '@/lib/thong-bao';
 import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
@@ -202,6 +202,9 @@ export async function xoaTaiKhoan() {
   // Cả lịch nhắc trước buổi hẹn nữa. Mấy lời đó mang theo tên chuyên gia, mà
   // khách đã xoá tài khoản thì không còn buổi hẹn nào để mà nhắc.
   await goHetNhacHen();
+  // Tài khoản không còn thì dấu cũng vô nghĩa, mà để lại thì lần sau
+  // bấm "Dùng ngay" lại bị báo phiên hết hạn.
+  await xoaDauTaiKhoanThat();
 
   datCoHoSo(false);
   datHoSoChung(null);

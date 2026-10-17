@@ -41,13 +41,69 @@ export const supabase = createClient(url ?? 'https://xem-thu.invalid', anonKey ?
 });
 
 /**
- * Tạo hồ sơ ẩn danh ở lần mở app đầu tiên. Khách không phải bấm gì.
- * Phiên đăng nhập lưu lại trong máy, nên lần sau mở vẫn là người đó.
+ * Dấu ghi lại rằng máy này TẮNG có tài khoản thật (Google hoặc Apple).
+ *
+ * Cần nó vì `getSession()` trả null trong HAI trường hợp khác hẳn nhau, mà nhìn
+ * vào kết quả thì giống hệt:
+ *
+ *   1. Máy này chưa từng đăng nhập — tạo hồ sơ ẩn danh là đúng.
+ *   2. Từng đăng nhập, nhưng thẻ làm mới đã chết — hết hạn, bị thu hồi, hoặc
+ *      khách đăng xuất từ một máy khác.
+ *
+ * Trước đây cả hai đều dẫn tới `signInAnonymously()`. Nghĩa là một khách đã
+ * đăng nhập Google, chỉ cần thẻ chết là lần lưu hồ sơ kế tiếp đẻ ra MỘT DANH TÍNH
+ * MỚI HOÀN TOÀN, rồi ghi hồ sơ vào đó. Tài khoản thật cùng mọi đơn đặt lịch, lịch
+ * sử và đánh giá nằm lại phía sau, không một dòng báo nào.
  */
-export async function dangNhapAnDanh() {
+const KHOA_THAT = 'omora-tai-khoan-that';
+
+/** Phiên đã chết trên một máy từng đăng nhập thật. */
+export class PhienHetHan extends Error {
+  constructor() {
+    super('Phiên đăng nhập đã hết hạn');
+    this.name = 'PhienHetHan';
+  }
+}
+
+export async function ghiDauTaiKhoanThat() {
+  try {
+    await AsyncStorage.setItem(KHOA_THAT, '1');
+  } catch {
+    // Không ghi được thì thôi. Mất dấu chỉ làm mất lớp bảo vệ, không làm hỏng gì.
+  }
+}
+
+export async function xoaDauTaiKhoanThat() {
+  try {
+    await AsyncStorage.removeItem(KHOA_THAT);
+  } catch {}
+}
+
+async function daTungCoTaiKhoanThat(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(KHOA_THAT)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Tạo hồ sơ ẩn danh. Khách không phải bấm gì.
+ * Phiên đăng nhập lưu lại trong máy, nên lần sau mở vẫn là người đó.
+ *
+ * `coY` là true khi chính khách bấm "Dùng ngay, không cần tài khoản". Lúc đó họ
+ * biết mình đang chọn gì nên cứ tạo, và xóa luôn dấu cũ.
+ *
+ * Gọi ngầm (ví dụ từ `luuHoSo`) thì KHÔNG được tự đẻ ra danh tính mới trên một
+ * máy từng đăng nhập thật — thà hỏng rõ còn hơn mất dữ liệu lặng lẽ.
+ */
+export async function dangNhapAnDanh(coY = false) {
   if (XEM_THU) return null;
   const { data } = await supabase.auth.getSession();
   if (data.session) return data.session.user;
+
+  if (coY) await xoaDauTaiKhoanThat();
+  else if (await daTungCoTaiKhoanThat()) throw new PhienHetHan();
 
   const { data: moi, error } = await supabase.auth.signInAnonymously();
   if (error) throw error;
@@ -90,6 +146,10 @@ export async function tinTaiKhoan(): Promise<TinTaiKhoan | null> {
 
   const danhTinh = (u.identities ?? []).filter((d) => d.provider !== 'anonymous');
   const anDanh = (u.is_anonymous ?? false) && !u.email && danhTinh.length === 0;
+
+  // Ghi dấu mỗi lần nhìn thấy một tài khoản thật. Lớp đệm cho trường hợp dấu
+  // chưa kịp ghi lúc đăng nhập, ví dụ bản cũ cài từ trước khi có phần này.
+  if (!anDanh) void ghiDauTaiKhoanThat();
 
   return {
     anDanh,

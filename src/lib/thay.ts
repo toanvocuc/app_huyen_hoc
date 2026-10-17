@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { supabase } from '@/lib/supabase';
+import { ghiDauTaiKhoanThat, supabase, xoaDauTaiKhoanThat } from '@/lib/supabase';
 import { XEM_THU, XEM_THU_THAY } from '@/lib/xem-thu';
 
 export type TinThay = { ma: string; ten: string };
@@ -67,8 +67,15 @@ export async function dangNhapThay(email: string, matKhau: string): Promise<TinT
   const thay = await hoSoThayCuaToi();
   if (!thay) {
     await supabase.auth.signOut();
+    // Đăng nhập đúng mật khẩu nhưng không phải thầy thì coi như chưa từng vào:
+    // để dấu lại thì lần sau bấm "Dùng ngay" bị báo phiên hết hạn oan.
+    await xoaDauTaiKhoanThat();
     throw new LoiDangNhapThay('Tài khoản này chưa được cấp quyền chuyên gia.');
   }
+
+  // Tài khoản thầy cũng là tài khoản thật. Ghi dấu để thẻ chết thì app báo phiên
+  // hết hạn chứ không lặng lẽ đẻ ra một danh tính ẩn danh mới.
+  await ghiDauTaiKhoanThat();
   return thay;
 }
 

@@ -25,7 +25,12 @@ import {
   laTrungDanhTinh,
   layMa,
 } from '@/lib/duong-tra-ve';
-import { supabase } from '@/lib/supabase';
+import {
+  ghiDauTaiKhoanThat,
+  PhienHetHan,
+  supabase,
+  xoaDauTaiKhoanThat,
+} from '@/lib/supabase';
 import { goMaDay } from '@/lib/thong-bao';
 
 export type NhaCungCap = 'google' | 'apple';
@@ -121,6 +126,10 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   const { error: loiDoi } = await supabase.auth.exchangeCodeForSession(ma);
   if (loiDoi) throw doiLoi(loiDoi, gan);
 
+  // Ghi dấu máy này đã có tài khoản thật. Từ đây trở đi, thẻ chết thì app báo
+  // phiên hết hạn chứ không lặng lẽ đẻ ra một danh tính ẩn danh mới.
+  await ghiDauTaiKhoanThat();
+
   // Lấy thẻ đăng nhập mới sau khi gắn. Thẻ đang cầm được cấp lúc còn ẩn danh,
   // nên mấy thông tin trong đó vẫn là của lúc đó. Không làm bước này thì gắn
   // xong màn Cá nhân vẫn tưởng khách chưa đăng nhập.
@@ -211,6 +220,12 @@ export const ganApple = () => chayOAuth('apple', true);
 /** Đổi lỗi máy móc thành câu người đọc hiểu được. */
 export function loiDeHieu(e: unknown): string {
   if (e instanceof KhachHuy) return e.message;
+  if (e instanceof PhienHetHan) {
+    return (
+      'Phiên đăng nhập trên máy này đã hết hạn. Đăng nhập lại bằng đúng tài khoản cũ ' +
+      'thì hồ sơ và lịch hẹn của bạn còn nguyên.'
+    );
+  }
   const tho = e instanceof Error ? e.message : String(e);
   if (/already|exists|duplicate|identity_already/i.test(tho)) {
     // Hay gặp nhất: khách từng bấm đăng nhập ở màn mở đầu bằng chính tài khoản
@@ -248,4 +263,7 @@ export async function dangXuat(): Promise<void> {
   await goMaDay();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
+  // Xóa dấu: đây là lần rời đi có chủ ý, nên lần sau bấm "Dùng ngay" phải tạo
+  // được hồ sơ ẩn danh bình thường.
+  await xoaDauTaiKhoanThat();
 }
