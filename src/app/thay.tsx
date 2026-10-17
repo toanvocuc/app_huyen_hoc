@@ -30,6 +30,7 @@ import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/co
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { tachNgay } from '@/lib/ho-so';
+import { dongGoi } from '@/lib/goi';
 import { duongLienHe, ngayDoc, useHoSoKhach } from '@/lib/khach';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { supabase } from '@/lib/supabase';
@@ -424,6 +425,17 @@ function The({
             {tt.chu}
           </Text>
         </View>
+
+        {/* Gói lên trước và tô vàng: đó là thứ thầy cần biết ngay để xếp bao nhiêu
+            thời gian cho buổi này. Đơn đặt trước khi có bảng gói thì không có dòng
+            này, và đó là ý muốn — đừng bịa một gói cho đơn cũ. */}
+        {yc.goi ? (
+          <Text
+            style={{ fontFamily: CHU.thanDam, color: MAU.vang }}
+            className="mb-1 text-sm">
+            {dongGoi(yc.goi, yc.gia_goi)}
+          </Text>
+        ) : null}
 
         <Text style={{ fontFamily: CHU.than }} className="mb-3 text-sm text-chu-phu">
           {yc.chu_de} · {yc.khung_gio}

@@ -25,6 +25,7 @@ import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/co
 import { CHU, MAU } from '@/constants/giao-dien';
 import { NoiLienHe } from '@/components/noi-lien-he';
 import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
+import { dongGoi } from '@/lib/goi';
 import {
   huyYeuCau,
   ngayHenGon,
@@ -233,7 +234,7 @@ function The({
         ) : null}
 
         <Text style={{ fontFamily: CHU.than }} className="mb-3 text-sm text-chu-phu">
-          {yc.chu_de}
+          {dongGoi(yc.goi, yc.gia_goi) ?? yc.chu_de}
           {yc.ngay_hen ? '' : ` · ${yc.khung_gio}`} · đặt ngày {ngay.getDate()}/
           {ngay.getMonth() + 1}
         </Text>

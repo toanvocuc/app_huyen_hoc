@@ -19,6 +19,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
 import { NoiLienHe } from '@/components/noi-lien-he';
 import { Sao, SaoKemSo } from '@/components/sao';
+import { tienGoi, useGoiTuVan, type Goi } from '@/lib/goi';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { chamSao, useDiemCuaToi } from '@/lib/danh-gia';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
@@ -57,7 +58,12 @@ export default function HoSoChuyenGia() {
 
 // ------------------------------------------------------------------ phần trên
 
-function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>['dong']>[number] }) {
+export function ThongTin({
+  thay,
+}: {
+  thay: NonNullable<ReturnType<typeof useChuyenGia>['dong']>[number];
+}) {
+  const { dong: cacGoi } = useGoiTuVan(thay.ma);
 
   const soLieu = [
     thay.nam_kinh_nghiem ? `${thay.nam_kinh_nghiem} năm trong nghề` : null,
@@ -68,8 +74,12 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
 
   const cachLamViec = (
     [
-      thay.gia_tu ? ['Giá', `từ ${tien(thay.gia_tu)} một lượt`] : null,
-      thay.gom_gi ? ['Một lượt gồm', thay.gom_gi] : null,
+      // Ô `gom_gi` cố ý KHÔNG còn bày ở đây nữa: nội dung của nó giờ là danh
+      // sách gói bấm được bên dưới. Giữ cả hai là khách đọc hai lần cùng một thứ.
+      cacGoi.length === 0 && thay.gia_tu
+        ? ['Giá', `từ ${tien(thay.gia_tu)} một lượt`]
+        : null,
+      cacGoi.length === 0 && thay.gom_gi ? ['Một lượt gồm', thay.gom_gi] : null,
       thay.thoi_gian_tra_loi ? ['Thường trả lời', thay.thoi_gian_tra_loi] : null,
       thay.gio_lam_viec ? ['Giờ làm việc', thay.gio_lam_viec] : null,
     ].filter(Boolean) as [string, string][]
@@ -82,8 +92,11 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
    * không biết mình đã gửi hay chưa, và chức năng chính của app rút lại thành
    * một cái nút chuyển sang ứng dụng khác.
    */
-  function datLich() {
-    router.push({ pathname: '/dat-lich', params: { thay: thay.ma } });
+  function datLich(maGoi?: string) {
+    router.push({
+      pathname: '/dat-lich',
+      params: maGoi ? { thay: thay.ma, goi: maGoi } : { thay: thay.ma },
+    });
   }
 
   return (
@@ -168,16 +181,37 @@ function ThongTin({ thay }: { thay: NonNullable<ReturnType<typeof useChuyenGia>[
         </View>
       ) : null}
 
-      <Pressable
-        onPress={datLich}
-        className="mt-5 rounded-xl bg-vang px-5 py-3.5 active:opacity-80">
-        <Text style={{ fontFamily: CHU.thanDam }} className="text-center text-nen">
-          Đặt lịch với {thay.ten}
-        </Text>
-      </Pressable>
-      <Text style={{ fontFamily: CHU.than }} className="mt-2.5 text-center text-xs text-chu-mo">
-        Bạn chọn khung giờ và gửi câu hỏi, thầy nhận rồi sẽ hẹn bạn
-      </Text>
+      {/* Bảng gói. Mỗi gói là một thứ bấm được, đi thẳng sang màn đặt lịch với gói
+          đó chọn sẵn. Trước đây ba mức giá nằm chung một đoạn văn, khách đọc
+          xong vẫn phải tự nhắn hỏi muốn gói nào. */}
+      {cacGoi.length > 0 ? (
+        <View className="mt-5">
+          <Nhan>Chọn một gói</Nhan>
+          <View className="mt-2.5 gap-2.5">
+            {cacGoi.map((g) => (
+              <TheGoi key={g.ma} goi={g} onPress={() => datLich(g.ma)} />
+            ))}
+          </View>
+          <Text
+            style={{ fontFamily: CHU.than }}
+            className="mt-3 text-center text-xs leading-5 text-chu-mo">
+            Tiền trả thẳng cho thầy sau buổi tư vấn. Omora không thu hộ.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Pressable
+            onPress={() => datLich()}
+            className="mt-5 rounded-xl bg-vang px-5 py-3.5 active:opacity-80">
+            <Text style={{ fontFamily: CHU.thanDam }} className="text-center text-nen">
+              Đặt lịch với {thay.ten}
+            </Text>
+          </Pressable>
+          <Text style={{ fontFamily: CHU.than }} className="mt-2.5 text-center text-xs text-chu-mo">
+            Bạn chọn khung giờ và gửi câu hỏi, thầy nhận rồi sẽ hẹn bạn
+          </Text>
+        </>
+      )}
     </Khoi>
   );
 }
@@ -256,5 +290,48 @@ function PhanDanhGia({
         ) : null}
       </View>
     </View>
+  );
+}
+
+/**
+ * Một gói tư vấn.
+ *
+ * Giá đặt bên phải cùng hàng với tên chứ không nép xuống dưới phần mô tả:
+ * khách so gói bằng cách lướt cột giá, để giá lẫn trong chữ là bắt họ đọc hết
+ * mới so được.
+ */
+function TheGoi({ goi, onPress }: { goi: Goi; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{ borderColor: MAU.vangMo }}
+      className="rounded-xl border bg-nen px-4 py-3.5 active:opacity-70">
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="flex-1">
+          <Text style={{ fontFamily: CHU.thanDam }} className="text-[15px] text-chu-chinh">
+            {goi.ten}
+          </Text>
+          {goi.phut ? (
+            <Text style={{ fontFamily: CHU.than }} className="mt-0.5 text-xs text-chu-mo">
+              {goi.phut} phút
+            </Text>
+          ) : null}
+        </View>
+        <Text style={{ fontFamily: CHU.thanDam, color: MAU.vang }} className="text-[15px]">
+          {tienGoi(goi.gia)}
+        </Text>
+      </View>
+      {goi.mo_ta ? (
+        <Text style={{ fontFamily: CHU.than }} className="mt-2 text-sm leading-6 text-chu-phu">
+          {goi.mo_ta}
+        </Text>
+      ) : null}
+      <View className="mt-2.5 flex-row items-center gap-1.5">
+        <Text style={{ fontFamily: CHU.thanDam }} className="text-sm text-vang">
+          Đặt gói này
+        </Text>
+        <Ionicons name="chevron-forward" size={13} color={MAU.vang} />
+      </View>
+    </Pressable>
   );
 }

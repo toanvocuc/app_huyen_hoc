@@ -33,6 +33,14 @@ export type YeuCau = {
   tao_luc: string;
   /** Ảnh chụp tên khách lúc đặt. Null với mấy đơn đặt trước khi có cột này. */
   ten_khach: string | null;
+  /**
+   * Gói khách chọn, chụp lại tên và giá ngay lúc đặt.
+   *
+   * Không đọc qua khoá ngoại: thầy tăng giá tháng sau thì đơn cũ phải còn nguyên
+   * giá đã thoả thuận. Null với đơn đặt trước khi có bảng gói.
+   */
+  goi: string | null;
+  gia_goi: number | null;
 };
 
 /** Khung giờ cho sẵn. Cố ý không cho chọn ngày giờ chính xác, xem migration 0011. */
@@ -100,6 +108,8 @@ const MAU_YEU_CAU: YeuCau[] = [
     ly_do: null,
     tao_luc: NGAY_TRUOC(0),
     ten_khach: 'Nguyễn Thị Ánh Đào',
+    goi: 'Buổi 30 phút',
+    gia_goi: 300000,
   },
   {
     ma: 'xem-thu-2',
@@ -113,6 +123,8 @@ const MAU_YEU_CAU: YeuCau[] = [
     ly_do: null,
     tao_luc: NGAY_TRUOC(1),
     ten_khach: 'Trần Minh Quân',
+    goi: 'Một câu hỏi cụ thể',
+    gia_goi: 150000,
   },
   {
     ma: 'xem-thu-3',
@@ -126,6 +138,8 @@ const MAU_YEU_CAU: YeuCau[] = [
     ly_do: null,
     tao_luc: NGAY_TRUOC(9),
     ten_khach: 'Lê Hoàng Vũ',
+    goi: 'Buổi 60 phút',
+    gia_goi: 500000,
   },
   {
     ma: 'xem-thu-4',
@@ -142,6 +156,8 @@ const MAU_YEU_CAU: YeuCau[] = [
     ly_do: 'Tuần này mình đi xa nên chưa nhận thêm đơn nào được. Bạn đặt lại giúp mình tuần sau nhé, mình ưu tiên xếp sớm cho bạn.',
     tao_luc: NGAY_TRUOC(14),
     ten_khach: 'Phạm Thu Hằng',
+    goi: 'Buổi 30 phút',
+    gia_goi: 300000,
   },
 ];
 
@@ -154,6 +170,9 @@ export async function guiYeuCau(phan: {
   cauHoi: string;
   /** Tên khách, chép sang đơn để thầy biết xưng hô với ai. */
   tenKhach?: string | null;
+  /** Tên và giá gói lúc đặt. Bỏ trống với thầy chưa khai gói nào. */
+  goi?: string | null;
+  giaGoi?: number | null;
 }): Promise<YeuCau> {
   if (XEM_THU) return { ...MAU_YEU_CAU[0], ...{ trang_thai: 'cho_nhan' as const } };
 
@@ -170,6 +189,8 @@ export async function guiYeuCau(phan: {
       ngay_hen: phan.ngayHen,
       cau_hoi: phan.cauHoi.trim(),
       ten_khach: phan.tenKhach?.trim() || null,
+      goi: phan.goi?.trim() || null,
+      gia_goi: phan.giaGoi ?? null,
     })
     .select()
     .single();

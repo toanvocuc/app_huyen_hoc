@@ -168,6 +168,26 @@ export type DongChuyenGia = {
   so_danh_gia: number;
 };
 
+/**
+ * Điểm sao cho chế độ xem thử.
+ *
+ * `diem_tb` và `so_danh_gia` là hai cột MÁY CHỦ TỰ TÍNH từ bảng `danh_gia`, nên
+ * chúng không có trong `data/chuyen_gia.csv` và cũng không có trong file mẫu sinh
+ * ra từ CSV đó.
+ *
+ * Hậu quả đã dính thật: mọi ảnh chụp màn nộp chợ đều ghi "Chưa có đánh giá",
+ * trong khi app thật đang hiện 4,5 sao. Chợ nhìn vào ảnh để đoán app, mà ảnh
+ * lại bán rẻ app hơn chính nó.
+ *
+ * Số ở đây là số THẬT đang nằm trên máy chủ, không phải số đẹp tự đặt. Thêm
+ * đánh giá thật thì sửa lại hai con số này cho khớp.
+ */
+const MAU_CHUYEN_GIA_CO_SAO = MAU_CHUYEN_GIA.map((t) => ({
+  ...t,
+  diem_tb: 4.5,
+  so_danh_gia: 2,
+}));
+
 const MAU_BANG: Record<string, unknown[]> = {
   cung_hoang_dao: MAU_CUNG,
   do_hop_cung: MAU_DO_HOP,
@@ -176,7 +196,7 @@ const MAU_BANG: Record<string, unknown[]> = {
   mui_ten_bieu_do: MAU_MUI_TEN_BIEU_DO,
   con_so_bieu_do: MAU_CON_SO_BIEU_DO,
   tu_vi_mau: MAU_TU_VI,
-  chuyen_gia: MAU_CHUYEN_GIA,
+  chuyen_gia: MAU_CHUYEN_GIA_CO_SAO,
 };
 
 function useBang<T>(bang: string) {

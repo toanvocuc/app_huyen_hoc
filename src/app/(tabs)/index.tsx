@@ -20,6 +20,7 @@ import { NenChomSao } from '@/components/nen-anh';
 import { SaoKemSo } from '@/components/sao';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
+import { ThongTin } from '@/app/ho-so-thay';
 
 export function tien(d: number): string {
   return `${d.toLocaleString('vi-VN')}đ`;
@@ -27,11 +28,16 @@ export function tien(d: number): string {
 
 export default function DanhSachChuyenGia() {
   const { dong, loi, dangTai } = useChuyenGia();
+  const mot = dong?.length === 1;
 
   return (
     <ManHinh
       tieuDe="Chuyên gia của Omora"
-      phu="Chọn người bạn muốn hỏi, rồi đặt một buổi tư vấn."
+      phu={
+        mot
+          ? 'Đặt một buổi tư vấn riêng. Bạn chọn gói, chọn ngày, rồi viết điều muốn hỏi.'
+          : 'Chọn người bạn muốn hỏi, rồi đặt một buổi tư vấn.'
+      }
       nenPhu={<NenChomSao />}>
       {dangTai ? (
         <DangTai />
@@ -39,6 +45,19 @@ export default function DanhSachChuyenGia() {
         <Trong loi={`Chưa tải được danh sách. ${loi}`} />
       ) : !dong || dong.length === 0 ? (
         <Trong loi="Hiện chưa có ai nhận tư vấn. Bạn quay lại sau giúp nhé." />
+      ) : dong.length === 1 ? (
+        /*
+         * MỘT chuyên gia thì bày thẳng hồ sơ, không vẽ ra cái danh sách một món.
+         *
+         * Một thẻ đơn độc giữa màn trời sao trống trông như app chưa làm xong,
+         * mà thật ra sau thẻ đó là một hồ sơ đầy: ảnh, giới thiệu, điểm sao, ba
+         * gói có giá. Bày luôn thứ đó ra thì khách bớt được một lần bấm, mà màn
+         * đầu tiên cũng nói được app này làm gì.
+         *
+         * Từ hai người trở lên thì danh sách lại đúng hơn: lúc đó việc của màn này
+         * là cho chọn, không phải giới thiệu một người.
+         */
+        <ThongTin thay={dong[0]} />
       ) : (
         <View className="gap-3">
           {dong.map((t) => (

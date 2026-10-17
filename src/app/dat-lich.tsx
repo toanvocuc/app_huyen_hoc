@@ -18,6 +18,7 @@ import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/
 import { CHU, MAU } from '@/constants/giao-dien';
 import { luuHoSo, useHoSo } from '@/lib/ho-so';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
+import { tienGoi, useGoiTuVan } from '@/lib/goi';
 import { guiYeuCau, KHUNG_GIO, tachChuDe } from '@/lib/yeu-cau';
 
 /** Dài tối thiểu cho câu hỏi. Ngắn hơn thì thầy không có gì để bắt đầu. */
@@ -72,7 +73,7 @@ function dayNgay(moc: string) {
 }
 
 export default function DatLich() {
-  const { thay: maThay } = useLocalSearchParams<{ thay: string }>();
+  const { thay: maThay, goi: maGoi } = useLocalSearchParams<{ thay: string; goi?: string }>();
   const { dong } = useChuyenGia();
   const { hoSo } = useHoSo();
   const thay = useMemo(() => dong?.find((t) => t.ma === maThay) ?? null, [dong, maThay]);
@@ -83,6 +84,12 @@ export default function DatLich() {
   // bị ẩn đi (chỉ hiện khi có từ hai chủ đề), mà `chuDeThat` cũng không bao giờ
   // có giá trị nên nút GỬi nằm tắt vĩnh viễn — khách không có cách nào biết
   // thiếu gì, và cũng không phải lỗi của họ.
+  const { dong: cacGoi } = useGoiTuVan(maThay);
+  const [chonGoi, datChonGoi] = useState<string | null>(null);
+  // Gói từ đường dẫn là gói khách vừa bấm bên hồ sơ; sau đó họ đổi ý ngay tại đây
+  // cũng được, không phải quay ra bấm lại.
+  const goi = cacGoi.find((g) => g.ma === (chonGoi ?? maGoi)) ?? null;
+
   const chuDe = tachChuDe(thay?.chuyen_sau);
   const chuDeChon = chuDe.length > 0 ? chuDe : ['Tư vấn chung'];
   const [chonChuDe, datChonChuDe] = useState<string | null>(null);
@@ -134,6 +141,7 @@ export default function DatLich() {
    * rồi nên họ tưởng app đang hỏng.
    */
   const thieu: string[] = [];
+  if (cacGoi.length > 0 && !goi) thieu.push('chọn gói');
   if (!chuDeThat) thieu.push('chọn chủ đề');
   if (!chonGio) thieu.push('chọn khung giờ');
   if (lienHe.trim().length < TOI_THIEU_LIEN_HE) thieu.push('điền số điện thoại hoặc Zalo');
@@ -142,6 +150,7 @@ export default function DatLich() {
 
   async function gui() {
     if (!thay || !chuDeThat || !chonGio) return;
+    if (cacGoi.length > 0 && !goi) return;
     datLoi(null);
     datDangGui(true);
     try {
@@ -161,6 +170,8 @@ export default function DatLich() {
         // bảng hồ sơ của khách — luật khoá dòng chặn — nên không chép là thầy
         // chỉ thấy một dãy ký tự.
         tenKhach: hoSo?.ho_ten,
+        goi: goi?.ten ?? null,
+        giaGoi: goi?.gia ?? null,
       });
       // Sang thẳng mục Lịch của tôi, KHÔNG tự mở Zalo nữa.
       //
@@ -185,6 +196,50 @@ export default function DatLich() {
 
   return (
     <ManHinh quayLai tieuDe="Đặt lịch tư vấn" phu={`Với ${thay.ten}`}>
+      {/* Gói đặt trên cùng: đó là thứ quyết định giá và thời lượng, nên khách cần
+          thấy mình đang đặt cái gì trước khi khai mấy thứ còn lại. */}
+      {cacGoi.length > 0 ? (
+        <View className="mb-7">
+          <Nhan>Bạn đặt gói nào</Nhan>
+          <View className="mt-2 gap-2">
+            {cacGoi.map((g) => {
+              const chon = goi?.ma === g.ma;
+              return (
+                <Pressable
+                  key={g.ma}
+                  onPress={() => datChonGoi(g.ma)}
+                  style={{
+                    borderColor: chon ? MAU.vang : MAU.vien,
+                    backgroundColor: chon ? MAU.vangRatMo : 'transparent',
+                  }}
+                  className="flex-row items-center justify-between gap-3 rounded-xl border px-4 py-3 active:opacity-70">
+                  <View className="flex-1">
+                    <Text
+                      style={{ fontFamily: chon ? CHU.thanDam : CHU.than }}
+                      className={`text-sm ${chon ? 'text-vang' : 'text-chu-chinh'}`}>
+                      {g.ten}
+                    </Text>
+                    {g.phut ? (
+                      <Text style={{ fontFamily: CHU.than }} className="mt-0.5 text-xs text-chu-mo">
+                        {g.phut} phút
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Text
+                    style={{ fontFamily: CHU.thanDam, color: chon ? MAU.vang : MAU.chuPhu }}
+                    className="text-sm">
+                    {tienGoi(g.gia)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={{ fontFamily: CHU.than }} className="mt-2 text-xs leading-5 text-chu-mo">
+            Tiền trả thẳng cho thầy sau buổi tư vấn. Omora không thu hộ.
+          </Text>
+        </View>
+      ) : null}
+
       {chuDeChon.length > 1 ? (
         <View className="mb-7">
           <Nhan>Bạn muốn hỏi về</Nhan>
@@ -286,8 +341,7 @@ export default function DatLich() {
         <Nhan>Sau khi gửi</Nhan>
         <ChuThan>
           Yêu cầu nằm trong mục Lịch của tôi, bạn theo dõi được thầy đã nhận chưa. Ở đó cũng
-          có sẵn mấy nơi liên hệ của thầy để bạn nhắn trực tiếp. Tiền trả thẳng cho thầy,
-          Omora không thu hộ.
+          có sẵn mấy nơi liên hệ của thầy để bạn nhắn trực tiếp.
         </ChuThan>
       </Khoi>
 

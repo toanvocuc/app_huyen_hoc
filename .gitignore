@@ -55,3 +55,4 @@ example
 
 # Ban web xuat tam de chup anh nop cho
 dist-web/
+dist-web-*/
