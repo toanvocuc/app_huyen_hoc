@@ -24,6 +24,8 @@ import { CUNG, cungTheoNgay, diemHop } from '../src/lib/zodiac.ts';
 import { khoangNamSinh, ngayHopLe, soNgayTrongThang } from '../src/lib/ngay-thang.ts';
 // Doi ten `moc` vi file nay da co mot bien moc khac, la moc 32 bit.
 import { gioBatDau, moc as mocGio, mocNhac } from '../src/lib/nhac-hen-gio.ts';
+// Doi ten `layMa` cho khoi lan voi bien khac trong file.
+import { docLoi, laKhachTuChoi, laTrungDanhTinh, layMa as layMaTraVe } from '../src/lib/duong-tra-ve.ts';
 
 let loi = 0;
 function kiem(ten: string, thuc: unknown, mong: unknown) {
@@ -360,6 +362,48 @@ kiem('9h: nhắc gần vẫn cùng ngày', h3 ? h3.truocMotTieng.getDate() : nul
 // Hẹn 1/1 thì lùi sang năm trước.
 const h4 = mocNhac('2027-01-01', 'Tối, 19h tới 21h');
 kiem('1/1: nhắc trước là 31/12/2026', h4 ? `${h4.homTruoc.getDate()}/${h4.homTruoc.getMonth() + 1}/${h4.homTruoc.getFullYear()}` : null, '31/12/2026');
+
+
+// ---------------------------------------------------------------- địa chỉ OAuth trả về
+
+console.log('\n--- bóc mã đăng nhập ---');
+kiem('mã sau dấu hỏi', layMaTraVe('omora://dang-nhap-xong?code=abc123'), 'abc123');
+kiem('mã sau dấu thăng', layMaTraVe('omora://dang-nhap-xong#code=abc123'), 'abc123');
+// Chỗ cách cũ sập: có sẵn dấu hỏi rồi mới tới dấu thăng.
+kiem(
+  'có cả hỏi lẫn thăng',
+  layMaTraVe('omora://dang-nhap-xong?x=1#code=abc123'),
+  'abc123'
+);
+kiem('không có mã', layMaTraVe('omora://dang-nhap-xong'), null);
+
+console.log('\n--- đọc lỗi Supabase nhét trong địa chỉ ---');
+const trung =
+  'omora://dang-nhap-xong?error=server_error&error_code=identity_already_exists' +
+  '&error_description=Identity+is+already+linked+to+another+user';
+const l1 = docLoi(trung);
+kiem('nhận ra có lỗi', l1 !== null, true);
+kiem('lấy đúng mã lỗi', l1 ? l1.ma : null, 'identity_already_exists');
+kiem('dấu cộng thành dấu cách', l1 ? l1.ta : null, 'Identity is already linked to another user');
+kiem('đúng là trùng danh tính', l1 ? laTrungDanhTinh(l1.ma, l1.ta) : false, true);
+
+// Cùng nội dung nhưng trả sau dấu thăng.
+const l2 = docLoi('omora://dang-nhap-xong#error_code=identity_already_exists&error_description=x');
+kiem('lỗi sau dấu thăng cũng đọc được', l2 ? laTrungDanhTinh(l2.ma, l2.ta) : false, true);
+
+// Khách bấm từ chối ở trang Google.
+const l3 = docLoi('omora://dang-nhap-xong?error=access_denied&error_description=User+denied');
+kiem('khách từ chối', l3 ? laKhachTuChoi(l3.ma, l3.ta) : false, true);
+kiem('từ chối KHÔNG phải trùng danh tính', l3 ? laTrungDanhTinh(l3.ma, l3.ta) : true, false);
+
+// Địa chỉ chạy trót lọt thì không được báo lỗi.
+kiem('địa chỉ có mã thì không có lỗi', docLoi('omora://dang-nhap-xong?code=abc'), null);
+kiem('địa chỉ trơn thì không có lỗi', docLoi('omora://dang-nhap-xong'), null);
+
+// Chỉ có error chung chung, không có error_code.
+const l4 = docLoi('omora://dang-nhap-xong?error=server_error');
+kiem('lấy được error khi thiếu error_code', l4 ? l4.ma : null, 'server_error');
+
 
 console.log(loi === 0 ? '\n==> TAT CA DEU DUNG' : `\n==> CO ${loi} CHO SAI`);
 process.exit(loi === 0 ? 0 : 1);

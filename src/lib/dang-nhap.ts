@@ -19,6 +19,12 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 
+import {
+  docLoi,
+  laKhachTuChoi,
+  laTrungDanhTinh,
+  layMa,
+} from '@/lib/duong-tra-ve';
 import { supabase } from '@/lib/supabase';
 import { goMaDay } from '@/lib/thong-bao';
 
@@ -42,15 +48,6 @@ const TEN: Record<NhaCungCap, string> = { google: 'Google', apple: 'Apple' };
  */
 export function duongQuayVe(): string {
   return Linking.createURL('dang-nhap-xong');
-}
-
-/** Bóc mã dùng một lần ra khỏi địa chỉ trả về. */
-function layMa(duong: string): string | null {
-  // Một số nhà cung cấp trả về sau dấu thăng thay vì dấu hỏi.
-  const q = duong.includes('#') ? duong.replace('#', '?') : duong;
-  const dau = q.indexOf('?');
-  if (dau < 0) return null;
-  return new URLSearchParams(q.slice(dau + 1)).get('code');
 }
 
 /** Khách tự bấm huỷ. Tách riêng để màn hình không hiện chữ đỏ doạ người ta. */
@@ -110,6 +107,14 @@ async function chayOAuth(nha: NhaCungCap, gan: boolean): Promise<void> {
   const duong = await moVaCho(data.url, ve);
   if (!duong) throw new KhachHuy();
 
+  // Xét lỗi TRƯỚC khi hỏi mã.
+  //
+  // Supabase báo hỏng bằng cách nhét lỗi vào chính địa chỉ trả về chứ không
+  // ném qua SDK. Code cũ chỉ hỏi ô `code`, không thấy thì kêu "thiếu mã đăng
+  // nhập" — trong khi địa chỉ đang cầm sẵn lý do thật.
+  const loi = loiTrongDuong(duong, gan);
+  if (loi) throw loi;
+
   const ma = layMa(duong);
   if (!ma) throw new Error('Trình duyệt quay về nhưng thiếu mã đăng nhập.');
 
@@ -160,6 +165,23 @@ async function moVaCho(duongDangNhap: string, ve: string): Promise<string | null
   } finally {
     nghe.remove();
   }
+}
+
+/**
+ * Đổi lỗi nằm trong địa chỉ trả về thành đúng loại lỗi màn hình đang chờ.
+ *
+ * Ca hay gặp nhất: khách đang ẩn danh, gắn một tài khoản Google mà chính họ
+ * từng dùng để đăng nhập trước đó. Supabase không cho một danh tính thuộc hai
+ * hồ sơ nên từ chối, và app có sẵn một hộp thoại ba lựa chọn cho ca này — phải
+ * trả đúng `DaCoHoSoKhac` thì hộp đó mới hiện ra.
+ */
+function loiTrongDuong(duong: string, gan: boolean): Error | null {
+  const l = docLoi(duong);
+  if (!l) return null;
+  if (gan && laTrungDanhTinh(l.ma, l.ta)) return new DaCoHoSoKhac();
+  // Từ chối ở trang nhà cung cấp cũng là khách tự huỷ, đừng doạ bằng chữ đỏ.
+  if (laKhachTuChoi(l.ma, l.ta)) return new KhachHuy();
+  return new Error(l.ta || `Đăng nhập không thành công (${l.ma}).`);
 }
 
 /** Nhận ra trường hợp danh tính đã thuộc hồ sơ khác, để màn hình xử riêng. */
