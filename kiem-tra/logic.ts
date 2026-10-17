@@ -35,6 +35,7 @@ import {
 } from '../src/lib/nhac-hen-gio.ts';
 // Doi ten `layMa` cho khoi lan voi bien khac trong file.
 import { dongBacGia, dungTinNhan, giaKemDonVi, giaTheoSoLuong, tien, tongTien } from '../src/lib/gian-hang.ts';
+import { cauThieu, thieuHoSo } from '../src/lib/ho-so-thieu.ts';
 import { donDuocDon, maDonDuocDon, tachDonGhim } from '../src/lib/don-loc.ts';
 import { docLoi, laKhachTuChoi, laTrungDanhTinh, layMa as layMaTraVe } from '../src/lib/duong-tra-ve.ts';
 
@@ -583,6 +584,35 @@ console.log('\n--- tin nhan gui cho cua hang ---');
 
   kiem('danh sach rong thi khong co chu nao', dungTinNhan([], luc), '');
   kiem('tong cua danh sach rong la 0', tongTien([]), 0);
+}
+
+console.log('\n--- ho so con thieu gi truoc khi dat lich ---');
+{
+  const du = { ho_ten: 'Đào', ngay_sinh: '1995-09-16', gio_sinh: '07:30', noi_sinh: 'Hà Nội' };
+  kiem('ho so day du thi khong thieu gi', thieuHoSo(du).length, 0);
+
+  // Khach an danh chua khai gi: thieu het, va phai dung thu tu uu tien.
+  kiem('chua co ho so thi thieu het', thieuHoSo(null).join(', '),
+    'họ tên, ngày sinh, giờ sinh, nơi sinh');
+  kiem('ho so rong cung vay', thieuHoSo({}).join(', '),
+    'họ tên, ngày sinh, giờ sinh, nơi sinh');
+
+  // Hai o luong nhap ho so cho phep bo qua.
+  kiem('thieu moi gio sinh', thieuHoSo({ ...du, gio_sinh: null }).join(', '), 'giờ sinh');
+  kiem('thieu gio va noi sinh', thieuHoSo({ ...du, gio_sinh: null, noi_sinh: null }).join(', '),
+    'giờ sinh, nơi sinh');
+
+  // Chuoi toan dau cach khong tinh la da dien.
+  kiem('ten toan dau cach van la thieu', thieuHoSo({ ...du, ho_ten: '   ' }).join(', '), 'họ tên');
+  kiem('ten rong van la thieu', thieuHoSo({ ...du, ho_ten: '' }).join(', '), 'họ tên');
+
+  // Ghep thanh cau doc duoc.
+  kiem('cau rong', cauThieu([]), '');
+  kiem('mot muc', cauThieu(['họ tên']), 'họ tên');
+  kiem('hai muc dung chu va', cauThieu(['họ tên', 'ngày sinh']), 'họ tên và ngày sinh');
+  kiem('ba muc: phay roi va', cauThieu(['họ tên', 'ngày sinh', 'giờ sinh']),
+    'họ tên, ngày sinh và giờ sinh');
+  kiem('bon muc', cauThieu(thieuHoSo(null)), 'họ tên, ngày sinh, giờ sinh và nơi sinh');
 }
 
 console.log(loi === 0 ? '\n==> TAT CA DEU DUNG' : `\n==> CO ${loi} CHO SAI`);

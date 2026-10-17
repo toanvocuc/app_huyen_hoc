@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { Dimensions, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,22 +22,7 @@ const { width: RONG, height: CAO } = Dimensions.get('window');
  * thẻ tab mà để màn chào vẫn mở đầu bằng "Mỗi ngày một lá bài" thì mới đi được
  * nửa đường.
  */
-/**
- * Vì sao khách bị đưa về đây.
- *
- * Màn gốc gửi kèm chỗ họ vừa định vào. Nói đúng lý do thì việc hỏi ngày sinh
- * thành một bước có nghĩa, chứ không phải một cánh cửa đóng sập vào mặt.
- */
-const VI_SAO: Record<string, string> = {
-  index: 'Để đặt lịch với chuyên gia, Omora cần biết ngày sinh của bạn.',
-  'lich-cua-toi': 'Phần lịch hẹn gắn với hồ sơ của bạn, nên cần khai trước.',
-  'kham-pha': 'Phần khám phá bản thân tính từ ngày sinh và họ tên của bạn.',
-  'ca-nhan': 'Trang cá nhân cần hồ sơ của bạn trước đã.',
-};
-
 export default function ChaoMung() {
-  const { vi } = useLocalSearchParams<{ vi?: string }>();
-  const liDo = vi ? VI_SAO[vi] : null;
   return (
     <View className="flex-1 bg-nen">
       {/* Dải ngân hà phủ hai phần ba trên, phần dưới tan vào nền để chữ đọc được. */}
@@ -71,8 +56,7 @@ export default function ChaoMung() {
           <Text
             style={{ fontFamily: CHU.than, fontSize: 15, lineHeight: 24 }}
             className="mx-auto mt-4 max-w-[300px] text-center text-chu-phu">
-            Đặt lịch trò chuyện cùng chuyên gia thật về chuyện của riêng bạn, và mỗi ngày
-            hiểu thêm một chút về chính mình. Không cần đăng ký, mở lên là dùng được ngay.
+            Trò chuyện với chuyên gia thật, và hiểu thêm về chính mình.
           </Text>
         </View>
 
@@ -80,30 +64,17 @@ export default function ChaoMung() {
           <Text
             style={{ fontFamily: CHU.than }}
             className="mb-5 text-center text-[11px] leading-5 text-chu-mo">
-            Nội dung trong app chỉ mang tính giải trí và tham khảo, không thay thế cho lời khuyên
-            về y tế, tài chính hay pháp lý.
+            Nội dung mang tính tham khảo và giải trí.
           </Text>
-          {liDo ? (
-            <View
-              style={{ borderColor: MAU.vangMo }}
-              className="mb-4 rounded-xl border bg-nen-nhat px-4 py-3">
-              <Text
-                style={{ fontFamily: CHU.than }}
-                className="text-center text-sm leading-6 text-chu-phu">
-                {liDo} Khai một lần, khoảng hai phút.
-              </Text>
-            </View>
-          ) : null}
-
           <Nut nhan="Bắt đầu" onPress={() => router.push('/nhap-ho-so/dieu-khoan')} />
 
-          {/* Lối vào gian hàng, KHÔNG cần khai gì. Xem `_layout.tsx` để biết vì
-              sao phần đó nằm ngoài cổng hồ sơ. */}
+          {/* Lối đi thẳng vào app, không khai gì cả. App không chặn ai vì thiếu
+              hồ sơ — phần nào cần thì tự hỏi đúng lúc cần. */}
           <Pressable
-            onPress={() => router.push('/trung-bay')}
+            onPress={() => router.replace('/')}
             className="mt-5 self-center px-4 py-2 active:opacity-60">
             <Text style={{ fontFamily: CHU.than }} className="text-sm text-vang underline">
-              Xem gian hàng, chưa cần khai gì
+              Xem trước đã
             </Text>
           </Pressable>
         </View>

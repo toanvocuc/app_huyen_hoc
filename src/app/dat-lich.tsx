@@ -12,11 +12,12 @@
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { AppState, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, AppState, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { BanhXeGioHen } from '@/components/banh-xe';
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
+import { cauThieu, thieuHoSo } from '@/lib/ho-so-thieu';
 import { luuHoSo, useHoSo } from '@/lib/ho-so';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
 import { tienGoi, useGoiTuVan } from '@/lib/goi';
@@ -182,7 +183,42 @@ export default function DatLich() {
   if (cauHoi.trim().length < TOI_THIEU) thieu.push('viết câu hỏi dài thêm một chút');
   const duDieuKien = thieu.length === 0;
 
-  async function gui() {
+  /**
+   * Hỏi trước khi gửi, nếu hồ sơ còn trống chỗ nào.
+   *
+   * KHÔNG chặn. Khách thiếu hồ sơ vẫn gửi được đơn — chặn lại là mất luôn người
+   * muốn đặt. Chỉ nói thẳng họ đang thiếu gì, và rằng chuyên gia có thể phải
+   * huỷ đơn vì không đủ thông tin để xem. Quyết định là của khách.
+   *
+   * Bấm "để tôi điền thêm" thì chỉ cho biết chỗ điền rồi thôi, không tự kéo họ
+   * đi đâu cả: họ đang gõ dở một câu hỏi trên màn này, kéo đi là mất.
+   */
+  function bamGui() {
+    const con = thieuHoSo(hoSo);
+    if (con.length === 0) {
+      void guiThat();
+      return;
+    }
+    Alert.alert(
+      'Hồ sơ của bạn còn thiếu',
+      `Bạn chưa có ${cauThieu(con)}.\n\nVẫn gửi đơn được, nhưng chuyên gia có thể phải huỷ vì không đủ thông tin để xem cho bạn.`,
+      [
+        {
+          text: 'Để tôi điền thêm',
+          style: 'cancel',
+          onPress: () =>
+            Alert.alert(
+              'Điền ở mục Cá nhân',
+              'Bạn vào mục Cá nhân để điền thêm thông tin, rồi quay lại đặt lịch.',
+              [{ text: 'OK' }]
+            ),
+        },
+        { text: 'Vẫn gửi đơn', style: 'destructive', onPress: () => void guiThat() },
+      ]
+    );
+  }
+
+  async function guiThat() {
     if (!thay || !chuDeThat) return;
     if (tuChonGio ? !gioHen : !chonGio) return;
     if (cacGoi.length > 0 && !goi) return;
@@ -447,7 +483,7 @@ export default function DatLich() {
 
       <VanNgan />
 
-      <Nut nhan="Gửi yêu cầu" tat={!duDieuKien} dangChay={dangGui} onPress={gui} />
+      <Nut nhan="Gửi yêu cầu" tat={!duDieuKien} dangChay={dangGui} onPress={bamGui} />
       {!duDieuKien ? (
         <Text
           style={{ fontFamily: CHU.than }}

@@ -21,7 +21,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Chuong } from '@/components/chuong';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { khiDoiTaiKhoan } from '@/lib/doi-tai-khoan';
-import { datCoHoSo, docHoSo, ngheCoHoSo } from '@/lib/ho-so';
+import { datCoHoSo, docHoSo } from '@/lib/ho-so';
 import { goHetNhacHen } from '@/lib/nhac-hen';
 import { hoSoThayCuaToi } from '@/lib/thay';
 import { batHienKhiDangMo, doiLoiNhac, dongBoNhacLaBai } from '@/lib/thong-bao';
@@ -37,7 +37,6 @@ batHienKhiDangMo();
 
 export default function RootLayout() {
   const [xong, setXong] = useState(false);
-  const [coHoSo, setCoHoSo] = useState(false);
   const [coPhien, setCoPhien] = useState(false);
   /**
    * Tài khoản đang đăng nhập có phải thầy không.
@@ -89,7 +88,6 @@ export default function RootLayout() {
       })
       .then((h) => {
         const co = Boolean(h?.ngay_sinh);
-        setCoHoSo(co);
         datCoHoSo(co);
         if (doiNguoi.current) {
           doiNguoi.current = false;
@@ -163,9 +161,6 @@ export default function RootLayout() {
     return () => clearTimeout(hen);
   }, [traLoiThongBao, xong, phongXong]);
 
-  // Nhập hồ sơ xong thì ho-so.ts báo lại, nhờ vậy không bị đá ngược về phần nhập.
-  useEffect(() => ngheCoHoSo(setCoHoSo), []);
-
   // Màn đăng nhập tạo phiên xong thì báo về đây, nhờ vậy không bị đá ngược ra.
   // Nghe thẳng Supabase chứ không tự gọi lại, vì cách này bắt được cả lúc đăng
   // xuất lẫn lúc phiên hết hạn.
@@ -205,23 +200,6 @@ export default function RootLayout() {
    */
   const MAN_CUA_THAY = ['thay', 'dang-nhap-thay'];
 
-  /**
-   * Gian hàng KHÔNG cần hồ sơ.
-   *
-   * Điều 5.1.1(v) của Apple: "Apps may not require users to enter personal
-   * information to function, except when directly relevant to the core
-   * functionality of the app". Giờ sinh và nơi sinh liên quan trực tiếp tới
-   * phần chiêm tinh nên hỏi ở đó là chính đáng — nhưng chúng không liên quan
-   * gì tới việc xem một cái vòng tay.
-   *
-   * Và cũng không có lý do kỹ thuật nào: luật khoá dòng của bảng `san_pham` là
-   * `using (hien)`, đọc được mà không cần phiên nào; còn danh sách quan tâm thì
-   * nằm trên máy khách, không cần danh tính.
-   *
-   * `/trung-bay` nằm trong nhóm thẻ tab nên `doan[0]` của nó là '(tabs)', phải
-   * xét tới đoạn thứ hai mới nhận ra.
-   */
-  const MAN_GIAN_HANG = ['san-pham', 'quan-tam'];
 
   useEffect(() => {
     if (!xong || !phongXong || loi) return;
@@ -231,26 +209,26 @@ export default function RootLayout() {
       if (!DUOC_DUNG_KHI_CHUA_CO_PHIEN.includes(dau)) router.replace('/dang-nhap');
       return;
     }
-    const trongGianHang =
-      MAN_GIAN_HANG.includes(dau) || (dau === '(tabs)' && doan[1] === 'trung-bay');
     // Thầy đi đường riêng, không đụng tới hồ sơ khách.
     if (laThay) {
       if (!MAN_CUA_THAY.includes(dau)) router.replace('/thay');
       return;
     }
-    if (
-      !coHoSo &&
-      dau !== 'nhap-ho-so' &&
-      dau !== 'dang-nhap-xong' &&
-      !MAN_CUA_THAY.includes(dau) &&
-      !trongGianHang
-    ) {
-      // Mang theo chỗ họ vừa định vào, để màn chào nói đúng vì sao lại hỏi hồ
-      // sơ — thay vì đá về một màn trắng không giải thích gì.
-      router.replace(`/nhap-ho-so?vi=${dau === '(tabs)' ? (doan[1] ?? 'index') : dau}`);
-    }
+    /**
+     * KHÔNG chặn ai vì chưa có hồ sơ.
+     *
+     * Trước đây chưa khai đủ năm bước thì mọi thẻ tab đều bị đá về màn nhập hồ
+     * sơ. Hai cái sai cùng lúc: điều 5.1.1(v) của Apple nói app không được bắt
+     * khai thông tin cá nhân để dùng được, trừ phần thật sự cần tới nó; và về
+     * mặt sản phẩm thì hỏi giờ sinh trước khi cho người ta xem một cái vòng tay
+     * là cách nhanh nhất để họ thoát ra.
+     *
+     * Giờ ai cũng vào được mọi chỗ. Phần nào thật sự cần thông tin thì tự hỏi
+     * ngay tại chỗ, đúng lúc cần — màn đặt lịch nói rõ còn thiếu gì ngay trước
+     * khi gửi đơn, và khách vẫn được quyền gửi.
+     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [xong, phongXong, loi, coPhien, coHoSo, laThay, doan]);
+  }, [xong, phongXong, loi, coPhien, laThay, doan]);
 
   if (!xong || !phongXong) {
     return (
@@ -304,7 +282,7 @@ export default function RootLayout() {
           Chỉ hiện khi đã có phiên và đã qua phần nhập hồ sơ — người đang đăng
           nhập hay đang khai ngày sinh thì chưa có thông báo nào để xem, mà một
           bong bóng lạ nổi lên lúc đó chỉ làm họ phân tâm. */}
-      {coPhien && (coHoSo || laThay) ? <Chuong /> : null}
+      {coPhien && doan[0] !== 'nhap-ho-so' ? <Chuong /> : null}
     </GestureHandlerRootView>
   );
 }
