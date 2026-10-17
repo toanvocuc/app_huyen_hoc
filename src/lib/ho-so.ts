@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { dangNhapAnDanh, supabase } from '@/lib/supabase';
+import { goHetNhacHen } from '@/lib/nhac-hen';
 import { huyLichLaBai } from '@/lib/thong-bao';
 import { HO_SO_MAU, XEM_THU } from '@/lib/xem-thu';
 
@@ -198,6 +199,9 @@ export async function xoaTaiKhoan() {
   // dưới máy chủ, nên xoá bao nhiêu dưới đó cũng không đụng tới nó — thiếu dòng
   // này thì khách xoá sạch xong vẫn bị đánh thức mỗi sáng.
   await huyLichLaBai();
+  // Cả lịch nhắc trước buổi hẹn nữa. Mấy lời đó mang theo tên chuyên gia, mà
+  // khách đã xoá tài khoản thì không còn buổi hẹn nào để mà nhắc.
+  await goHetNhacHen();
 
   datCoHoSo(false);
   datHoSoChung(null);

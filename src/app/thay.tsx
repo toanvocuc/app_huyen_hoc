@@ -14,7 +14,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -31,6 +31,7 @@ import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { tachNgay } from '@/lib/ho-so';
 import { dongGoi } from '@/lib/goi';
+import { donBoNhacHen, goHetNhacHen } from '@/lib/nhac-hen';
 import { duongLienHe, ngayDoc, useHoSoKhach } from '@/lib/khach';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { supabase } from '@/lib/supabase';
@@ -105,6 +106,12 @@ export default function ManThay() {
       lamMoi();
     }, [lamMoi])
   );
+
+  // Thầy cũng được nhắc, trên máy của thầy. Giữ chỗ cho một buổi hẹn mà quên
+  // mất là hỏng cả hai đầu, không chỉ phía khách.
+  useEffect(() => {
+    donBoNhacHen(dong, (yc) => yc.ten_khach ?? 'khách', true);
+  }, [dong]);
 
   const ds = useMemo(() => {
     const chu = tim.trim().toLowerCase();
@@ -202,6 +209,9 @@ export default function ManThay() {
           // Gỡ máy TRƯỚC khi đăng xuất: xoá dòng của mình cần thẻ còn hiệu lực.
           // Thiếu bước này thì đăng xuất xong máy vẫn rung mỗi khi có đơn mới.
           goMaDay()
+            // Gỡ luôn lịch nhắc hẹn: đăng xuất rồi mà máy vẫn kêu "sắp tới giờ
+            // buổi tư vấn cho chị A" thì vừa khó hiểu vừa lộ tên khách.
+            .then(goHetNhacHen)
             .then(() => supabase.auth.signOut())
             .then(() => router.replace('/dang-nhap'))
             .catch(() => Alert.alert('Chưa đăng xuất được', 'Kiểm tra mạng rồi thử lại.')),

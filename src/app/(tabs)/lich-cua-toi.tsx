@@ -18,7 +18,7 @@
  */
 
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
@@ -26,6 +26,7 @@ import { CHU, MAU } from '@/constants/giao-dien';
 import { NoiLienHe } from '@/components/noi-lien-he';
 import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
 import { dongGoi } from '@/lib/goi';
+import { donBoNhacHen } from '@/lib/nhac-hen';
 import {
   huyYeuCau,
   ngayHenGon,
@@ -65,6 +66,17 @@ export default function LichCuaToi() {
     (ma: string) => cacThay?.find((t) => t.ma === ma)?.ten ?? 'Chuyên gia',
     [cacThay]
   );
+
+  /**
+   * Hẹn lời nhắc trước buổi tư vấn, mỗi lần danh sách đơn đổi.
+   *
+   * Đặt ở đây chứ không đặt lúc gửi đơn: gửi xong mới hẹn thì đơn bị huỵ, đơn
+   * đổi ngày, hay khách cài lại app đều làm lịch lệch với thực tế. Đồng bộ theo
+   * danh sách thật thì lần nào mở màn này cũng tự chỉnh lại cho đúng.
+   */
+  useEffect(() => {
+    donBoNhacHen(dong, (yc) => tenThay(yc.chuyen_gia));
+  }, [dong, tenThay]);
 
   const { dangCho, lichSu } = useMemo(() => {
     const ds = [...(dong ?? [])];

@@ -22,6 +22,8 @@ import {
 } from '../src/lib/tu-vi.ts';
 import { CUNG, cungTheoNgay, diemHop } from '../src/lib/zodiac.ts';
 import { khoangNamSinh, ngayHopLe, soNgayTrongThang } from '../src/lib/ngay-thang.ts';
+// Doi ten `moc` vi file nay da co mot bien moc khac, la moc 32 bit.
+import { gioBatDau, moc as mocGio, mocNhac } from '../src/lib/nhac-hen-gio.ts';
 
 let loi = 0;
 function kiem(ten: string, thuc: unknown, mong: unknown) {
@@ -318,6 +320,46 @@ kiem('nam muon nhat la 18 tuoi', khoangNamSinh(moc).cuoi, 2008);
   kiem('rut 3 la, it nhat 2 la nguoc duoi 30%', haiTroLen < 0.3, true);
   kiem('van con luc ra 3 la nguoc', dem[3] > 0, true);
 }
+
+
+// ---------------------------------------------------------------- nhắc trước buổi hẹn
+
+console.log('\n--- giờ bắt đầu, suy từ chính chuỗi khách chọn ---');
+kiem('Sáng 9h', gioBatDau('Sáng, 9h tới 11h'), 9);
+kiem('Chiều 14h', gioBatDau('Chiều, 14h tới 16h'), 14);
+kiem('Tối 19h', gioBatDau('Tối, 19h tới 21h'), 19);
+// Không có số nào thì về 9h, không được trả NaN rồi hẹn vào hư không.
+kiem('giờ nào cũng được -> 9h', gioBatDau('Giờ nào cũng được'), 9);
+kiem('chuỗi lạ -> 9h', gioBatDau('bất kỳ'), 9);
+
+console.log('\n--- dựng mốc theo giờ MÁY, không qua UTC ---');
+// Chỗ sập nếu lỡ dùng new Date('2026-10-22'): ở Việt Nam sẽ ra 21/10.
+const m1 = mocGio('2026-10-22', 19);
+kiem('ngày đúng', m1 ? m1.getDate() : null, 22);
+kiem('tháng đúng', m1 ? m1.getMonth() + 1 : null, 10);
+kiem('giờ đúng', m1 ? m1.getHours() : null, 19);
+kiem('ngày 31/2 bị bắt', mocGio('2026-02-31', 9), null);
+kiem('chuỗi rỗng bị bắt', mocGio('', 9), null);
+
+console.log('\n--- hai mốc nhắc ---');
+const h = mocNhac('2026-10-22', 'Tối, 19h tới 21h');
+kiem('nhắc hôm trước đúng ngày 21', h ? h.homTruoc.getDate() : null, 21);
+kiem('nhắc hôm trước lúc 20h', h ? h.homTruoc.getHours() : null, 20);
+kiem('nhắc gần giờ: 18h', h ? h.truocMotTieng.getHours() : null, 18);
+kiem('nhắc gần giờ: đúng ngày 22', h ? h.truocMotTieng.getDate() : null, 22);
+
+// Hẹn mùng 1 thì lời nhắc hôm trước phải lùi sang tháng trước.
+const h2 = mocNhac('2026-11-01', 'Sáng, 9h tới 11h');
+kiem('mùng 1: nhắc trước là 31/10', h2 ? `${h2.homTruoc.getDate()}/${h2.homTruoc.getMonth() + 1}` : null, '31/10');
+kiem('mùng 1: nhắc gần là 8h', h2 ? h2.truocMotTieng.getHours() : null, 8);
+
+// Hẹn 9h sáng thì "trước một tiếng" là 8h CÙNG ngày, không được tụt sang hôm trước.
+const h3 = mocNhac('2026-10-22', 'Giờ nào cũng được');
+kiem('9h: nhắc gần vẫn cùng ngày', h3 ? h3.truocMotTieng.getDate() : null, 22);
+
+// Hẹn 1/1 thì lùi sang năm trước.
+const h4 = mocNhac('2027-01-01', 'Tối, 19h tới 21h');
+kiem('1/1: nhắc trước là 31/12/2026', h4 ? `${h4.homTruoc.getDate()}/${h4.homTruoc.getMonth() + 1}/${h4.homTruoc.getFullYear()}` : null, '31/12/2026');
 
 console.log(loi === 0 ? '\n==> TAT CA DEU DUNG' : `\n==> CO ${loi} CHO SAI`);
 process.exit(loi === 0 ? 0 : 1);
