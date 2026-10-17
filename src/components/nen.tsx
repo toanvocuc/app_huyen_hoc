@@ -27,6 +27,7 @@ export function ManHinh({
   nenPhu,
   onLamMoi,
   dangLamMoi,
+  cuonRef,
   children,
 }: {
   tieuDe?: string;
@@ -43,6 +44,13 @@ export function ManHinh({
    */
   onLamMoi?: () => void;
   dangLamMoi?: boolean;
+  /**
+   * Mốc để chỗ gọi tự cuộn tới một chỗ trong trang.
+   *
+   * Cần cho việc bấm thông báo rồi nhảy tới đúng đơn. Không có mốc này thì
+   * ScrollView nằm kín trong đây, bên ngoài không với tới được.
+   */
+  cuonRef?: React.RefObject<ScrollView | null>;
   children: React.ReactNode;
 }) {
   // Chừa chỗ cho thanh tab và thanh điều hướng của máy, không thì dòng cuối
@@ -55,6 +63,7 @@ export function ManHinh({
       <BauTroiDong />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView
+          ref={cuonRef}
           contentContainerClassName="px-5 pt-3"
           contentContainerStyle={{ paddingBottom: CAO_THANH_TAB + 16 + le.bottom }}
           keyboardShouldPersistTaps="handled"

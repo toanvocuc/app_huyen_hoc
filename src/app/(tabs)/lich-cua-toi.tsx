@@ -28,6 +28,7 @@ import { useChuyenGia, type DongChuyenGia } from '@/lib/kho-noi-dung';
 import { dongGoi } from '@/lib/goi';
 import { donBoNhacHen } from '@/lib/nhac-hen';
 import { gioDoc } from '@/lib/nhac-hen-gio';
+import { useTimDon } from '@/lib/tim-don';
 import {
   huyYeuCau,
   ngayHenGon,
@@ -58,6 +59,8 @@ export default function LichCuaToi() {
   const { dong: cacThay } = useChuyenGia();
   const [xep, datXep] = useState<Xep>('moi');
   const [moLichSu, datMoLichSu] = useState(false);
+  // Bấm thông báo thì nhảy tới đúng đơn, không phải đầu danh sách.
+  const { don: donCanTim, cuon, ganThe, sang } = useTimDon();
 
   // Đặt lịch xong là màn này hiện lên ngay. Không đọc lại mỗi lần hiện thì khách
   // thấy danh sách cũ, tưởng yêu cầu vừa gửi rơi mất.
@@ -97,6 +100,18 @@ export default function LichCuaToi() {
     };
   }, [dong, xep, tenThay]);
 
+  /**
+   * Đơn cần tới nằm trong mục Lịch sử thì phải mở mục đó ra.
+   *
+   * Đúng cái ca hay xảy ra nhất: thầy báo "đã tư vấn xong" hay "chưa nhận được
+   * đơn này", khách bấm vào — mà cả hai trạng thái đó đều đã rớt xuống Lịch sử,
+   * mục đang gấp lại. Không mở ra thì cuộn tới một thẻ chưa được vẽ.
+   */
+  const trongLichSu = Boolean(donCanTim && lichSu.some((y) => y.ma === donCanTim));
+  // Suy ra chứ không đặt trạng thái trong hiệu ứng: đặt thật là kéo thêm một vòng vẽ,
+  // mà còn sinh cái bậy khách tự thu mục lịch sử lại thì nó tự bật ra ngay.
+  const hienLichSu = moLichSu || trongLichSu;
+
   function hoiHuy(yc: YeuCau) {
     Alert.alert(
       'Huỷ yêu cầu này?',
@@ -122,7 +137,8 @@ export default function LichCuaToi() {
       tieuDe="Lịch của tôi"
       phu="Những buổi tư vấn bạn đã đặt."
       onLamMoi={lamMoi}
-      dangLamMoi={dangTai && coGi}>
+      dangLamMoi={dangTai && coGi}
+      cuonRef={cuon}>
       {dangTai ? <DangTai /> : null}
 
       {loi ? (
@@ -166,6 +182,8 @@ export default function LichCuaToi() {
                   tenThay={tenThay(yc.chuyen_gia)}
                   thay={cacThay?.find((t) => t.ma === yc.chuyen_gia) ?? null}
                   onHuy={() => hoiHuy(yc)}
+                                    gan={ganThe(yc.ma)}
+                  sang={sang === yc.ma}
                 />
               ))}
             </View>
@@ -177,7 +195,7 @@ export default function LichCuaToi() {
             <View>
               <VanNgan />
               <Pressable
-                onPress={() => datMoLichSu((m) => !m)}
+                onPress={() => datMoLichSu(!hienLichSu)}
                 className="flex-row items-center justify-between py-1 active:opacity-60">
                 <Text
                   style={{ fontFamily: CHU.thanDam, letterSpacing: 1.6 }}
@@ -185,14 +203,20 @@ export default function LichCuaToi() {
                   Lịch sử ({lichSu.length})
                 </Text>
                 <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-mo">
-                  {moLichSu ? 'Thu lại' : 'Xem'}
+                  {hienLichSu ? 'Thu lại' : 'Xem'}
                 </Text>
               </Pressable>
 
-              {moLichSu ? (
+              {hienLichSu ? (
                 <View className="mt-4 gap-4">
                   {lichSu.map((yc) => (
-                    <The key={yc.ma} yc={yc} tenThay={tenThay(yc.chuyen_gia)} />
+                    <The
+                      key={yc.ma}
+                      yc={yc}
+                      tenThay={tenThay(yc.chuyen_gia)}
+                                            gan={ganThe(yc.ma)}
+                  sang={sang === yc.ma}
+                    />
                   ))}
                 </View>
               ) : null}
@@ -209,17 +233,36 @@ function The({
   tenThay,
   thay,
   onHuy,
+  gan,
+  sang,
 }: {
   yc: YeuCau;
   tenThay: string;
   thay?: DongChuyenGia | null;
   onHuy?: () => void;
+  /** Mốc và hàm đo, chỉ thẻ cần tìm mới có. */
+  gan?: object;
+  /** Được bấm tới từ một thông báo: tô sáng một lúc. */
+  sang?: boolean;
 }) {
   const tt = TEN_TRANG_THAI[yc.trang_thai];
   const ngay = new Date(yc.tao_luc);
 
   return (
-    <View style={{ opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1 }}>
+    <View
+      {...gan}
+      style={{
+        opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1,
+        ...(sang
+          ? {
+              borderRadius: 18,
+              borderWidth: 2,
+              borderColor: MAU.vang,
+              padding: 2,
+              margin: -4,
+            }
+          : null),
+      }}>
       <Khoi vang>
         <View className="mb-2 flex-row items-center justify-between">
           <Text

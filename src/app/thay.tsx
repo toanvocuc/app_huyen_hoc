@@ -33,6 +33,7 @@ import { tachNgay } from '@/lib/ho-so';
 import { dongGoi } from '@/lib/goi';
 import { donBoNhacHen, goHetNhacHen } from '@/lib/nhac-hen';
 import { gioDoc } from '@/lib/nhac-hen-gio';
+import { useTimDon } from '@/lib/tim-don';
 import { duongLienHe, ngayDoc, useHoSoKhach } from '@/lib/khach';
 import { cungTheoNgay, timCung } from '@/lib/zodiac';
 import { supabase, xoaDauTaiKhoanThat } from '@/lib/supabase';
@@ -80,6 +81,8 @@ export default function ManThay() {
   const [xep, datXep] = useState<Xep>('moi');
   const [tim, datTim] = useState('');
   const [dangTuChoi, datDangTuChoi] = useState<YeuCau | null>(null);
+  // Bấm thông báo thì nhảy tới đúng đơn, không phải đầu danh sách.
+  const { don: donCanTim, cuon, ganThe, sang } = useTimDon();
   const [lyDo, datLyDo] = useState('');
 
   useFocusEffect(
@@ -114,8 +117,16 @@ export default function ManThay() {
     donBoNhacHen(dong, (yc) => yc.ten_khach ?? 'khách', true);
   }, [dong]);
 
+  /**
+   * Tới từ thông báo thì bỏ lọc đi.
+   *
+   * Thầy đang gõ tìm một cái tên, rồi bấm thông báo về một đơn khác — đơn đó
+   * không khớp ô tìm nên không được vẽ ra, mà cuộn tới một thẻ không tồn tại
+   * thì chẳng thấy gì cả.
+   */
   const ds = useMemo(() => {
-    const chu = tim.trim().toLowerCase();
+    // Tới từ một thông báo thì bỏ lọc, bày cả danh sách ra.
+    const chu = donCanTim ? '' : tim.trim().toLowerCase();
     let ra = [...(dong ?? [])];
 
     if (chu) {
@@ -145,7 +156,7 @@ export default function ManThay() {
       return xep === 'cu' ? t : -t;
     });
     return ra;
-  }, [dong, tim, xep]);
+  }, [dong, tim, xep, donCanTim]);
 
   async function bat() {
     datDangXin(true);
@@ -253,7 +264,8 @@ export default function ManThay() {
       tieuDe="Đơn của bạn"
       phu={`Đang làm việc với tư cách ${thay.ten}`}
       onLamMoi={lamMoi}
-      dangLamMoi={dangTai && coDon}>
+      dangLamMoi={dangTai && coDon}
+      cuonRef={cuon}>
       {/* Ba trạng thái, không phải hai. Cấp quyền rồi mà máy chủ chưa biết máy
           này thì vẫn không nhận được tin — trước đây chỗ đó hiện màn sạch trơn,
           thầy tưởng xong. */}
@@ -352,7 +364,14 @@ export default function ManThay() {
           ) : (
             <View className="gap-4">
               {ds.map((yc) => (
-                <The key={yc.ma} yc={yc} onDoi={doi} onTuChoi={tuChoi} />
+                <The
+                  key={yc.ma}
+                  yc={yc}
+                  onDoi={doi}
+                  onTuChoi={tuChoi}
+                                    gan={ganThe(yc.ma)}
+                  sang={sang === yc.ma}
+                />
               ))}
             </View>
           )}
@@ -414,10 +433,16 @@ function The({
   yc,
   onDoi,
   onTuChoi,
+  gan,
+  sang,
 }: {
   yc: YeuCau;
   onDoi: (yc: YeuCau, sang: 'da_nhan' | 'da_xong' | 'da_huy', hoi: string) => void;
   onTuChoi: (yc: YeuCau) => void;
+  /** Mốc và hàm đo, chỉ thẻ cần tìm mới có. */
+  gan?: object;
+  /** Được bấm tới từ một thông báo: tô sáng một lúc cho mắt bắt đúng chỗ. */
+  sang?: boolean;
 }) {
   const tt = TEN_TRANG_THAI[yc.trang_thai];
   // Chỉ hỏi máy chủ khi thầy bấm mở. Mười đơn là mười lượt gọi cho thứ thầy có
@@ -425,7 +450,20 @@ function The({
   const [moKhach, datMoKhach] = useState(false);
 
   return (
-    <View style={{ opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1 }}>
+    <View
+      {...gan}
+      style={{
+        opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1,
+        ...(sang
+          ? {
+              borderRadius: 18,
+              borderWidth: 2,
+              borderColor: MAU.vang,
+              padding: 2,
+              margin: -4,
+            }
+          : null),
+      }}>
       <Khoi vang>
         <View className="mb-2 flex-row items-center justify-between">
           <Text
