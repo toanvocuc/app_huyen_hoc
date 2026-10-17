@@ -23,7 +23,16 @@ import {
 import { CUNG, cungTheoNgay, diemHop } from '../src/lib/zodiac.ts';
 import { khoangNamSinh, ngayHopLe, soNgayTrongThang } from '../src/lib/ngay-thang.ts';
 // Doi ten `moc` vi file nay da co mot bien moc khac, la moc 32 bit.
-import { gioBatDau, gioDoc, moc as mocGio, mocNhac, tachGioHen } from '../src/lib/nhac-hen-gio.ts';
+import {
+  gioBatDau,
+  gioDoc,
+  gioSomNhat,
+  hetGioHomNay,
+  khungConDat,
+  moc as mocGio,
+  mocNhac,
+  tachGioHen,
+} from '../src/lib/nhac-hen-gio.ts';
 // Doi ten `layMa` cho khoi lan voi bien khac trong file.
 import { docLoi, laKhachTuChoi, laTrungDanhTinh, layMa as layMaTraVe } from '../src/lib/duong-tra-ve.ts';
 
@@ -394,6 +403,41 @@ kiem('giờ sai khuôn thì dùng khung', g3 ? g3.truocMotTieng.getHours() : nul
 // Giờ chính xác sớm, 00:30, thì nhắc lùi sang hôm trước.
 const g4 = mocNhac('2026-10-22', 'Sáng, 9h tới 11h', '00:30');
 kiem('00:30 -> nhắc 23:30 hôm trước', g4 ? `${g4.truocMotTieng.getDate()} ${g4.truocMotTieng.getHours()}:${g4.truocMotTieng.getMinutes()}` : null, '21 23:30');
+
+
+console.log('\n--- khoảng giờ còn đặt được ---');
+// Ngày khác hôm nay thì cứ từ 9 giờ, bất kể bây giờ là mấy giờ.
+kiem('ngày mai, bây giờ 20h -> 9', gioSomNhat('2026-10-20', new Date(2026, 9, 19, 20, 0)), 9);
+kiem('ngày mai, bây giờ 3h sáng -> 9', gioSomNhat('2026-10-20', new Date(2026, 9, 19, 3, 0)), 9);
+
+// Hôm nay thì lùi theo đồng hồ, cộng một tiếng đặt trước.
+kiem('hôm nay 6h sáng -> vẫn 9', gioSomNhat('2026-10-19', new Date(2026, 9, 19, 6, 0)), 9);
+kiem('hôm nay 8h -> 9', gioSomNhat('2026-10-19', new Date(2026, 9, 19, 8, 30)), 9);
+kiem('hôm nay 14h -> 15', gioSomNhat('2026-10-19', new Date(2026, 9, 19, 14, 10)), 15);
+kiem('hôm nay 20h -> 21', gioSomNhat('2026-10-19', new Date(2026, 9, 19, 20, 0)), 21);
+
+// Quá giờ thì hôm nay hết chỗ.
+kiem('hôm nay 21h -> 22, quá giờ muộn nhất', gioSomNhat('2026-10-19', new Date(2026, 9, 19, 21, 0)), 22);
+kiem('hôm nay 8h: chưa hết giờ', hetGioHomNay('2026-10-19', new Date(2026, 9, 19, 8, 0)), false);
+kiem('hôm nay 20h: chưa hết giờ', hetGioHomNay('2026-10-19', new Date(2026, 9, 19, 20, 0)), false);
+kiem('hôm nay 21h: HẾT giờ', hetGioHomNay('2026-10-19', new Date(2026, 9, 19, 21, 0)), true);
+kiem('hôm nay 23h: HẾT giờ', hetGioHomNay('2026-10-19', new Date(2026, 9, 19, 23, 0)), true);
+kiem('ngày mai thì không bao giờ hết', hetGioHomNay('2026-10-20', new Date(2026, 9, 19, 23, 0)), false);
+
+console.log('\n--- khung giờ cho sẵn còn đặt được không ---');
+const n8 = new Date(2026, 9, 19, 8, 0);
+const n20 = new Date(2026, 9, 19, 20, 0);
+kiem('8h sáng: khung Sáng còn đặt', khungConDat('Sáng, 9h tới 11h', '2026-10-19', n8), true);
+kiem('8h sáng: khung Tối còn đặt', khungConDat('Tối, 19h tới 21h', '2026-10-19', n8), true);
+// Đây là ca user báo: 8 giờ tối mà vẫn chọn được khung sáng của hôm nay.
+kiem('20h: khung Sáng ĐÃ TRÔI QUA', khungConDat('Sáng, 9h tới 11h', '2026-10-19', n20), false);
+kiem('20h: khung Chiều ĐÃ TRÔI QUA', khungConDat('Chiều, 14h tới 16h', '2026-10-19', n20), false);
+kiem('20h: khung Tối vẫn còn', khungConDat('Tối, 19h tới 21h', '2026-10-19', n20), true);
+// Ngày mai thì khung nào cũng còn.
+kiem('20h hôm nay, khung Sáng NGÀY MAI vẫn còn', khungConDat('Sáng, 9h tới 11h', '2026-10-20', n20), true);
+// 'Giờ nào cũng được' quy về 9h nên cũng trôi qua như khung sáng.
+// 'Giờ nào cũng được' kéo tới giờ muộn nhất nên 20h vẫn còn đặt được.
+kiem('20h: giờ nào cũng được vẫn còn', khungConDat('Giờ nào cũng được', '2026-10-19', n20), true);
 
 
 // ---------------------------------------------------------------- địa chỉ OAuth trả về

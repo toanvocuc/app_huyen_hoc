@@ -273,3 +273,41 @@ export function BanhXeGioSinh({
     </Khung>
   );
 }
+
+/**
+ * Bánh xe chọn giờ hẹn, có chặn đầu chặn cuối.
+ *
+ * Khác bánh xe giờ sinh ở chỗ nó KHÔNG cho cuộn ra ngoài khoảng cho phép. Giờ
+ * sinh thì 0 tới 23 giờ đều có thật; giờ hẹn thì không — không ai nhận tư vấn
+ * lúc một hai giờ sáng, và đặt lịch vào một giờ đã trôi qua trong ngày hôm nay
+ * là đặt vào quá khứ.
+ *
+ * Chặn ngay ở danh sách con lăn chứ không chỉ báo lỗi sau khi khách chọn: thứ
+ * cuộn không tới được thì khách không chọn nhầm được, khỏi cần ai nhắc.
+ */
+export function BanhXeGioHen({
+  gio,
+  phut,
+  gioSom,
+  gioMuon,
+  dat,
+}: {
+  gio: number;
+  phut: number;
+  /** Giờ sớm nhất cuộn tới được. */
+  gioSom: number;
+  /** Giờ muộn nhất cuộn tới được. */
+  gioMuon: number;
+  dat: (phan: { gio?: number; phut?: number }) => void;
+}) {
+  const mucGio = useMemo(() => day(gioSom, Math.max(gioSom, gioMuon)), [gioSom, gioMuon]);
+  // Tới đúng giờ muộn nhất thì chỉ còn phút 0: 21h30 là đã quá giờ làm việc.
+  const mucPhut = useMemo(() => day(0, gio >= gioMuon ? 0 : 59), [gio, gioMuon]);
+
+  return (
+    <Khung nhan={['Giờ', 'Phút']}>
+      <BanhXe gia={Math.min(Math.max(gio, gioSom), gioMuon)} dat={(v) => dat({ gio: v })} muc={mucGio} />
+      <BanhXe gia={gio >= gioMuon ? 0 : phut} dat={(v) => dat({ phut: v })} muc={mucPhut} />
+    </Khung>
+  );
+}

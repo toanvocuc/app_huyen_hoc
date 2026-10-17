@@ -35,51 +35,50 @@ const CHUA_TREN = 90;
 const SANG_TRONG = 2600;
 
 /**
- * Bám theo layout trong bao lâu, tính từ lúc nhận mã đơn.
+ * Cho cuộn lại nhiều nhất bao nhiêu lượt cho mỗi đơn.
  *
- * Cuộn đúng một lần là chưa đủ: mục Lịch sử mở ra sau, mấy thẻ trong đó vẽ dần,
- * nên nội dung còn xô lên xô xuống sau cú cuộn đầu. Mỗi lần layout đổi là đo
- * lại và cuộn lại, tới khi nó thôi đổi. Hết thời gian thì buông, để khách tự
- * cuộn không bị giật lại.
+ * ĐẾM LƯỢT chứ không hẹn giờ. Bản trước tôi mở một cửa sổ 2,5 giây tính từ lúc
+ * nhận mã đơn, và nó hỏng ở màn thầy: màn đó gọi `lamMoi()` mỗi lần hiện lên,
+ * lệnh ấy xoá danh sách về rỗng rồi nạp lại — thẻ bị tháo ra dựng lại sau khi
+ * cửa sổ đã đóng, nên không còn lượt nào để cuộn. Màn hình đứng ở đầu trang.
+ *
+ * Tệ hơn: ở chế độ xem thử `lamMoi` là lệnh rỗng, nên phép thử của tôi không
+ * bao giờ đi qua đường đó và báo là chạy tốt.
+ *
+ * Đếm lượt thì không phụ thuộc thời gian: nạp lại bao nhiêu lần cũng còn lượt.
+ * `onLayout` chỉ nổ khi bố cục thật sự đổi, nên lúc mọi thứ đứng yên là hết nổ
+ * — không có chuyện giành giật với tay khách đang tự cuộn.
  */
-const BAM_THEO = 2500;
+const SO_LUOT = 8;
 
 export function useTimDon() {
   const { don } = useLocalSearchParams<{ don?: string }>();
   const cuon = useRef<ScrollView>(null);
   /** Chỉ thẻ CẦN TÌM mới mang mốc này, mấy thẻ khác không cần đo đạc gì. */
   const the = useRef<View>(null);
-  // 0 = chưa bắt đầu đếm. Gọi Date.now() ngay trong lúc vẽ là gọi hàm không
-  // thuần giữa kỳ vẽ, trình biên dịch React chặn — và chặn có lý.
-  const batDau = useRef(0);
+  const conLuot = useRef(0);
   const maCu = useRef<string | null>(null);
   const [sang, datSang] = useState<string | null>(null);
 
+  // Tắt đèn sau một lúc.
   useEffect(() => {
-    if (maCu.current !== don) {
-      maCu.current = don ?? null;
-      // Đặt lại 0 để lượt layout đầu tiên của đơn mới tự bắt đầu đếm.
-      batDau.current = 0;
-    }
-  }, [don]);
-
-  // Tắt đèn tính từ lúc nhận mã đơn, không tính từ cú cuộn cuối — không thì
-  // mỗi lần layout nhúc nhích là đèn lại sáng thêm một lượt.
-  useEffect(() => {
-    if (!don) return;
-    const hen = setTimeout(() => datSang(null), BAM_THEO + SANG_TRONG);
+    if (!sang) return;
+    const hen = setTimeout(() => datSang(null), SANG_TRONG);
     return () => clearTimeout(hen);
-  }, [don]);
+  }, [sang]);
 
   const khiLayout = useCallback(() => {
     if (!don) return;
-    // 0 nghĩa là đây chính là lượt layout đầu tiên — bắt đầu đếm từ đây.
-    //
-    // Bản trước tôi để hiệu ứng đặt mốc, mà hiệu ứng chạy SAU layout. Nên
-    // cú đo duy nhất bị chính cổng thời gian này chặn lại: màn hình đứng yên
-    // trong khi thẻ vẫn sáng lên, nên nhìn qua lại tưởng đã chạy đúng.
-    if (batDau.current === 0) batDau.current = Date.now();
-    else if (Date.now() - batDau.current > BAM_THEO) return;
+
+    // So mã NGAY TRONG hàm này chứ không trong một hiệu ứng: hiệu ứng chạy sau
+    // layout, nên lượt đo đầu tiên của đơn mới sẽ đọc phải số lượt cũ đã cạn.
+    if (maCu.current !== don) {
+      maCu.current = don;
+      conLuot.current = SO_LUOT;
+    }
+    if (conLuot.current <= 0) return;
+    conLuot.current -= 1;
+
     const node = the.current;
     const khung = cuon.current;
     if (!node || !khung) return;

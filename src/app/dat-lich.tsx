@@ -14,12 +14,19 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { AppState, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { BanhXeGioSinh } from '@/components/banh-xe';
+import { BanhXeGioHen } from '@/components/banh-xe';
 import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { luuHoSo, useHoSo } from '@/lib/ho-so';
 import { useChuyenGia } from '@/lib/kho-noi-dung';
 import { tienGoi, useGoiTuVan } from '@/lib/goi';
+import {
+  GIO_MUON,
+  GIO_SOM,
+  gioSomNhat,
+  hetGioHomNay,
+  khungConDat,
+} from '@/lib/nhac-hen-gio';
 import { guiYeuCau, KHUNG_GIO, tachChuDe } from '@/lib/yeu-cau';
 
 /** Dài tối thiểu cho câu hỏi. Ngắn hơn thì thầy không có gì để bắt đầu. */
@@ -104,9 +111,6 @@ export default function DatLich() {
   const [tuChonGio, datTuChonGio] = useState(false);
   const [gio, datGio] = useState(19);
   const [phut, datPhut] = useState(0);
-  const gioHen = tuChonGio
-    ? `${String(gio).padStart(2, '0')}:${String(phut).padStart(2, '0')}`
-    : null;
 
   /**
    * Mốc "hôm nay", đọc lại mỗi khi app quay lại từ nền.
@@ -129,6 +133,23 @@ export default function DatLich() {
   // không đặt lại trạng thái trong hiệu ứng: đặt trong hiệu ứng là thêm một vòng
   // vẽ, mà eslint cũng bắt.
   const ngayThat = cacNgay.some((n) => n.gia === chonNgay) ? chonNgay : cacNgay[0].gia;
+
+  /**
+   * Khoảng giờ còn đặt được cho NGÀY ĐANG CHỌN.
+   *
+   * Hôm nay thì lùi theo đồng hồ: 8 giờ tối rồi mà vẫn chọn được 6 giờ sáng là
+   * đặt một buổi hẹn nằm trong quá khứ, mà chẳng ai báo gì cả. Ngày mai trở đi
+   * thì cứ từ giờ làm việc sớm nhất.
+   */
+  const gioSom = gioSomNhat(ngayThat, moc === homNay() ? new Date() : new Date(`${ngayThat}T00:00:00`));
+  const hetGio = hetGioHomNay(ngayThat);
+  // Kẹp lại cho khỏi rơi ra ngoài khoảng khi khách đổi sang ngày khác.
+  const gioThat = Math.min(Math.max(gio, gioSom), GIO_MUON);
+  const phutThat = gioThat >= GIO_MUON ? 0 : phut;
+  const gioHen =
+    tuChonGio && !hetGio
+      ? `${String(gioThat).padStart(2, '0')}:${String(phutThat).padStart(2, '0')}`
+      : null;
   const [cauHoi, datCauHoi] = useState('');
   // Điền sẵn từ hồ sơ. Khách đặt lần hai không phải gõ lại số của mình.
   const [lienHe, datLienHe] = useState('');
@@ -156,14 +177,14 @@ export default function DatLich() {
   const thieu: string[] = [];
   if (cacGoi.length > 0 && !goi) thieu.push('chọn gói');
   if (!chuDeThat) thieu.push('chọn chủ đề');
-  if (!tuChonGio && !chonGio) thieu.push('chọn giờ');
+  if (tuChonGio ? !gioHen : !chonGio) thieu.push('chọn giờ');
   if (lienHe.trim().length < TOI_THIEU_LIEN_HE) thieu.push('điền số điện thoại hoặc Zalo');
   if (cauHoi.trim().length < TOI_THIEU) thieu.push('viết câu hỏi dài thêm một chút');
   const duDieuKien = thieu.length === 0;
 
   async function gui() {
     if (!thay || !chuDeThat) return;
-    if (!tuChonGio && !chonGio) return;
+    if (tuChonGio ? !gioHen : !chonGio) return;
     if (cacGoi.length > 0 && !goi) return;
     datLoi(null);
     datDangGui(true);
@@ -312,6 +333,10 @@ export default function DatLich() {
               key={g}
               nhan={g}
               chon={!tuChonGio && chonGio === g}
+              // Khung đã trôi qua trong hôm nay thì không bấm được. Tám giờ
+              // tối mà vẫn đặt được 'Sáng, 9h tới 11h' của hôm nay là đặt vào
+              // quá khứ.
+              tat={!khungConDat(g, ngayThat)}
               onPress={() => {
                 datTuChonGio(false);
                 datChonGio(g);
@@ -322,8 +347,9 @@ export default function DatLich() {
               Khoảng thì cả hai bên đều khó giữ giờ giấc, mà lời nhắc trước buổi
               hẹn cũng chỉ đoán được giờ bắt đầu khung. */}
           <O
-            nhan={tuChonGio ? `Đúng ${gioHen}` : 'Chọn giờ chính xác'}
+            nhan={tuChonGio && gioHen ? `Đúng ${gioHen}` : 'Chọn giờ chính xác'}
             chon={tuChonGio}
+            tat={hetGio}
             onPress={() => {
               datTuChonGio(true);
               datChonGio(null);
@@ -333,20 +359,34 @@ export default function DatLich() {
 
         {tuChonGio ? (
           <View className="mt-4">
-            <BanhXeGioSinh
-              gio={gio}
-              phut={phut}
-              dat={(p) => {
-                if (p.gio !== undefined) datGio(p.gio);
-                if (p.phut !== undefined) datPhut(p.phut);
+            <BanhXeGioHen
+              gio={gioThat}
+              phut={phutThat}
+              gioSom={gioSom}
+              gioMuon={GIO_MUON}
+              dat={(v: { gio?: number; phut?: number }) => {
+                if (v.gio !== undefined) datGio(v.gio);
+                if (v.phut !== undefined) datPhut(v.phut);
               }}
             />
             <Text
               style={{ fontFamily: CHU.than }}
               className="mt-2 text-xs leading-5 text-chu-mo">
-              Thầy sẽ thấy đúng giờ này trong đơn, và máy bạn nhắc trước một tiếng.
+              Nhận từ {GIO_SOM} giờ tới {GIO_MUON} giờ. Thầy sẽ thấy đúng giờ này trong đơn,
+              và máy bạn nhắc trước một tiếng.
             </Text>
           </View>
+        ) : null}
+
+        {/* Hôm nay hết giờ nhận thì nói thẳng, đừng để khách ngồi đoán vì sao
+            mọi ô đều bấm không được. */}
+        {hetGio ? (
+          <Text
+            style={{ fontFamily: CHU.than }}
+            className="mt-3 text-xs leading-5 text-canh">
+            Hôm nay đã qua giờ nhận tư vấn ({GIO_SOM} giờ tới {GIO_MUON} giờ). Bạn chọn một
+            ngày khác ở trên giúp tôi.
+          </Text>
         ) : null}
       </View>
 
@@ -420,16 +460,30 @@ export default function DatLich() {
 }
 
 /** Một ô chọn. Dùng chung cho chủ đề và khung giờ nên không đặt tên theo việc nào cả. */
-function O({ nhan, chon, onPress }: { nhan: string; chon: boolean; onPress: () => void }) {
+function O({
+  nhan,
+  chon,
+  tat,
+  onPress,
+}: {
+  nhan: string;
+  chon: boolean;
+  /** Khung giờ đã trôi qua trong ngày đang chọn thì mờ đi và không bấm được. */
+  tat?: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={tat ? undefined : onPress}
+      disabled={tat}
+      accessibilityState={{ disabled: Boolean(tat), selected: chon }}
       // Nền và viền đặt bằng style chứ không bằng lớp Tailwind: bộ màu trong
       // tailwind.config.js không khai vangRatMo, mà lớp không có thật thì
       // NativeWind bỏ qua im lặng — ô được chọn trông y hệt ô chưa chọn.
       style={{
         borderColor: chon ? MAU.vang : MAU.vien,
         backgroundColor: chon ? MAU.vangRatMo : 'transparent',
+        opacity: tat ? 0.32 : 1,
       }}
       className="rounded-xl border px-4 py-2.5 active:opacity-70">
       <Text
