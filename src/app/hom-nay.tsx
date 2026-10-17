@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
 import { NenKhungVan } from '@/components/nen-anh';
-import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, LuuYThamKhao, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { CHU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
 import { useBoBai } from '@/lib/kho-noi-dung';
@@ -145,6 +145,7 @@ export default function HomNay() {
           />
         </View>
       ) : null}
+      <LuuYThamKhao />
     </ManHinh>
   );
 }

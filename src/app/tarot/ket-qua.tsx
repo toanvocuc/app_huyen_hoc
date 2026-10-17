@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
 import { LaBai } from '@/components/la-bai';
-import { ChuThan, Khoi, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
+import { ChuThan, Khoi, LuuYThamKhao, ManHinh, Nhan, Nut, Trong } from '@/components/nen';
 import { NenKhungVan } from '@/components/nen-anh';
 import { CHU } from '@/constants/giao-dien';
 import { danhDauDaGhi, layPhien } from '@/lib/phien-rut';
@@ -125,6 +125,7 @@ export default function KetQua() {
         manHinh="tarot"
         loiMoi={`Muốn hiểu sâu hơn về ${dang.la.tenEn}? Nhắn cho chuyên gia để hỏi theo đúng chuyện của bạn.`}
       />
+      <LuuYThamKhao />
     </ManHinh>
   );
 }

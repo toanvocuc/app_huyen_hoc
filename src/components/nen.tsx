@@ -296,3 +296,22 @@ export function Trong({ loi }: { loi: string }) {
     </View>
   );
 }
+
+/**
+ * Dòng miễn trừ ở cuối mỗi màn kết quả luận giải.
+ *
+ * Đặt ngay dưới phần luận giải chứ không chỉ để ở màn chào và màn Cá nhân: ai
+ * mở thẳng một màn kết quả từ thông báo hay từ liên kết chia sẻ thì chưa từng
+ * đi qua hai chỗ kia. Và đây cũng là chỗ người ta dễ đọc lời luận giải như một
+ * lời khuyên thật nhất, nên câu nhắc phải nằm đúng ở đó.
+ */
+export function LuuYThamKhao() {
+  return (
+    <Text
+      style={{ fontFamily: CHU.than }}
+      className="mt-8 text-center text-[11px] leading-5 text-chu-mo">
+      Nội dung này mang tính tham khảo và giải trí, không thay thế lời khuyên y tế, tâm lý,
+      tài chính hay pháp lý.
+    </Text>
+  );
+}

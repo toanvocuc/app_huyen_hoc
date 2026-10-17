@@ -8,7 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { ChuThan, DangTai, Khoi, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, LuuYThamKhao, Nhan, Nut, Trong, VanNgan } from '@/components/nen';
 import { NenKhungCung } from '@/components/nen-anh';
 import { BauTroiDong } from '@/components/bau-troi-dong';
 import { ThanhTieuDe } from '@/components/thanh-tieu-de';
@@ -197,6 +197,8 @@ export default function ChiTietCung() {
             manHinh="chi-tiet-cung"
             loiMoi={`Là ${cung.ten} thì điều gì đang chờ bạn tháng này? Nhắn cho chuyên gia để hỏi cho rõ.`}
           />
+
+          <LuuYThamKhao />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

@@ -11,6 +11,17 @@ import { CHU, MAU } from '@/constants/giao-dien';
 
 const { width: RONG, height: CAO } = Dimensions.get('window');
 
+/**
+ * Màn chào, và là màn ĐẦU TIÊN người duyệt app của Apple nhìn thấy sau khi bấm
+ * "Dùng ngay".
+ *
+ * Câu chữ ở đây cố ý nói về đặt lịch với chuyên gia và khám phá bản thân, không
+ * nói lá bài. Không phải để giấu: thẻ Khám phá vẫn bày đủ, và dòng miễn trừ ngay
+ * dưới vẫn nói rõ đây là nội dung tham khảo. Lý do là THỨ TỰ — app từng bị từ
+ * chối theo điều 4.3(b) vì mở ra là tarot, xem `(tabs)/_layout.tsx`. Sửa thứ tự
+ * thẻ tab mà để màn chào vẫn mở đầu bằng "Mỗi ngày một lá bài" thì mới đi được
+ * nửa đường.
+ */
 export default function ChaoMung() {
   return (
     <View className="flex-1 bg-nen">
@@ -39,14 +50,14 @@ export default function ChaoMung() {
           <Text
             style={{ fontFamily: CHU.hoaDam, fontSize: 44, lineHeight: 50 }}
             className="text-center text-chu-chinh">
-            Mỗi ngày{'\n'}
-            <Text style={{ color: MAU.vang }}>một lá bài</Text>
+            Khám phá{'\n'}
+            <Text style={{ color: MAU.vang }}>chính mình</Text>
           </Text>
           <Text
             style={{ fontFamily: CHU.than, fontSize: 15, lineHeight: 24 }}
             className="mx-auto mt-4 max-w-[300px] text-center text-chu-phu">
-            Rút bài Tarot, xem cung hoàng đạo và thần số học. Không cần đăng ký, mở lên là dùng
-            được ngay.
+            Đặt lịch trò chuyện cùng chuyên gia thật về chuyện của riêng bạn, và mỗi ngày
+            hiểu thêm một chút về chính mình. Không cần đăng ký, mở lên là dùng được ngay.
           </Text>
         </View>
 

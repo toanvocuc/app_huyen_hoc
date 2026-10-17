@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { DangTai, Khoi, ManHinh, Nhan, Trong } from '@/components/nen';
+import { DangTai, Khoi, LuuYThamKhao, ManHinh, Nhan, Trong } from '@/components/nen';
 import { NenKhungCung } from '@/components/nen-anh';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { tachNgay, useHoSo } from '@/lib/ho-so';
@@ -115,6 +115,7 @@ export default function DoHop() {
         manHinh="do-hop"
         loiMoi="Muốn xem kỹ hơn chuyện hai người? Nhắn cho chuyên gia để hỏi theo lá số thật."
       />
+      <LuuYThamKhao />
     </ManHinh>
   );
 }

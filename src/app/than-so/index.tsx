@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { HoiChuyenGia } from '@/components/hoi-chuyen-gia';
-import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Trong, VanNgan } from '@/components/nen';
+import { ChuThan, DangTai, Khoi, LuuYThamKhao, ManHinh, Nhan, Trong, VanNgan } from '@/components/nen';
 import { NenKhungSo } from '@/components/nen-anh';
 import { OVuongSinh } from '@/components/o-vuong-sinh';
 import { VongSo } from '@/components/vong-so';
@@ -276,6 +276,7 @@ export default function ThanSo() {
             : `Số ${so ?? ''} nói gì về năm nay của bạn? Nhắn cho chuyên gia để hỏi kỹ hơn.`
         }
       />
+      <LuuYThamKhao />
     </ManHinh>
   );
 }
