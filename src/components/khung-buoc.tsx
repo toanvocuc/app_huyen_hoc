@@ -1,7 +1,7 @@
 /** Khung chung cho năm bước nhập hồ sơ: thanh tiêu đề, thanh tiến trình, nội dung, nút dưới. */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NenTroiSao } from '@/components/nen-anh';
@@ -21,6 +21,7 @@ export function KhungBuoc({
   tat,
   onTiep,
   duoi,
+  boQua,
   cuon = true,
 }: {
   tenMan: string;
@@ -33,6 +34,17 @@ export function KhungBuoc({
   tat?: boolean;
   onTiep: () => void;
   duoi?: React.ReactNode;
+  /**
+   * Lối thoát khỏi luồng nhập hồ sơ, chỉ đặt ở BƯỚC ĐẦU.
+   *
+   * Đặt ở đây chứ không đặt ngoài màn chào: màn chào phải đúng một nút, không
+   * bắt ai cân nhắc gì khi còn chưa biết app làm gì. Tới bước này thì họ đã
+   * thấy app hỏi gì rồi, cho họ đường lui là phải lẽ.
+   *
+   * Và chỉ bước đầu thôi — gõ xong cái tên là người ta đã bỏ công vào, bày
+   * thêm lối ra ở mỗi bước chỉ làm họ phân vân.
+   */
+  boQua?: { nhan: string; onPress: () => void };
   /**
    * Tắt khi nội dung có bánh xe cuộn.
    *
@@ -70,6 +82,15 @@ export function KhungBuoc({
 
         <View style={{ borderTopColor: MAU.vien }} className="border-t px-5 pb-2 pt-4">
           <Nut nhan={nhanNut} tat={tat} onPress={onTiep} />
+          {boQua ? (
+            <Pressable
+              onPress={boQua.onPress}
+              className="mt-3 self-center px-4 py-2 active:opacity-60">
+              <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-mo underline">
+                {boQua.nhan}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </SafeAreaView>
     </LinearGradient>

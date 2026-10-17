@@ -22,6 +22,7 @@ export default function BuocTen() {
         datBanNhap({ hoTen: hoTen.trim() });
         router.push('/nhap-ho-so/ngay-sinh');
       }}
+      boQua={{ nhan: 'Bỏ qua, xem app trước', onPress: () => router.replace('/') }}
       duoi={
         <Text
           style={{ fontFamily: CHU.than }}
