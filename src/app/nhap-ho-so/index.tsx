@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { Dimensions, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Dimensions, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BauTroiDong } from '@/components/bau-troi-dong';
@@ -22,7 +22,22 @@ const { width: RONG, height: CAO } = Dimensions.get('window');
  * thẻ tab mà để màn chào vẫn mở đầu bằng "Mỗi ngày một lá bài" thì mới đi được
  * nửa đường.
  */
+/**
+ * Vì sao khách bị đưa về đây.
+ *
+ * Màn gốc gửi kèm chỗ họ vừa định vào. Nói đúng lý do thì việc hỏi ngày sinh
+ * thành một bước có nghĩa, chứ không phải một cánh cửa đóng sập vào mặt.
+ */
+const VI_SAO: Record<string, string> = {
+  index: 'Để đặt lịch với chuyên gia, Omora cần biết ngày sinh của bạn.',
+  'lich-cua-toi': 'Phần lịch hẹn gắn với hồ sơ của bạn, nên cần khai trước.',
+  'kham-pha': 'Phần khám phá bản thân tính từ ngày sinh và họ tên của bạn.',
+  'ca-nhan': 'Trang cá nhân cần hồ sơ của bạn trước đã.',
+};
+
 export default function ChaoMung() {
+  const { vi } = useLocalSearchParams<{ vi?: string }>();
+  const liDo = vi ? VI_SAO[vi] : null;
   return (
     <View className="flex-1 bg-nen">
       {/* Dải ngân hà phủ hai phần ba trên, phần dưới tan vào nền để chữ đọc được. */}
@@ -68,7 +83,29 @@ export default function ChaoMung() {
             Nội dung trong app chỉ mang tính giải trí và tham khảo, không thay thế cho lời khuyên
             về y tế, tài chính hay pháp lý.
           </Text>
+          {liDo ? (
+            <View
+              style={{ borderColor: MAU.vangMo }}
+              className="mb-4 rounded-xl border bg-nen-nhat px-4 py-3">
+              <Text
+                style={{ fontFamily: CHU.than }}
+                className="text-center text-sm leading-6 text-chu-phu">
+                {liDo} Khai một lần, khoảng hai phút.
+              </Text>
+            </View>
+          ) : null}
+
           <Nut nhan="Bắt đầu" onPress={() => router.push('/nhap-ho-so/dieu-khoan')} />
+
+          {/* Lối vào gian hàng, KHÔNG cần khai gì. Xem `_layout.tsx` để biết vì
+              sao phần đó nằm ngoài cổng hồ sơ. */}
+          <Pressable
+            onPress={() => router.push('/trung-bay')}
+            className="mt-5 self-center px-4 py-2 active:opacity-60">
+            <Text style={{ fontFamily: CHU.than }} className="text-sm text-vang underline">
+              Xem gian hàng, chưa cần khai gì
+            </Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     </View>

@@ -205,6 +205,24 @@ export default function RootLayout() {
    */
   const MAN_CUA_THAY = ['thay', 'dang-nhap-thay'];
 
+  /**
+   * Gian hàng KHÔNG cần hồ sơ.
+   *
+   * Điều 5.1.1(v) của Apple: "Apps may not require users to enter personal
+   * information to function, except when directly relevant to the core
+   * functionality of the app". Giờ sinh và nơi sinh liên quan trực tiếp tới
+   * phần chiêm tinh nên hỏi ở đó là chính đáng — nhưng chúng không liên quan
+   * gì tới việc xem một cái vòng tay.
+   *
+   * Và cũng không có lý do kỹ thuật nào: luật khoá dòng của bảng `san_pham` là
+   * `using (hien)`, đọc được mà không cần phiên nào; còn danh sách quan tâm thì
+   * nằm trên máy khách, không cần danh tính.
+   *
+   * `/trung-bay` nằm trong nhóm thẻ tab nên `doan[0]` của nó là '(tabs)', phải
+   * xét tới đoạn thứ hai mới nhận ra.
+   */
+  const MAN_GIAN_HANG = ['san-pham', 'quan-tam'];
+
   useEffect(() => {
     if (!xong || !phongXong || loi) return;
     const dau = doan[0];
@@ -213,13 +231,23 @@ export default function RootLayout() {
       if (!DUOC_DUNG_KHI_CHUA_CO_PHIEN.includes(dau)) router.replace('/dang-nhap');
       return;
     }
+    const trongGianHang =
+      MAN_GIAN_HANG.includes(dau) || (dau === '(tabs)' && doan[1] === 'trung-bay');
     // Thầy đi đường riêng, không đụng tới hồ sơ khách.
     if (laThay) {
       if (!MAN_CUA_THAY.includes(dau)) router.replace('/thay');
       return;
     }
-    if (!coHoSo && dau !== 'nhap-ho-so' && dau !== 'dang-nhap-xong' && !MAN_CUA_THAY.includes(dau)) {
-      router.replace('/nhap-ho-so');
+    if (
+      !coHoSo &&
+      dau !== 'nhap-ho-so' &&
+      dau !== 'dang-nhap-xong' &&
+      !MAN_CUA_THAY.includes(dau) &&
+      !trongGianHang
+    ) {
+      // Mang theo chỗ họ vừa định vào, để màn chào nói đúng vì sao lại hỏi hồ
+      // sơ — thay vì đá về một màn trắng không giải thích gì.
+      router.replace(`/nhap-ho-so?vi=${dau === '(tabs)' ? (doan[1] ?? 'index') : dau}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xong, phongXong, loi, coPhien, coHoSo, laThay, doan]);
