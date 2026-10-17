@@ -5,13 +5,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CAO_THANH_TAB, CHU, MAU } from '@/constants/giao-dien';
 
 /**
- * Bốn thẻ tab. Thứ tự ở đây chính là thứ tự khách — và người duyệt app của
+ * Năm thẻ tab. Thứ tự ở đây chính là thứ tự khách — và người duyệt app của
  * Apple — nhìn thấy, nên nó không phải chuyện bày biện.
  *
  * Trước đây mở app ra là "Lá bài hôm nay". Apple từ chối theo điều 4.3(b): app
  * chủ yếu là tarot và chiêm tinh, một danh mục họ coi là đã bão hoà. Giờ thẻ đầu
  * là DANH SÁCH CHUYÊN GIA, và việc đặt lịch tư vấn với người thật mới là chức
  * năng chính. Tarot với tử vi lùi hết vào thẻ Khám phá.
+ *
+ * Gian hàng nằm ở thẻ thứ ba chứ không phải thẻ đầu, và đó là chuyện cố ý: thứ
+ * Apple cần thấy trước nhất vẫn là người thật và việc đặt lịch. Gian hàng là
+ * phần thêm vào, không phải phần thay thế.
  *
  * `index` là danh sách chuyên gia chứ không phải một màn riêng tên /chuyen-gia:
  * nhờ vậy đường dẫn gốc "/" mở ra đúng thứ muốn khoe, và mấy chỗ đang gọi
@@ -55,6 +59,15 @@ export default function TabsLayout() {
           title: 'Lịch của tôi',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="trung-bay"
+        options={{
+          title: 'Trưng bày',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="storefront-outline" color={color} size={size} />
           ),
         }}
       />

@@ -34,6 +34,7 @@ import {
   tachGioHen,
 } from '../src/lib/nhac-hen-gio.ts';
 // Doi ten `layMa` cho khoi lan voi bien khac trong file.
+import { dongBacGia, dungTinNhan, giaKemDonVi, giaTheoSoLuong, tien, tongTien } from '../src/lib/gian-hang.ts';
 import { donDuocDon, maDonDuocDon, tachDonGhim } from '../src/lib/don-loc.ts';
 import { docLoi, laKhachTuChoi, laTrungDanhTinh, layMa as layMaTraVe } from '../src/lib/duong-tra-ve.ts';
 
@@ -524,6 +525,64 @@ console.log('\n--- ghim don tu thong bao, va don bot don da khep lai ---');
   // donDuocDon dung voi mot don le, dung cho nut trong tung the.
   kiem('mot don da xong thi don duoc', donDuocDon([ds[2]]).length, 1);
   kiem('mot don cho nhan thi khong', donDuocDon([ds[0]]).length, 0);
+}
+
+console.log('\n--- gia va bac gia theo so luong ---');
+{
+  const bac = [{ tu: 10, gia: 249000 }];
+
+  kiem('viet tien co dau cham', tien(280000), '280.000đ');
+  kiem('viet tien bac trieu', tien(4660000), '4.660.000đ');
+  kiem('gia kem don vi', giaKemDonVi(280000, 'vòng'), '280.000đ / vòng');
+
+  // Chua toi nguong thi van gia goc.
+  kiem('mua 1 thi gia goc', giaTheoSoLuong(280000, bac, 1), 280000);
+  kiem('mua 9 van gia goc', giaTheoSoLuong(280000, bac, 9), 280000);
+  // Dung bang nguong la duoc huong.
+  kiem('mua dung 10 thi duoc gia bac', giaTheoSoLuong(280000, bac, 10), 249000);
+  kiem('mua 50 van gia bac do', giaTheoSoLuong(280000, bac, 50), 249000);
+  // Khong co bac thi khong doi gi.
+  kiem('khong co bac gia', giaTheoSoLuong(230000, null, 100), 230000);
+  kiem('bac gia rong', giaTheoSoLuong(230000, [], 100), 230000);
+
+  // Nhieu bac, va CO Y dat sai thu tu trong du lieu: bang gia do nguoi nhap tay.
+  const nhieu = [{ tu: 500, gia: 60000 }, { tu: 50, gia: 64000 }];
+  kiem('nhieu bac: 10 chua toi nguong nao', giaTheoSoLuong(70000, nhieu, 10), 70000);
+  kiem('nhieu bac: 50 an bac giua', giaTheoSoLuong(70000, nhieu, 50), 64000);
+  kiem('nhieu bac: 499 van bac giua', giaTheoSoLuong(70000, nhieu, 499), 64000);
+  kiem('nhieu bac: 500 an bac thap nhat', giaTheoSoLuong(70000, nhieu, 500), 60000);
+  kiem('nhieu bac: 900 an bac thap nhat', giaTheoSoLuong(70000, nhieu, 900), 60000);
+
+  // Dong chu mo ta bac, luon xep tu nguong nho len.
+  kiem('dong bac gia mot bac', dongBacGia(bac, 'vòng').join(' | '), 'Từ 10 vòng: 249.000đ');
+  kiem('dong bac gia xep lai tu nho',
+    dongBacGia(nhieu, 'kg').join(' | '),
+    'Từ 50 kg: 64.000đ | Từ 500 kg: 60.000đ');
+  kiem('khong co bac thi khong co dong nao', dongBacGia(null, 'bộ').length, 0);
+}
+
+console.log('\n--- tin nhan gui cho cua hang ---');
+{
+  const luc = new Date(2026, 9, 18, 9, 5); // 18/10 09:05
+  const mon = [
+    { ten: 'Vòng Lam Ngọc Jade type A', soLuong: 10, gia: 280000, donVi: 'vòng', bacGia: [{ tu: 10, gia: 249000 }] },
+    { ten: 'Bát tụ bảo Ngọc Hoàng Long chữ Phát Tài', soLuong: 1, gia: 360000, donVi: 'bộ', bacGia: [{ tu: 5, gia: 320000 }] },
+  ];
+
+  // 10 vong x 249.000 = 2.490.000 ; 1 bo x 360.000 (chua toi 5 bo) = 360.000
+  kiem('tong tien an dung bac gia', tongTien(mon), 2490000 + 360000);
+
+  const chu = dungTinNhan(mon, luc);
+  kiem('co dong gio ngan', chu.indexOf('18/10 09:05') >= 0, true);
+  kiem('co don gia da ha theo bac', chu.indexOf('10 vòng x 249.000đ = 2.490.000đ') >= 0, true);
+  kiem('mon chua toi nguong van gia goc', chu.indexOf('1 bộ x 360.000đ = 360.000đ') >= 0, true);
+  kiem('co dong tam tinh', chu.indexOf('Tạm tính: 2.850.000đ') >= 0, true);
+  // Cau cuoi phai la mot cau HOI, khong phai lenh dat hang.
+  kiem('ket bang cau hoi them', chu.indexOf('Mình muốn hỏi thêm về mấy món này.') >= 0, true);
+  kiem('khong co chu "dat hang"', /đặt hàng|đơn hàng|thanh toán/i.test(chu), false);
+
+  kiem('danh sach rong thi khong co chu nao', dungTinNhan([], luc), '');
+  kiem('tong cua danh sach rong la 0', tongTien([]), 0);
 }
 
 console.log(loi === 0 ? '\n==> TAT CA DEU DUNG' : `\n==> CO ${loi} CHO SAI`);
