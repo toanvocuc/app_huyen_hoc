@@ -14,8 +14,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { DangTai, ManHinh, Nhan, Trong, VanNgan } from '@/components/nen';
 import { CHU, MAU } from '@/constants/giao-dien';
@@ -67,11 +76,7 @@ export default function TrungBay() {
       {noiBat.length > 0 ? (
         <View className="mb-2">
           <Nhan>Nổi bật tuần này</Nhan>
-          <View className="mt-3 gap-4">
-            {noiBat.map((s) => (
-              <TheNgang key={s.ma} mon={s} />
-            ))}
-          </View>
+          <DaiNoiBat ds={noiBat} />
           <VanNgan />
         </View>
       ) : null}
@@ -97,8 +102,112 @@ export default function TrungBay() {
   );
 }
 
-/** Thẻ to, ảnh nằm trên — dùng cho dải nổi bật. */
-function TheNgang({ mon }: { mon: SanPham }) {
+/** Đệm hai bên của `ManHinh`, cần để tính bề ngang một thẻ. */
+const LE_MAN = 20;
+/** Khe giữa hai thẻ trong dải. */
+const KHE = 12;
+/** Không ai vuốt trong bấy nhiêu mili giây thì tự sang món kế. */
+const CHO_TU_CHAY = 4000;
+
+/**
+ * Dải NỔI BẬT TUẦN NÀY: vuốt ngang, và tự chạy khi không ai đụng tới.
+ *
+ * ───────────────────────────────────────── VÌ SAO HẸN GIỜ CHỨ KHÔNG ĐẶT NHỊP
+ *
+ * `setInterval` thì nhịp chạy đều bất kể người dùng làm gì: vừa vuốt xong là
+ * có thể bị nhảy tiếp ngay sau một phần mười giây, vì nhịp cũ sắp tới. Yêu cầu
+ * là "không vuốt trong 4 giây", tức là đếm lại từ lần đụng cuối — mà cái đó chỉ
+ * có hẹn giờ đặt lại được mới làm đúng.
+ *
+ * `dungLai` là TRẠNG THÁI chứ không phải mốc: đổi trạng thái thì hiệu ứng chạy
+ * lại và dọn luôn hẹn giờ cũ. Để mốc thì hẹn giờ cũ vẫn nổ giữa lúc tay đang
+ * vuốt.
+ *
+ * Máy bật mục giảm chuyển động thì KHÔNG tự chạy. Một thứ tự động trượt ngang
+ * là đúng loại chuyển động mà mục đó sinh ra để tắt.
+ */
+function DaiNoiBat({ ds }: { ds: SanPham[] }) {
+  const { width } = useWindowDimensions();
+  const rong = Math.max(240, width - LE_MAN * 2);
+  const buoc = rong + KHE;
+  const cuon = useRef<ScrollView>(null);
+  const [o, datO] = useState(0);
+  const [dungLai, datDungLai] = useState(false);
+  const giamChuyenDong = useReducedMotion();
+
+  const tuChay = ds.length > 1 && !giamChuyenDong && !dungLai;
+
+  useEffect(() => {
+    if (!tuChay) return;
+    const hen = setTimeout(() => {
+      const moi = (o + 1) % ds.length;
+      datO(moi);
+      cuon.current?.scrollTo({ x: moi * buoc, animated: true });
+    }, CHO_TU_CHAY);
+    return () => clearTimeout(hen);
+  }, [tuChay, o, ds.length, buoc]);
+
+  // Màn xoay ngang hay đổi bề rộng thì giữ nguyên món đang xem.
+  useEffect(() => {
+    cuon.current?.scrollTo({ x: o * buoc, animated: false });
+    // Chỉ chạy khi bề ngang đổi, không chạy theo `o` — `o` đã có hẹn giờ lo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buoc]);
+
+  const xongVuot = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const moi = Math.round(e.nativeEvent.contentOffset.x / buoc);
+      datO(Math.min(ds.length - 1, Math.max(0, moi)));
+      // Thả tay ra thì đếm lại từ đầu bốn giây.
+      datDungLai(false);
+    },
+    [buoc, ds.length]
+  );
+
+  return (
+    <View className="mt-3">
+      <ScrollView
+        ref={cuon}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={buoc}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        onScrollBeginDrag={() => datDungLai(true)}
+        onMomentumScrollEnd={xongVuot}
+        // Vuốt xong mà không có quán tính thì `onMomentumScrollEnd` không nổ,
+        // và dải sẽ đứng im mãi. Bắt thêm ở đây cho chắc.
+        onScrollEndDrag={xongVuot}>
+        {ds.map((mon, i) => (
+          <View key={mon.ma} style={{ width: rong, marginRight: i === ds.length - 1 ? 0 : KHE }}>
+            <TheNoiBat mon={mon} />
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Mấy chấm cho biết đang ở món thứ mấy. Không có thì khách vuốt mà
+          không biết còn bao nhiêu món nữa. */}
+      {ds.length > 1 ? (
+        <View className="mt-3 flex-row justify-center gap-1.5">
+          {ds.map((mon, i) => (
+            <View
+              key={mon.ma}
+              style={{
+                width: i === o ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: i === o ? MAU.vang : MAU.vien,
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Thẻ to, ảnh nằm trên — một món trong dải nổi bật. */
+function TheNoiBat({ mon }: { mon: SanPham }) {
   const anh = anhSanPham(mon.anh);
   return (
     <Pressable
