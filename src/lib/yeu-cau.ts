@@ -48,6 +48,13 @@ export type YeuCau = {
    */
   goi: string | null;
   gia_goi: number | null;
+  /**
+   * Thầy đã dọn đơn này khỏi danh sách của mình.
+   *
+   * Ô riêng của thầy, bên khách không đọc tới. Để `?` vì đơn tải về từ máy chủ
+   * chưa chạy migration 0026 sẽ không có ô này — lúc đó coi như chưa dọn.
+   */
+  thay_an?: boolean;
 };
 
 /** Khung giờ cho sẵn. Cố ý không cho chọn ngày giờ chính xác, xem migration 0011. */
@@ -290,7 +297,12 @@ export function useDonChoThay() {
           .select('*')
           .order('tao_luc', { ascending: false });
         if (error) datLoi(error.message);
-        else datDong(data as YeuCau[]);
+        // Lọc ở máy chứ KHÔNG `.eq('thay_an', false)` trong câu truy vấn: bản
+        // app này lên tay thầy qua cập nhật nóng, có thể tới trước lúc migration
+        // 0026 được chạy. Hỏi một cột chưa tồn tại thì PostgREST trả lỗi và màn
+        // trắng trơn; lọc ở máy thì cột chưa có nghĩa là chưa ai dọn gì, đúng y
+        // như thật. Một thầy có vài chục đơn nên lọc ở đâu cũng vậy.
+        else datDong((data as YeuCau[]).filter((y) => !y.thay_an));
       } catch (e) {
         datLoi(e instanceof Error ? e.message : String(e));
       }
@@ -306,7 +318,31 @@ export function useDonChoThay() {
     taiLai();
   }, [taiLai]);
 
-  return { dong, loi, dangTai: dong === null && loi === null, lamMoi };
+  /**
+   * Thầy dọn một hoặc nhiều đơn khỏi danh sách của mình.
+   *
+   * Bỏ khỏi danh sách trên máy TRƯỚC khi máy chủ trả lời. Dọn hai chục đơn mà
+   * phải ngồi nhìn vòng xoay thì chẳng khác gì chưa dọn; mà lỡ máy chủ từ chối
+   * thì tải lại là mọi thứ về đúng chỗ cũ.
+   */
+  const donBot = useCallback(
+    async (ma: string[]) => {
+      if (ma.length === 0) return;
+      datDong((ds) => (ds ? ds.filter((y) => !ma.includes(y.ma)) : ds));
+      if (XEM_THU_THAY) return;
+      const { error } = await supabase
+        .from('yeu_cau_tu_van')
+        .update({ thay_an: true })
+        .in('ma', ma);
+      if (error) {
+        taiLai();
+        throw error;
+      }
+    },
+    [taiLai]
+  );
+
+  return { dong, loi, dangTai: dong === null && loi === null, lamMoi, donBot };
 }
 
 /**

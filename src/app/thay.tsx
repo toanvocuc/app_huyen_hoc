@@ -30,6 +30,8 @@ import { ChuThan, DangTai, Khoi, ManHinh, Nhan, Nut, Trong, VanNgan } from '@/co
 import { BieuTuongCung } from '@/components/bieu-tuong-cung';
 import { CHU, MAU } from '@/constants/giao-dien';
 import { tachNgay } from '@/lib/ho-so';
+import { DonGhim, KhongConDon } from '@/components/don-ghim';
+import { donDuocDon, maDonDuocDon, tachDonGhim } from '@/lib/don-loc';
 import { dongGoi } from '@/lib/goi';
 import { donBoNhacHen, goHetNhacHen } from '@/lib/nhac-hen';
 import { gioDoc } from '@/lib/nhac-hen-gio';
@@ -53,9 +55,17 @@ const MAU_TRANG_THAI = { cho: MAU.vang, xong: MAU.tot, huy: MAU.chuMo } as const
 const TOI_THIEU_LY_DO = 5;
 
 type Xep = 'moi' | 'cu' | 'ten';
+/**
+ * 'Tất cả' chứ không phải 'Mới nhất'.
+ *
+ * Hai chữ đó mô tả cùng một thứ tự, nhưng nói ra hai ý khác hẳn. 'Mới nhất'
+ * nghe như một bộ lọc chỉ giữ lại mấy đơn gần đây, nên thầy tưởng muốn xem đơn
+ * cũ thì phải đổi sang ô khác. Thật ra ô này vẫn bày đủ mọi đơn, chỉ là đơn mới
+ * nằm trên.
+ */
 const TEN_XEP: Record<Xep, string> = {
-  moi: 'Mới nhất',
-  cu: 'Cũ nhất',
+  moi: 'Tất cả',
+  cu: 'Cũ nhất trước',
   ten: 'Theo tên khách',
 };
 
@@ -67,7 +77,7 @@ function ngayGon(iso: string): string {
 
 export default function ManThay() {
   const { thay, xong } = useLaThay();
-  const { dong, loi, dangTai, lamMoi } = useDonChoThay();
+  const { dong, loi, dangTai, lamMoi, donBot } = useDonChoThay();
   const [coQuyen, datCoQuyen] = useState<boolean | null>(null);
   /**
    * Máy chủ đã biết máy này chưa.
@@ -81,8 +91,8 @@ export default function ManThay() {
   const [xep, datXep] = useState<Xep>('moi');
   const [tim, datTim] = useState('');
   const [dangTuChoi, datDangTuChoi] = useState<YeuCau | null>(null);
-  // Bấm thông báo thì nhảy tới đúng đơn, không phải đầu danh sách.
-  const { don: donCanTim, cuon, ganThe, sang } = useTimDon();
+  // Bấm thông báo thì ghim đúng đơn lên đầu, không phải đầu danh sách.
+  const { don: donCanTim, cuon, boQua } = useTimDon();
   const [lyDo, datLyDo] = useState('');
 
   useFocusEffect(
@@ -117,16 +127,9 @@ export default function ManThay() {
     donBoNhacHen(dong, (yc) => yc.ten_khach ?? 'khách', true);
   }, [dong]);
 
-  /**
-   * Tới từ thông báo thì bỏ lọc đi.
-   *
-   * Thầy đang gõ tìm một cái tên, rồi bấm thông báo về một đơn khác — đơn đó
-   * không khớp ô tìm nên không được vẽ ra, mà cuộn tới một thẻ không tồn tại
-   * thì chẳng thấy gì cả.
-   */
+  /** Danh sách sau khi lọc theo ô tìm và xếp theo ô đang chọn. */
   const ds = useMemo(() => {
-    // Tới từ một thông báo thì bỏ lọc, bày cả danh sách ra.
-    const chu = donCanTim ? '' : tim.trim().toLowerCase();
+    const chu = tim.trim().toLowerCase();
     let ra = [...(dong ?? [])];
 
     if (chu) {
@@ -156,7 +159,52 @@ export default function ManThay() {
       return xep === 'cu' ? t : -t;
     });
     return ra;
-  }, [dong, tim, xep, donCanTim]);
+  }, [dong, tim, xep]);
+
+  // Đơn tới từ thông báo được nhấc lên đầu, chỗ mắt đang nhìn sẵn.
+  const { ghim, conLai } = useMemo(
+    () => tachDonGhim(dong ?? [], ds, donCanTim),
+    [dong, ds, donCanTim]
+  );
+
+  /** Mã mọi đơn đã xong hoặc đã huỷ, tức là mọi đơn dọn được một lượt. */
+  const maDonDuoc = useMemo(() => maDonDuocDon(dong ?? []), [dong]);
+
+  function donMot(yc: YeuCau) {
+    Alert.alert(
+      'Dọn đơn này?',
+      'Đơn chỉ biến mất khỏi danh sách của bạn. Khách vẫn xem lại được buổi này trong lịch sử của họ.',
+      [
+        { text: 'Thôi', style: 'cancel' },
+        {
+          text: 'Dọn',
+          style: 'destructive',
+          onPress: () =>
+            donBot([yc.ma]).catch(() =>
+              Alert.alert('Chưa dọn được', 'Kiểm tra mạng rồi thử lại giúp tôi.')
+            ),
+        },
+      ]
+    );
+  }
+
+  function donHet() {
+    Alert.alert(
+      `Dọn ${maDonDuoc.length} đơn đã khép lại?`,
+      'Mấy đơn đã xong và đã huỷ sẽ biến mất khỏi danh sách của bạn, danh sách còn lại đúng mấy đơn đang cần làm. Khách vẫn xem lại được lịch sử của họ.',
+      [
+        { text: 'Thôi', style: 'cancel' },
+        {
+          text: 'Dọn hết',
+          style: 'destructive',
+          onPress: () =>
+            donBot(maDonDuoc).catch(() =>
+              Alert.alert('Chưa dọn được', 'Kiểm tra mạng rồi thử lại giúp tôi.')
+            ),
+        },
+      ]
+    );
+  }
 
   async function bat() {
     datDangXin(true);
@@ -317,6 +365,18 @@ export default function ManThay() {
         </View>
       ) : null}
 
+      {/* Đơn tới từ thông báo, ghim trên đầu. Trước phần tìm kiếm và trước mọi
+          thẻ khác: đó là thứ duy nhất thầy vừa bấm vào để xem. */}
+      {dong && donCanTim ? (
+        ghim ? (
+          <DonGhim onBoQua={boQua}>
+            <The yc={ghim} onDoi={doi} onTuChoi={tuChoi} onDon={donMot} />
+          </DonGhim>
+        ) : (
+          <KhongConDon onBoQua={boQua} />
+        )
+      ) : null}
+
       {dangTai ? <DangTai /> : null}
 
       {loi ? (
@@ -348,7 +408,7 @@ export default function ManThay() {
           {/* Chỉ hiện khi có từ hai đơn trở lên — một đơn thì không có gì để xếp. */}
           {(dong?.length ?? 0) > 1 ? (
             <View className="mt-5">
-              <Nhan>Sắp xếp</Nhan>
+              <Nhan>Cách xem</Nhan>
               <View className="mt-2 flex-row flex-wrap gap-2">
                 {(Object.keys(TEN_XEP) as Xep[]).map((k) => (
                   <O key={k} nhan={TEN_XEP[k]} chon={xep === k} onPress={() => datXep(k)} />
@@ -357,21 +417,34 @@ export default function ManThay() {
             </View>
           ) : null}
 
+          {/* Dọn một lượt. Từ hai đơn trở lên mới hiện: dọn đúng một đơn thì bấm
+              thẳng trong thẻ của nó nhanh hơn, mà thêm một nút ở đây chỉ làm rối. */}
+          {maDonDuoc.length > 1 ? (
+            <Pressable
+              onPress={donHet}
+              style={{ borderColor: MAU.vien }}
+              className="mt-4 flex-row items-center justify-center gap-2 rounded-xl border px-4 py-3 active:opacity-70">
+              <Ionicons name="archive-outline" size={15} color={MAU.chuPhu} />
+              <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-phu">
+                Dọn {maDonDuoc.length} đơn đã xong và đã huỷ
+              </Text>
+            </Pressable>
+          ) : null}
+
           <VanNgan />
 
-          {ds.length === 0 ? (
-            <Trong loi={`Không có đơn nào khớp với "${tim.trim()}".`} />
+          {conLai.length === 0 ? (
+            <Trong
+              loi={
+                tim.trim()
+                  ? `Không có đơn nào khớp với "${tim.trim()}".`
+                  : 'Danh sách đã sạch. Có đơn mới là máy báo cho bạn ngay.'
+              }
+            />
           ) : (
             <View className="gap-4">
-              {ds.map((yc) => (
-                <The
-                  key={yc.ma}
-                  yc={yc}
-                  onDoi={doi}
-                  onTuChoi={tuChoi}
-                                    gan={ganThe(yc.ma)}
-                  sang={sang === yc.ma}
-                />
+              {conLai.map((yc) => (
+                <The key={yc.ma} yc={yc} onDoi={doi} onTuChoi={tuChoi} onDon={donMot} />
               ))}
             </View>
           )}
@@ -433,37 +506,22 @@ function The({
   yc,
   onDoi,
   onTuChoi,
-  gan,
-  sang,
+  onDon,
 }: {
   yc: YeuCau;
   onDoi: (yc: YeuCau, sang: 'da_nhan' | 'da_xong' | 'da_huy', hoi: string) => void;
   onTuChoi: (yc: YeuCau) => void;
-  /** Mốc và hàm đo, chỉ thẻ cần tìm mới có. */
-  gan?: object;
-  /** Được bấm tới từ một thông báo: tô sáng một lúc cho mắt bắt đúng chỗ. */
-  sang?: boolean;
+  /** Dọn đơn này khỏi danh sách. Chỉ hiện với đơn đã xong hoặc đã huỷ. */
+  onDon: (yc: YeuCau) => void;
 }) {
   const tt = TEN_TRANG_THAI[yc.trang_thai];
   // Chỉ hỏi máy chủ khi thầy bấm mở. Mười đơn là mười lượt gọi cho thứ thầy có
   // thể không xem tới.
   const [moKhach, datMoKhach] = useState(false);
+  const donDuoc = donDuocDon([yc]).length > 0;
 
   return (
-    <View
-      {...gan}
-      style={{
-        opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1,
-        ...(sang
-          ? {
-              borderRadius: 18,
-              borderWidth: 2,
-              borderColor: MAU.vang,
-              padding: 2,
-              margin: -4,
-            }
-          : null),
-      }}>
+    <View style={{ opacity: yc.trang_thai === 'da_huy' ? 0.55 : 1 }}>
       <Khoi vang>
         <View className="mb-2 flex-row items-center justify-between">
           <Text
@@ -533,6 +591,21 @@ function The({
               onPress={() => onDoi(yc, 'da_xong', 'Đã tư vấn xong đơn này?')}
             />
           </View>
+        ) : null}
+
+        {/* Việc đã khép lại thì cho dọn đi. Để chữ nhỏ và mờ chứ không làm nút
+            to: dọn là việc thỉnh thoảng mới làm, không phải việc chính của thẻ
+            này, mà một nút to màu đỏ cạnh thông tin khách thì dễ bấm nhầm. */}
+        {donDuoc ? (
+          <Pressable
+            onPress={() => onDon(yc)}
+            hitSlop={8}
+            className="mt-5 flex-row items-center gap-1.5 self-end active:opacity-60">
+            <Ionicons name="archive-outline" size={13} color={MAU.chuMo} />
+            <Text style={{ fontFamily: CHU.than }} className="text-sm text-chu-mo">
+              Dọn đơn này
+            </Text>
+          </Pressable>
         ) : null}
       </Khoi>
     </View>

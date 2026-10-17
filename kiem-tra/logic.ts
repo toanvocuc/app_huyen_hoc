@@ -34,6 +34,7 @@ import {
   tachGioHen,
 } from '../src/lib/nhac-hen-gio.ts';
 // Doi ten `layMa` cho khoi lan voi bien khac trong file.
+import { donDuocDon, maDonDuocDon, tachDonGhim } from '../src/lib/don-loc.ts';
 import { docLoi, laKhachTuChoi, laTrungDanhTinh, layMa as layMaTraVe } from '../src/lib/duong-tra-ve.ts';
 
 let loi = 0;
@@ -480,6 +481,50 @@ kiem('địa chỉ trơn thì không có lỗi', docLoi('omora://dang-nhap-xong'
 const l4 = docLoi('omora://dang-nhap-xong?error=server_error');
 kiem('lấy được error khi thiếu error_code', l4 ? l4.ma : null, 'server_error');
 
+
+console.log('\n--- ghim don tu thong bao, va don bot don da khep lai ---');
+{
+  type D = { ma: string; trang_thai: string };
+  const ds: D[] = [
+    { ma: 'a', trang_thai: 'cho_nhan' },
+    { ma: 'b', trang_thai: 'da_nhan' },
+    { ma: 'c', trang_thai: 'da_xong' },
+    { ma: 'd', trang_thai: 'da_huy' },
+  ];
+
+  // Khong co ma thi khong ghim gi, va danh sach phai la DUNG mang dang hien.
+  const k0 = tachDonGhim(ds, ds, null);
+  kiem('khong co ma thi khong ghim', k0.ghim, null);
+  kiem('khong co ma thi giu nguyen danh sach', k0.conLai.length, 4);
+
+  const k1 = tachDonGhim(ds, ds, 'c');
+  kiem('ghim dung don', k1.ghim ? k1.ghim.ma : null, 'c');
+  kiem('don da ghim khong con trong danh sach', k1.conLai.some((x) => x.ma === 'c'), false);
+  kiem('ba don con lai van nguyen', k1.conLai.length, 3);
+
+  // Day du co, dang hien khong co: van phai ghim duoc.
+  // Day la ca o tim kiem dang loc mat don can tim.
+  const locHet = ds.filter((x) => x.ma === 'a');
+  const k2 = tachDonGhim(ds, locHet, 'd');
+  kiem('loc mat van ghim duoc', k2.ghim ? k2.ghim.ma : null, 'd');
+  kiem('danh sach dang hien khong bi dong them gi', k2.conLai.length, 1);
+
+  // Ma tro toi mot don khong con ton tai: khong ghim, va khong duoc nuot don nao.
+  const k3 = tachDonGhim(ds, ds, 'khong-co');
+  kiem('ma la thi khong ghim', k3.ghim, null);
+  kiem('ma la thi khong mat don nao', k3.conLai.length, 4);
+
+  // Don duoc don: chi da_xong va da_huy.
+  kiem('dem dung so don don duoc', maDonDuocDon(ds).length, 2);
+  kiem('don duoc gom c va d', maDonDuocDon(ds).join(','), 'c,d');
+  kiem('khong don don dang cho', maDonDuocDon(ds).includes('a'), false);
+  kiem('khong don don da nhan', maDonDuocDon(ds).includes('b'), false);
+  kiem('danh sach rong thi khong co gi de don', maDonDuocDon([]).length, 0);
+
+  // donDuocDon dung voi mot don le, dung cho nut trong tung the.
+  kiem('mot don da xong thi don duoc', donDuocDon([ds[2]]).length, 1);
+  kiem('mot don cho nhan thi khong', donDuocDon([ds[0]]).length, 0);
+}
 
 console.log(loi === 0 ? '\n==> TAT CA DEU DUNG' : `\n==> CO ${loi} CHO SAI`);
 process.exit(loi === 0 ? 0 : 1);
