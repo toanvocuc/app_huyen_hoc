@@ -18,11 +18,11 @@ create table if not exists san_pham (
   ten         text not null,
   mo_ta       text,
   -- Mỗi dòng một thông số, xuống dòng ngăn cách. Ví dụ:
-  --   Kích thước: 17 cm
+  --   Đường kính: 17 cm
   --   Trọng lượng: 7,28 kg
   thong_so    text,
   gia         integer not null check (gia >= 0),
-  -- 'vòng', 'chuỗi', 'bộ', 'tượng', 'kg'… Hiện ngay sau giá: "280.000đ / vòng".
+  -- 'vòng', 'chuỗi', 'bộ', 'tượng', 'viên'… Hiện ngay sau giá: "280.000đ / vòng".
   don_vi      text not null default 'cái',
   /**
    * Bậc giá theo số lượng, dạng [{"tu": 10, "gia": 249000}].
@@ -71,9 +71,16 @@ create policy "ai cung xem duoc hang dang bay" on san_pham for select
 -- Giá ghi theo đúng bảng giá cửa hàng gửi, đơn vị đồng. "k" trong bảng gốc là
 -- nghìn đồng, đã quy ra đủ số 0 ở đây.
 --
--- CỐ Ý không viết câu nào hứa hẹn về sức khoẻ. "Mang lại may mắn và tài lộc" là
--- cách nói văn hoá, giữ được; "đeo vào khỏi bệnh" thì không — Apple xếp loại sau
--- vào nhóm nội dung gây hại, nặng hơn mọi rủi ro khác của gian hàng này.
+-- ──────────────────────────────────── MÔ TẢ CHỈ NÓI MÓN ĐÓ LÀ GÌ, KHÔNG HỨA GÌ
+--
+-- Không một dòng nào ở đây nói món hàng mang lại điều gì cho người mua: không
+-- may mắn, không tài lộc, không bình an, và tuyệt đối không sức khoẻ. Mô tả chỉ
+-- nói chất liệu, hình dáng, kích thước — những thứ nhìn vào ảnh là kiểm được.
+--
+-- Lý do không phải chỉ vì Apple. Một lời hứa không kiểm chứng được nằm cạnh một
+-- cái giá là thứ pháp luật quảng cáo soi tới, mà cũng là thứ khách bực nhất khi
+-- nhận hàng. Tên món như "Bát tụ bảo" hay chữ "Phát Tài" khắc trên thân thì giữ
+-- nguyên: đó là tên gọi và là thứ có thật trên món hàng, không phải lời hứa.
 
 insert into san_pham (ma, ten, mo_ta, thong_so, gia, don_vi, bac_gia, anh, noi_bat, thu_tu) values
 (
@@ -132,8 +139,8 @@ insert into san_pham (ma, ten, mo_ta, thong_so, gia, don_vi, bac_gia, anh, noi_b
 ),
 (
   'bo-am-tra-da-ngoc-hoang-long',
-  'Bộ ấm trà đá ngọc hoàng long chạm đào trường thọ',
-  'Bộ ấm trà chạm khắc từ đá ngọc hoàng long, thân bình chạm cây đào trường thọ, kèm đĩa và ly.',
+  'Bộ ấm trà đá ngọc hoàng long chạm đào',
+  'Bộ ấm trà chạm khắc từ đá ngọc hoàng long, thân bình chạm hình cây đào, kèm đĩa và ly.',
   E'Bình: Cao 10 cm, ngang 17 cm\nLy: Cao 3 cm, đường kính 4,5 cm\nChất liệu: Đá ngọc hoàng long',
   2600000, 'bộ',
   null,
@@ -142,7 +149,7 @@ insert into san_pham (ma, ten, mo_ta, thong_so, gia, don_vi, bac_gia, anh, noi_b
 (
   'bi-cau-thach-anh-den-17cm',
   'Bi cầu thạch anh đen 17 cm',
-  'Bi cầu thạch anh đen nguyên khối, vân tơ trắng chạy khắp thân, kèm đế gỗ. Theo quan niệm dân gian là vật mang lại may mắn và tài lộc.',
+  'Bi cầu thạch anh đen nguyên khối, vân tơ trắng chạy khắp thân, kèm đế gỗ.',
   E'Đường kính: 17 cm\nTrọng lượng: 7,28 kg\nKèm theo: Đế gỗ',
   4660000, 'viên',
   null,
