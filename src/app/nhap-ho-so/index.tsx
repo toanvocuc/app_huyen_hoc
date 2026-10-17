@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Dimensions, Pressable, Text, View } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BauTroiDong } from '@/components/bau-troi-dong';
@@ -56,7 +56,7 @@ export default function ChaoMung() {
           <Text
             style={{ fontFamily: CHU.than, fontSize: 15, lineHeight: 24 }}
             className="mx-auto mt-4 max-w-[300px] text-center text-chu-phu">
-            Trò chuyện với chuyên gia thật, và hiểu thêm về chính mình.
+            Trò chuyện với chuyên gia, và hiểu thêm về chính mình.
           </Text>
         </View>
 
@@ -66,17 +66,11 @@ export default function ChaoMung() {
             className="mb-5 text-center text-[11px] leading-5 text-chu-mo">
             Nội dung mang tính tham khảo và giải trí.
           </Text>
+          {/* ĐÚNG MỘT nút, cố ý. Màn này là thứ đầu tiên người ta thấy; mỗi
+              lựa chọn thêm vào đây là một lần bắt họ cân nhắc trước khi kịp
+              hiểu app làm gì. Gian hàng và mọi phần khác đều là thẻ tab bên
+              trong, gặp sau cũng được. */}
           <Nut nhan="Bắt đầu" onPress={() => router.push('/nhap-ho-so/dieu-khoan')} />
-
-          {/* Lối đi thẳng vào app, không khai gì cả. App không chặn ai vì thiếu
-              hồ sơ — phần nào cần thì tự hỏi đúng lúc cần. */}
-          <Pressable
-            onPress={() => router.replace('/')}
-            className="mt-5 self-center px-4 py-2 active:opacity-60">
-            <Text style={{ fontFamily: CHU.than }} className="text-sm text-vang underline">
-              Xem trước đã
-            </Text>
-          </Pressable>
         </View>
       </SafeAreaView>
     </View>

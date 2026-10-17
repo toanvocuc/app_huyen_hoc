@@ -66,8 +66,8 @@ export default function KhamPha() {
               onPress={() => router.push('/than-so')}
             />
             <The
-              nhan="Hỏi người thật"
-              ten="Chuyên gia"
+              nhan="Hỏi chuyên gia"
+              ten="Đặt một buổi tư vấn"
               mo="Khi muốn hỏi một câu cụ thể mà app chưa trả lời được"
               onPress={() => router.push('/')}
             />
